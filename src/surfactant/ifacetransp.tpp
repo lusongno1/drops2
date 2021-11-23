@@ -149,7 +149,7 @@ void SetupConvectionP1 (const MultiGridCL& mg, MatDescCL* mat, const VecDescCL& 
 
 template <class DiscVelSolT>
 void LocalInterfaceMassDivP1CL<DiscVelSolT>::setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata)
-{
+{//set up divmass matrix
     make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
     resize_and_scatter_piecewise_normal( cdata.surf, qdom, n);
 
@@ -161,7 +161,7 @@ void LocalInterfaceMassDivP1CL<DiscVelSolT>::setup (const TetraCL& t, const Inte
     qdivgamma_w= 0.;
     for (int i= 0; i < 10; ++i) {
         evaluate_on_vertexes( gradp2[i], qdom, Addr( qgradp2i));
-        qdivgamma_w+= dot(w_loc[i], qgradp2i) - dot( w_loc[i], n)*dot( n, qgradp2i);
+        qdivgamma_w+= dot(w_loc[i], qgradp2i) - dot( w_loc[i], n)*dot( n, qgradp2i);//what is it
     }
 
     for (int i= 0; i < 4; ++i)

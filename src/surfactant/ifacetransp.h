@@ -852,7 +852,7 @@ template <template <class> class LocalMatrixT, class DiscVelSolT>
                 LocalMatrixT<DiscVelSolT>( wind, normal, time), cdata, name);
     }
 
-class LocalInterfaceMassP1CL
+class LocalInterfaceMassP1CL//set up local mass matrix P1
 {
   private:
     std::valarray<double> q[4];

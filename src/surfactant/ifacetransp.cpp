@@ -5074,7 +5074,7 @@ void TransportP1FunctionCL::DoStep (VectorCL& u, const DiscVelSolT& vel)
 }
 
 
-void SurfactantCharTransportP1CL::Update()
+void SurfactantCharTransportP1CL::Update()//in this module, update mass matrix, stiffness matrix and others
 {
     // ScopeTimerCL timer( "SurfactantCharTransportP1CL::Update");
     // std::cout << "SurfactantCharTransportP1CL::Update:\n";
@@ -5157,7 +5157,7 @@ void SurfactantCharTransportP1CL::DoStep ()
     std::cout << "Before solve: res = " << norm( L_*ic.Data - therhs) << std::endl;
     {
         ScopeTimerCL timer( "SurfactantCharTransportP1CL::DoStep: Solve");
-        gm_.Solve( L_, ic.Data, therhs, idx.GetEx());
+        gm_.Solve( L_, ic.Data, therhs, idx.GetEx());//solve equations
     }
     std::cout << "SurfactantCharTransportP1CL::DoStep: res = " << gm_.GetResid() << ", iter = " << gm_.GetIter() << std::endl;
 }

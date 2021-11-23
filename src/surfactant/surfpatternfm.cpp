@@ -840,7 +840,8 @@ SurfactantP1BaseCL* make_surfactant_timedisc( MultiGridCL& mg, LevelsetP2CL& lse
 }
 
 
-void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::LevelsetP2CL& lset)
+//used to compare with Strategy, not to run
+void Strategy2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::LevelsetP2CL& lset)
 {
     using namespace DROPS;
 
@@ -868,8 +869,8 @@ void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levelse
     InitVel( mg, &v, Bnd_v, the_wind_fun, 0.);
 
     //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps"));
-    double dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
-                +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+    double dist=2*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
+                +2*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
 
     std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, Bnd_v, P,dist));
     SurfactantP1BaseCL& timedisc= *timediscp;
@@ -911,6 +912,196 @@ void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levelse
     std::cout << "L_2x-error: " << L_2x_err
               << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
               << std::endl;
+    double L_inftL_2x_err= L_2x_err;
+    std::cout << "L_inftL_2x-error: " <<  L_inftL_2x_err << std::endl;
+    double H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+    std::cout << "H_1x-error: " << H_1x_err << std::endl;
+    double L_2tH_1x_err_sq= 0.5*dt*std::pow( H_1x_err, 2);
+    BndDataCL<> ifbnd( 0);
+    std::cout << "initial surfactant on \\Gamma: " << Integral_Gamma( mg, lset.Phi, lset.GetBndData(), make_P1Eval(  mg, ifbnd, timedisc.ic)) << '\n';
+
+    dynamic_cast<DistMarkingStrategyCL*>( adap.get_marking_strategy())->SetDistFct( lset);
+
+    double total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
+    //In the first step, we use some smaller time step to solve the problem
+    // double discrete_mass=0;
+    int N1=(int)1./dt;
+    for (int step= 1; step <= N1; ++step)
+      {
+          const double cur_time= step*dt/N1;
+          timedisc.InitTimeStep();
+
+          LSInit( mg, lset.Phi, the_lset_fun, cur_time);
+          InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
+          timedisc.DoStep0( cur_time);
+          total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
+        //  if(step==1)
+       //   	discrete_mass=total_mass;
+          //L_2tL_2x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/10*std::pow( L_2x_err, 2);
+          L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+          std::cout << "L_2x-error: " << L_2x_err
+                            << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
+                            << std::endl;
+          L_inftL_2x_err= std::max( L_inftL_2x_err, L_2x_err);
+          std::cout << "L_inftL_2x-eerror: " << L_inftL_2x_err << std::endl;
+          //L_2tL_2x_err_sq+= 0.5*dt/10*std::pow( L_2x_err, 2);
+         // std::cout << "L_2tL_2x-error: " << std::sqrt( L_2tL_2x_err_sq) << std::endl;
+          L_2tH_1x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/N1*std::pow( H_1x_err, 2);
+              //    H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+          H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+          std::cout << "H_1x-error: " << H_1x_err << std::endl;
+          L_2tH_1x_err_sq+= 0.5*dt/N1*std::pow( H_1x_err, 2);
+              //    L_2tH_1x_err_sq+= dt*std::pow( H_1x_err, 2);
+          std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
+      }
+
+    for (int step= 2; step <= P.get<int>("Time.NumSteps"); ++step) {
+        std::cout << "======================================================== step " << step << ":\n";
+        ScopeTimerCL timer( "Strategy: Time-loop");
+        const double cur_time= step*dt;
+        // Assumes (as the rest of Drops), that the current triangulation is acceptable to perform the time-step.
+        // If dt is large and AdapRef.Width is small, this may not be true.
+        // Watch for large differences in numbers of old and new dof.
+        timedisc.InitTimeStep();
+        LSInit( mg, lset.Phi, the_lset_fun, cur_time);
+        InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
+        timedisc.DoStep( cur_time);
+        std::cout << "surfactant on \\Gamma: " << Integral_Gamma( mg, lset.Phi, lset.GetBndData(), make_P1Eval(  mg, ifbnd, timedisc.ic)) << '\n';
+        L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+        std::cout << "L_2x-error: " << L_2x_err
+                  << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
+                  << std::endl;
+        L_inftL_2x_err= std::max( L_inftL_2x_err, L_2x_err);
+        std::cout << "L_inftL_2x-error: " << L_inftL_2x_err << std::endl;
+        L_2tH_1x_err_sq+= (step > 1 ? 0.5 : 0.)*dt*std::pow( H_1x_err, 2);
+        H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+        std::cout << "H_1x-error: " << H_1x_err << std::endl;
+        L_2tH_1x_err_sq+= 0.5*dt*std::pow( H_1x_err, 2);
+        std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
+        if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0) {
+            LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
+            vtkwriter->Write( cur_time);
+        }
+        if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0 && step % P.get<int>( "SurfTransp.SolutionOutput.Freq") == 0) {
+            std::ostringstream os1,
+                               os2;
+            os1 << P.get<int>( "Time.NumSteps");
+            os2 << P.get<std::string>( "SurfTransp.SolutionOutput.Path") << std::setw( os1.str().size()) << step;
+            DROPS::WriteFEToFile( timedisc.ic, mg, os2.str(), P.get<bool>( "SurfTransp.SolutionOutput.Binary"));
+        }
+//        lset2.DoStep();
+//        VectorCL rhs( lset2.Phi.Data.size());
+//        lset2.ComputeRhs( rhs);
+//        lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v, cur_time));
+//        lset2.SetTimeStep( dt);
+//        lset2.DoStep( rhs);
+
+//         std::cout << "rel. Volume: " << lset.GetVolume()/Vol << std::endl;
+//         if (P.get("Levelset.VolCorr", 0)) {
+//             double dphi= lset.AdjustVolume( Vol, 1e-9);
+//             std::cout << "volume correction is " << dphi << std::endl;
+//             lset.Phi.Data+= dphi;
+//             std::cout << "new rel. Volume: " << lset.GetVolume()/Vol << std::endl;
+//         }
+        //if (C.rpm_Freq && step%C.rpm_Freq==0) { // reparam levelset function
+            // lset.ReparamFastMarching( C.rpm_Method);
+
+        const bool doGridMod= P.get<int>("Mesh.AdaptRef.Freq") && step%P.get<int>("Mesh.AdaptRef.Freq") == 0;
+        const bool gridChanged= doGridMod ? adap.UpdateTriang() : false;
+        if (gridChanged) {
+            std::cout << "Triangulation changed.\n";
+            vidx.DeleteNumbering( mg);
+            vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
+            v.SetIdx( &vidx);
+            InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
+            LSInit( mg, lset.Phi, the_lset_fun, cur_time);
+            the_sol_vd.SetIdx( &lset.idx);
+            LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
+            // timedisc.Update(); // Called unconditionally in DoStep.
+            //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), dt);
+
+            std::cout << "rel. Volume: " << lset.GetVolume()/Vol << std::endl;
+            lset.AdjustVolume();
+            lset.GetVolumeAdjuster()->DebugOutput( std::cout);
+        }
+    }
+    std::cout << std::endl;
+    //delete &lset2;
+}
+
+
+void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::LevelsetP2CL& lset)
+{
+    using namespace DROPS;
+
+    if (P.get<std::string>("SurfTransp.Exp.Levelset") == std::string( "AxisScalingLset"))//MovingEllipsoid
+        dynamic_cast<DistMarkingStrategyCL*>( adap.get_marking_strategy())->SetDistFct( axis_scaling_lset_ini);
+
+    lset.CreateNumbering( mg.GetLastLevel(), &lset.idx);//create global numbering
+    lset.Phi.SetIdx( &lset.idx);
+    // LinearLSInit( mg, lset.Phi, the_lset_fun, 0.);
+    LSInit( mg, lset.Phi, the_lset_fun, 0.);
+
+    //DROPS::LevelsetP2CL& lset2( *LevelsetP2CL::Create( mg, lsbnd, sf, P.get_child("Levelset")) );
+    //lset2.idx.CreateNumbering( mg.GetLastLevel(), mg);
+    //lset2.Phi.SetIdx( &lset2.idx);
+    //LSInit( mg, lset2.Phi, the_lset_fun, 0.);
+
+    const double Vol= lset.GetVolume();
+    lset.InitVolume( Vol);
+    std::cout << "droplet volume: " << Vol << std::endl;
+
+    BndDataCL<Point3DCL> Bnd_v( 6, bc_wind, bf_wind);
+    IdxDescCL vidx( vecP2_FE);
+    vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
+    VecDescCL v( &vidx);
+    InitVel( mg, &v, Bnd_v, the_wind_fun, 0.);
+
+    //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps"));
+    double dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
+                +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+                //10*|0 0 0|*1/32+10*3.33333/32/(2^1)
+
+    std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, Bnd_v, P,dist));//key step, fast marching in it
+    SurfactantP1BaseCL& timedisc= *timediscp;
+    timedisc.SetRhs( the_rhs_fun);
+
+    LevelsetRepairCL lsetrepair( lset);
+    adap.push_back( &lsetrepair);
+    InterfaceP1RepairCL ic_repair( mg, lset.Phi, lset.GetBndData(), timedisc.ic);
+    adap.push_back( &ic_repair);
+    //LevelsetRepairCL lset2repair( lset2);
+    //adap.push_back( &lset2repair);
+
+    // Init Interface-Sol
+    timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);
+    std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
+    timedisc.ic.SetIdx( &timedisc.idx);
+    timedisc.SetInitialValue( the_sol_fun, 0.);
+    timedisc.iface.SetIdx( &timedisc.idx);
+    timedisc.iface_old.SetIdx( &timedisc.idx);
+
+    BndDataCL<> nobnd( 0);
+    VecDescCL the_sol_vd( &lset.idx);
+    LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);
+    if (vtkwriter.get() != 0) {
+        vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
+        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol"));
+        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
+        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
+        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
+        //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
+        vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
+        vtkwriter->Write( 0.);
+    }
+    //if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0)
+    //    DROPS::WriteFEToFile( timedisc.ic, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
+
+    const double dt= P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps");//1/32
+    double L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+    std::cout << "L_2x-error: " << L_2x_err
+              << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
+              << std::endl;//initial value error
     double L_inftL_2x_err= L_2x_err;
     std::cout << "L_inftL_2x-error: " <<  L_inftL_2x_err << std::endl;
     double H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
