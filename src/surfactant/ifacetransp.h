@@ -1619,6 +1619,7 @@ class SurfacePDEP1BaseCL
         virtual void InitTimeStep ();
 
         virtual void DoStep0 (double /*new_t*/) {}  //used only in Class: SurfactantExtensionP1CL
+        virtual void DoStep0PatternFM (double /*new_t*/) {}  //
 
         /// perform one time step to new_t.
         virtual void DoStep (double /*new_t*/) {}
@@ -1635,7 +1636,9 @@ class SurfacePDEP1BaseCL
                 Volume_stab, ///< stabilization matrix,
                 Mass,  ///< mass matrix
                 Conv,  ///< convection matrix
-                Massd; ///< mass matrix with interface-divergence of velocity
+                Massd, ///< mass matrix with interface-divergence of velocity
+                MassH,///<mass matrix with curvature>
+                MassU;///<mass matrix with (u_n)^2+\delta u_n>
 
         VecDescCL rhsext1;
         VectorCL load, ///< for a load-function
@@ -1667,6 +1670,7 @@ class SurfacePDEP1BaseCL
         /// perform one time step
 
         void DoStep0 (double new_t); //Backward Euler
+        void DoStep0PatternFM (double new_t); //Backward Euler for tumor growth problem
         void DoStep (double new_t);  //BDF2 method
 
         const_DiscSolCL GetSolution() const
