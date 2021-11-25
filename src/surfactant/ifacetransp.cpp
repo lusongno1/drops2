@@ -3032,6 +3032,7 @@ void SurfacePDEP1BaseCL::SetTheta (double theta)
 void SurfactantP1BaseCL::SetInitialValue (instat_scalar_fun_ptr icf, double t)
 {
     P1Init ( icf, ic, MG_, t);
+    P1Init ( icf, icw, MG_, t);//set initial value for w
 }
 
 void SurfactantP1BaseCL::SetRhs (instat_scalar_fun_ptr rhs)

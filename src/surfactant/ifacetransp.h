@@ -1559,6 +1559,7 @@ class SurfacePDEP1BaseCL
 
         IdxDescCL idx; ///< index desctription for concentration at current time
         VecDescCL ic;  ///< concentration on the interface at current time
+        VecDescCL icw;  ///< concentration on the interface at current time w.r.t w
 
         VecDescCL iface;  ///< interface mesh at current time
         VecDescCL iface_old;  ///< interface mesh at current time
@@ -1570,6 +1571,7 @@ class SurfacePDEP1BaseCL
 
         IdxDescCL           oldidx_; ///< idx that corresponds to old time (and oldls_)
         VectorCL            oldic_;  ///< interface concentration at old time
+        VectorCL            oldicw_;  ///< interface concentration at old time w.r.t w
 
         GSPcCL                  pc_;
         GMResSolverCL<GSPcCL>   gm_;

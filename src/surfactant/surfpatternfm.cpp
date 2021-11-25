@@ -1269,6 +1269,7 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
     timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);
     std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
     timedisc.ic.SetIdx( &timedisc.idx);
+    timedisc.icw.SetIdx( &timedisc.idx);
     timedisc.SetInitialValue( the_sol_fun, 0.);
     timedisc.iface.SetIdx( &timedisc.idx);
     timedisc.iface_old.SetIdx( &timedisc.idx);
