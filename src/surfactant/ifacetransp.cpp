@@ -3418,6 +3418,13 @@ void SurfactantNarrowBandStblP1CL::DoStep0 (double new_t)
 
 }
 
+/** \brief do step for tumor growth problem, created by lusong
+ *          we need set up Mass, Stiffness MassH, MassU, and loads with different functional coefficients
+ * \param
+ * \param
+ * \return
+ *
+ */
 //back formwad Euler for tumor growth problem
 void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern formulation
 {
