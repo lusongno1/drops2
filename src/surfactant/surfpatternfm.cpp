@@ -872,7 +872,7 @@ void Strategy2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levels
     double dist=2*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
                 +2*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
 
-    std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, Bnd_v, P,dist));
+    std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, Bnd_v, P,dist));//narrow band is in make_surfactant_timedisc
     SurfactantP1BaseCL& timedisc= *timediscp;
     timedisc.SetRhs( the_rhs_fun);
 
@@ -1062,7 +1062,7 @@ void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levelse
                 +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
                 //10*|0 0 0|*1/32+10*3.33333/32/(2^1)
 
-    std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, Bnd_v, P,dist));//key step, fast marching in it
+    std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, Bnd_v, P,dist));//key step, narrow band in it
     SurfactantP1BaseCL& timedisc= *timediscp;
     timedisc.SetRhs( the_rhs_fun);
 
@@ -1197,7 +1197,7 @@ void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levelse
         //if (C.rpm_Freq && step%C.rpm_Freq==0) { // reparam levelset function
             // lset.ReparamFastMarching( C.rpm_Method);
         const bool doGridMod= P.get<int>("Mesh.AdaptRef.Freq") && step%P.get<int>("Mesh.AdaptRef.Freq") == 0;
-        const bool gridChanged= doGridMod ? adap.UpdateTriang() : false;
+        const bool gridChanged= doGridMod ? adap.UpdateTriang() : false;//gird changed? or surface moved?
         if (gridChanged) {
             std::cout << "Triangulation changed.\n";
             vidx.DeleteNumbering( mg);

@@ -161,9 +161,14 @@ void LocalInterfaceMassDivP1CL<DiscVelSolT>::setup (const TetraCL& t, const Inte
     qdivgamma_w= 0.;
     for (int i= 0; i < 10; ++i) {
         evaluate_on_vertexes( gradp2[i], qdom, Addr( qgradp2i));
-        qdivgamma_w+= dot(w_loc[i], qgradp2i) - dot( w_loc[i], n)*dot( n, qgradp2i);//what is it
+        qdivgamma_w+= dot(w_loc[i], qgradp2i) - dot( w_loc[i], n)*dot( n, qgradp2i);//w_loc is a coefficient of w written as a linear combination of P2 basis functions
     }
-
+/*
+    for(auto &it:qdivgamma_w)
+    {
+        std::cout<< "qdivgamma_w:"<<it<<std::endl;
+    }
+*/
     for (int i= 0; i < 4; ++i)
         resize_and_evaluate_on_vertexes (cdata.p1[i], qdom, q[i]);
 

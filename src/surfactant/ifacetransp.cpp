@@ -2797,7 +2797,7 @@ void SurfactantP1BaseCL::InitTimeStep ()
 ///SurfactantNarrowBandStblP1CL
 
 
-    void SurfactantNarrowBandStblP1CL:: Update()
+    void SurfactantNarrowBandStblP1CL:: Update()//narrow band formulation
     {
 
         ScopeTimerCL timer( "SurfactantNarrowBandStblP1CL::Update");
