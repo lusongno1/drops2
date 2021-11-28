@@ -1247,7 +1247,7 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
     IdxDescCL vidx( vecP2_FE);
     vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
     VecDescCL v( &vidx);
-    InitVel( mg, &v, Bnd_v, the_wind_fun, 0.);
+    InitVel( mg, &v, Bnd_v, the_wind_fun, 0.);//make vector-value fun to be vector-val vectors
 
     //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps"));
     double dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")

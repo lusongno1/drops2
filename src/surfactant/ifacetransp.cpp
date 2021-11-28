@@ -3568,6 +3568,16 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
             //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu1<LocalInterfaceMassDivSkewP1CL>( &Md, cdata,  make_P2Eval( MG_, Bnd_v_, *v_),normal_,ic.t, "massdiv"));
             accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &Massd, cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "massdiv"));
 
+            /**< push back term like quasi-mass with curvature H as coefficient */
+            //InterfaceMatrixAccuCL<LocalInterfaceMassHP1CL, InterfaceCommonDataP1CL> massH_accu( &MassH, LocalInterfaceMassHP1CL(), cdata, "masscurvature");
+            //accus.push_back( &massH_accu);
+//            GridFunctionCL<Point3DCL> n;
+//            make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
+//            resize_and_scatter_piecewise_normal( cdata.surf, qdom, n);
+//            VecDescCL nd;
+//            accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &MassH, cdata,  make_P2Eval( MG_, Bnd_v_, nd), "massH"));
+
+
 
             /**< push back source term */
             if (rhs_fun_)

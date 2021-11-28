@@ -1170,6 +1170,8 @@ class LocalInterfaceMassDivP1CL
         : w_( w) { P2DiscCL::GetGradientsOnRef( gradrefp2); }
 };
 
+
+
 /// \brief Compute the P2 load vector corresponding to the function f on a single tetra.
 class LocalVectorP2CL
 {

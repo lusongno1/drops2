@@ -179,6 +179,8 @@ void LocalInterfaceMassDivP1CL<DiscVelSolT>::setup (const TetraCL& t, const Inte
     }
 }
 
+
+
 template <class DiscVelSolT>
 void SetupMassDivP1 (const MultiGridCL& mg, MatDescCL* mat, const VecDescCL& ls, const BndDataCL<>& lsetbnd, const DiscVelSolT& w)
 {
@@ -194,5 +196,6 @@ void SetupMassDivP1 (const MultiGridCL& mg, MatDescCL* mat, const VecDescCL& ls,
 
     // WriteToFile( mat->Data, "massdiv.txt", "massdiv");
 }
+
 
 } // end of namespace DROPS
