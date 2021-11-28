@@ -1643,8 +1643,10 @@ class SurfacePDEP1BaseCL
                 MassU;///<mass matrix with (u_n)^2+\delta u_n>
 
         VecDescCL rhsext1;
+        VecDescCL rhsextw1;
         VectorCL load, ///< for a load-function
                 rhs1_, ///< for the extension initial data
+                rhsw1_,
                 rhs2_; ///< for the extension initial data
         const double width_;
         const double rho_;///<stabilization parameter for Volume_stab
