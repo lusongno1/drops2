@@ -32,6 +32,7 @@
 #include <cmath>
 
 
+
 namespace DROPS
 {
 
@@ -3418,6 +3419,8 @@ void SurfactantNarrowBandStblP1CL::DoStep0 (double new_t)
 
 }
 
+
+
 /** \brief do step for tumor growth problem, created by lusong
  *          we need set up Mass, Stiffness MassH, MassU, and loads with different functional coefficients
  //back formwad Euler for tumor growth problem
@@ -3535,7 +3538,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
             TetraAccumulatorTupleCL accus;
 
             /**< push back information of element */
-            InterfaceCommonDataP1CL cdata( lset_vd_, lsetbnd_);
+            InterfaceCommonDataP1CL cdata( lset_vd_, lsetbnd_);//InterfaceCommonDataP2CL
             accus.push_back( &cdata);
 
             /**< push back mass term */
@@ -3569,15 +3572,9 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
             accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &Massd, cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "massdiv"));
 
             /**< push back term like quasi-mass with curvature H as coefficient */
+            accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &MassH, cdata,  make_P2Eval( MG_, Bnd_v_, *nd_), "massH"));
             //InterfaceMatrixAccuCL<LocalInterfaceMassHP1CL, InterfaceCommonDataP1CL> massH_accu( &MassH, LocalInterfaceMassHP1CL(), cdata, "masscurvature");
             //accus.push_back( &massH_accu);
-//            GridFunctionCL<Point3DCL> n;
-//            make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
-//            resize_and_scatter_piecewise_normal( cdata.surf, qdom, n);
-//            VecDescCL nd;
-//            accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &MassH, cdata,  make_P2Eval( MG_, Bnd_v_, nd), "massH"));
-
-
 
             /**< push back source term */
             if (rhs_fun_)

@@ -76,17 +76,17 @@ DROPS::LsetBndDataCL lsbnd( 6);
 // Surface divergence of a vector field w
 inline double div_gamma_wind (const Point3DCL& n, const SMatrixCL<3,3>& dw)
 {
-   return trace( dw) - inner_prod( n, dw*n);
+    return trace( dw) - inner_prod( n, dw*n);
 }
 
 // laplace-beltrami of a function u
 inline double laplace_beltrami_u (const Point3DCL& n,      const SMatrixCL<3,3>& dn,
                                   const Point3DCL& grad_u, const SMatrixCL<3,3>& Hess_u)
 {
-     const double tr_PHessu= trace( Hess_u) - inner_prod( n, Hess_u*n),
-                  tr_Pdn= trace( dn) - inner_prod( n, dn*n),
-                  ngradu= inner_prod( n, grad_u);
-     return tr_PHessu - tr_Pdn*ngradu;
+    const double tr_PHessu= trace( Hess_u) - inner_prod( n, Hess_u*n),
+                 tr_Pdn= trace( dn) - inner_prod( n, dn*n),
+                 ngradu= inner_prod( n, grad_u);
+    return tr_PHessu - tr_Pdn*ngradu;
 }
 
 
@@ -171,11 +171,11 @@ DROPS::Point3DCL heat_conduction_surfgradsol (const DROPS::Point3DCL& p, double 
     Point3DCL surfgrad;
     double D=P.get<double>("SurfTransp.Visc");
 //	double a=100;
-/*	double b=(p[0]+p[1]+p[2])/p.norm();
-	surfgrad[0]=1-b*p[0]/p.norm();
-	surfgrad[1]=1-b*p[1]/p.norm();
-	surfgrad[2]=1-b*p[2]/p.norm();
-        surfgrad*=std::exp(-2.*t);*///new Ex000
+    /*	double b=(p[0]+p[1]+p[2])/p.norm();
+    	surfgrad[0]=1-b*p[0]/p.norm();
+    	surfgrad[1]=1-b*p[1]/p.norm();
+    	surfgrad[2]=1-b*p[2]/p.norm();
+            surfgrad*=std::exp(-2.*t);*///new Ex000
 //	surfgrad*=exp(-t)/a;  //new Ex000-1
 //	surfgrad/=a;
 //	double nm=p.norm();
@@ -212,8 +212,10 @@ DROPS::SMatrixCL<3,3> rotation_matrix (const DROPS::Point3DCL& p, double t)
 {
     const double omega= angular_velocity( p, 0.);
     SMatrixCL<3,3> m;
-    m(0,0)= std::cos(omega*t); m(0,1)= -std::sin(omega*t);
-    m(1,0)= std::sin(omega*t); m(1,1)=  std::cos(omega*t);
+    m(0,0)= std::cos(omega*t);
+    m(0,1)= -std::sin(omega*t);
+    m(1,0)= std::sin(omega*t);
+    m(1,1)=  std::cos(omega*t);
     m(2,2)= 1.;
     return m;
 }
@@ -242,8 +244,10 @@ double toroidal_flow_rhs (const Point3DCL& p, double t)
     const Point3DCL w( toroidal_flow_wind( p, t));
     const double omega= angular_velocity( p, 0.);
     SMatrixCL<3,3> dw;
-    dw(0,1)= -omega; dw(0,2)= -p[1];
-    dw(1,0)=  omega; dw(1,2)=  p[0];
+    dw(0,1)= -omega;
+    dw(0,2)= -p[1];
+    dw(1,0)=  omega;
+    dw(1,2)=  p[0];
 
     const Point2DCL xhat( MakePoint2D( p[0], p[1]));
     const double norm_xhat= xhat.norm();
@@ -253,15 +257,17 @@ double toroidal_flow_rhs (const Point3DCL& p, double t)
     SMatrixCL<3,3> dn;
     dn= eye<3,3>() - outer_product( n, n);
     SMatrixCL<2,2> dnhat= RadTorus[0]/norm_xhat*(eye<2,2>() - outer_product( xhat/norm_xhat, xhat/norm_xhat));
-    dn(0,0)-= dnhat(0,0); dn(0,1)-= dnhat(0,1);
-    dn(1,0)-= dnhat(1,0); dn(1,1)-= dnhat(1,1);
+    dn(0,0)-= dnhat(0,0);
+    dn(0,1)-= dnhat(0,1);
+    dn(1,0)-= dnhat(1,0);
+    dn(1,1)-= dnhat(1,1);
     dn*= 1./l;
 
     const double c= std::cos( omega*t),
                  s= std::sin( omega*t);
     const Point3DCL z( toroidal_flow( p, -t));
     const Point3DCL dz0( MakePoint3D(  c, s, t*(-s*p[0] + c*p[1]))),
-                    dz1( MakePoint3D( -s, c, t*(-c*p[0] - s*p[1])));
+          dz1( MakePoint3D( -s, c, t*(-c*p[0] - s*p[1])));
     const Point3DCL grad_u= std::exp( -t)*(z[1]*dz0 + z[0]*dz1);
     SMatrixCL<3,3> Hess_u;
     Hess_u(0,2)= -c*z[0] - s*z[1];
@@ -311,7 +317,7 @@ double axis_scaling_lset_ini (const Point3DCL& p, double)
                  lin= axis_scaling_lset( p, tin);
     return lout >= 0. ? lout :
            lin  <= 0. ? lin  :
-                        0.;
+           0.;
 }
 
 double axis_scaling_sol (const Point3DCL& p, double t)
@@ -382,7 +388,7 @@ double collision_Dt_lset (const DROPS::Point3DCL& x, double t)
     const double n1= x1.norm() < 1e-3 ? 1e-3 : std::pow( x1.norm(), collision_p + 2.),
                  n2= x2.norm() < 1e-3 ? 1e-3 : std::pow( x2.norm(), collision_p + 2.);
     return collision_p*(DROPS::inner_prod( WindVelocity, x1)/n1
-                      - DROPS::inner_prod( WindVelocity, x2)/n2);
+                        - DROPS::inner_prod( WindVelocity, x2)/n2);
 }
 
 DROPS::Point3DCL collision_Dx_lset (const DROPS::Point3DCL& x, double t)
@@ -434,7 +440,7 @@ double collision_rhs (const Point3DCL&, double)
 }
 static RegisterScalarFunction regsca_collision_rhs( "CollisionRhs", collision_rhs);
 
-double zero_function (const Point3DCL& , double)
+double zero_function (const Point3DCL&, double)
 {
     return 0;
 }
@@ -498,7 +504,8 @@ DROPS::Point3DCL normal_mergedrop (const Point3DCL& p, double t)
     DROPS::Point3DCL x2( p - c2);
 
     DROPS::Point3DCL grad;
-    if(x1.norm()!=0&&x2.norm()!=0){
+    if(x1.norm()!=0&&x2.norm()!=0)
+    {
         grad=-3*(std::pow(x1.norm(),5)*x1+std::pow(x2.norm(),5)*x2);
         return  grad.norm()>0.000001?grad/grad.norm():grad;
     }
@@ -513,7 +520,8 @@ double mergedrop_sol (const Point3DCL& p, double t)
 {
     if(p[0]>=0)
         return   3-p[0];
-    else return 0;
+    else
+        return 0;
 }
 static RegisterScalarFunction regsca_mergedrop_sol( "MergeDropSol", mergedrop_sol);
 
@@ -588,7 +596,8 @@ double abs_det_sphere (const TetraCL& tet, const BaryCoordCL& xb, const SurfaceP
     qr.prepare_solve();
     SMatrixCL<3,2> U;
     Point3DCL tmp;
-    for (Uint i= 0; i < 2; ++i) {
+    for (Uint i= 0; i < 2; ++i)
+    {
         tmp= std_basis<3>( i + 1);
         qr.apply_Q( tmp);
         U.col( i, tmp);
@@ -680,16 +689,17 @@ static RegisterScalarFunction regsca_laplace_beltrami_1_sol( "LaplaceBeltrami1So
 
 template<class DiscP1FunType>
 double L2_error (const DROPS::VecDescCL& ls, const BndDataCL<>& lsbnd,
-    const DiscP1FunType& discsol, DROPS::instat_scalar_fun_ptr extsol)
+                 const DiscP1FunType& discsol, DROPS::instat_scalar_fun_ptr extsol)
 {
     const PrincipalLatticeCL& lat= PrincipalLatticeCL::instance( 2);
     const double t= discsol.GetTime();
     QuadDomain2DCL qdom;
     std::valarray<double> qsol,
-                          qdiscsol;
+        qdiscsol;
 
     double d( 0.);
-    DROPS_FOR_TRIANG_CONST_TETRA( discsol.GetMG(), ls.GetLevel(), it) {
+    DROPS_FOR_TRIANG_CONST_TETRA( discsol.GetMG(), ls.GetLevel(), it)
+    {
         make_CompositeQuad5Domain2D (qdom, *it, lat, ls, lsbnd);
         resize_and_evaluate_on_vertexes ( discsol, *it, qdom, qdiscsol);
         resize_and_evaluate_on_vertexes ( extsol,  *it, qdom, t, qsol);
@@ -702,7 +712,7 @@ double L2_error (const DROPS::VecDescCL& ls, const BndDataCL<>& lsbnd,
 /// The H1-error is then computed between the interpolant and the numerical solution.
 template<class DiscP1FunType>
 double H1_error (const DROPS::VecDescCL& ls, const BndDataCL<>& lsbnd,
-    const DiscP1FunType& discsol, DROPS::instat_scalar_fun_ptr extsol)
+                 const DiscP1FunType& discsol, DROPS::instat_scalar_fun_ptr extsol)
 {
     IdxDescCL* idx= const_cast<IdxDescCL*>( discsol.GetSolution()->RowIdx);
     MatDescCL A( idx, idx);
@@ -716,7 +726,7 @@ double H1_error (const DROPS::VecDescCL& ls, const BndDataCL<>& lsbnd,
 }
 
 double L2_norm (const DROPS::MultiGridCL& mg, const DROPS::VecDescCL& ls, const BndDataCL<>& lsbnd,
-    DROPS::instat_scalar_fun_ptr extsol)
+                DROPS::instat_scalar_fun_ptr extsol)
 {
     const PrincipalLatticeCL& lat= PrincipalLatticeCL::instance( 2);
     const double t= ls.t;
@@ -724,7 +734,8 @@ double L2_norm (const DROPS::MultiGridCL& mg, const DROPS::VecDescCL& ls, const 
     std::valarray<double> qsol;
 
     double d( 0.);
-    DROPS_FOR_TRIANG_CONST_TETRA( mg, ls.GetLevel(), it) {
+    DROPS_FOR_TRIANG_CONST_TETRA( mg, ls.GetLevel(), it)
+    {
         make_CompositeQuad5Domain2D (qdom, *it, lat, ls, lsbnd);
         resize_and_evaluate_on_vertexes ( extsol,  *it, qdom, t, qsol);
         d+= quad_2D( qsol*qsol, qdom);
@@ -738,11 +749,11 @@ void LinearLSInit (const DROPS::MultiGridCL& mg, DROPS::VecDescCL& ls, DROPS::in
                       idx= ls.RowIdx->GetIdx();
 
     DROPS_FOR_TRIANG_CONST_VERTEX( mg, lvl, it)
-        ls.Data[it->Unknowns( idx)]= d( it->GetCoord(), t);
+    ls.Data[it->Unknowns( idx)]= d( it->GetCoord(), t);
 
     DROPS_FOR_TRIANG_CONST_EDGE( mg, lvl, it)
-        ls.Data[it->Unknowns( idx)]= ls.Data[it->Unknowns( idx)]=
-            0.5*(ls.Data[it->GetVertex( 0)->Unknowns( idx)] + ls.Data[it->GetVertex( 1)->Unknowns( idx)]);
+    ls.Data[it->Unknowns( idx)]= ls.Data[it->Unknowns( idx)]=
+                                     0.5*(ls.Data[it->GetVertex( 0)->Unknowns( idx)] + ls.Data[it->GetVertex( 1)->Unknowns( idx)]);
     ls.t= t;
 }
 
@@ -752,10 +763,10 @@ void LSInit (const DROPS::MultiGridCL& mg, DROPS::VecDescCL& ls, dist_funT d, do
                       idx= ls.RowIdx->GetIdx();
 
     DROPS_FOR_TRIANG_CONST_VERTEX( mg, lvl, it)
-        ls.Data[it->Unknowns( idx)]= d( it->GetCoord(), t);
+    ls.Data[it->Unknowns( idx)]= d( it->GetCoord(), t);
 
     DROPS_FOR_TRIANG_CONST_EDGE( mg, lvl, it)
-        ls.Data[it->Unknowns( idx)]= d( 0.5*(it->GetVertex( 0)->GetCoord() + it->GetVertex( 1)->GetCoord()), t);
+    ls.Data[it->Unknowns( idx)]= d( 0.5*(it->GetVertex( 0)->GetCoord() + it->GetVertex( 1)->GetCoord()), t);
     ls.t= t;
 }
 
@@ -765,53 +776,115 @@ void InitVel ( const MultiGridCL& mg, VecDescCL* vec, BndDataCL<Point3DCL>& Bnd,
     const Uint lvl  = vec->GetLevel(),
                vidx = vec->RowIdx->GetIdx();
 
-    DROPS_FOR_TRIANG_CONST_VERTEX( mg, lvl, sit) {
+    DROPS_FOR_TRIANG_CONST_VERTEX( mg, lvl, sit)
+    {
         if (!Bnd.IsOnDirBnd( *sit))
             DoFHelperCL<Point3DCL, VectorCL>::set( lsgvel, sit->Unknowns( vidx),
-                LsgVel(sit->GetCoord(), t));
+                                                   LsgVel(sit->GetCoord(), t));
     }
-    DROPS_FOR_TRIANG_CONST_EDGE( mg, lvl, sit) {
+    DROPS_FOR_TRIANG_CONST_EDGE( mg, lvl, sit)
+    {
         if (!Bnd.IsOnDirBnd( *sit))
             DoFHelperCL<Point3DCL, VectorCL>::set( lsgvel, sit->Unknowns( vidx),
-                LsgVel( (sit->GetVertex(0)->GetCoord() + sit->GetVertex(1)->GetCoord())/2., t));
+                                                   LsgVel( (sit->GetVertex(0)->GetCoord() + sit->GetVertex(1)->GetCoord())/2., t));
     }
     vec->t= t;
 }
 
 
 SurfactantP1BaseCL* make_surfactant_timedisc( MultiGridCL& mg, LevelsetP2CL& lset,
-                                              VecDescCL& v, const BndDataCL<Point3DCL>& Bnd_v,
-                                              const ParamCL& P, const double & dist=0)
+        VecDescCL& v, VecDescCL& nd, const BndDataCL<Point3DCL>& Bnd_v,
+        const ParamCL& P, const double & dist=0)
 {
     SurfactantP1BaseCL* ret= 0;
     const std::string method= P.get<std::string>( "SurfTransp.Method");
 
     if (method == std::string( "cGcG"))
         ret= new SurfactantcGP1CL( mg,
-            P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
-            &v, Bnd_v, lset.Phi, lset.GetBndData(),
-            P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
-            P.get<double>("SurfTransp.XFEMReduced"));
+                                   P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
+                                   &v, Bnd_v, lset.Phi, lset.GetBndData(),
+                                   P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
+                                   P.get<double>("SurfTransp.XFEMReduced"));
     else if (method == std::string( "spacetime-cGdG"))
         ret= new SurfactantSTP1CL( mg,
-            P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
-            &v, Bnd_v, lset.Phi, lset.GetBndData(),
-            /* cG_in_t_ */ false, /* use_mass_div */ P.get<bool>( "SurfTransp.UseMassDiv"),
-            P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
-            P.get<double>("SurfTransp.XFEMReduced"));
+                                   P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
+                                   &v, Bnd_v, lset.Phi, lset.GetBndData(),
+                                   /* cG_in_t_ */ false, /* use_mass_div */ P.get<bool>( "SurfTransp.UseMassDiv"),
+                                   P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
+                                   P.get<double>("SurfTransp.XFEMReduced"));
     else if (method == std::string( "spacetime-cGcG"))
         ret= new SurfactantSTP1CL( mg,
-            P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
-            &v, Bnd_v, lset.Phi, lset.GetBndData(),
-            /* cG_in_t_ */ true, /* use_mass_div */ P.get<bool>( "SurfTransp.UseMassDiv"),
-            P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
-            P.get<double>("SurfTransp.XFEMReduced"));
+                                   P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
+                                   &v, Bnd_v, lset.Phi, lset.GetBndData(),
+                                   /* cG_in_t_ */ true, /* use_mass_div */ P.get<bool>( "SurfTransp.UseMassDiv"),
+                                   P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
+                                   P.get<double>("SurfTransp.XFEMReduced"));
     else if (method == std::string( "characteristic-transport"))
         ret= new SurfactantCharTransportP1CL ( mg,
-            P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
-            &v, Bnd_v, lset.Phi, lset.GetBndData(),
-            P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
-            P.get<double>("SurfTransp.XFEMReduced"));
+                                               P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
+                                               &v, Bnd_v, lset.Phi, lset.GetBndData(),
+                                               P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
+                                               P.get<double>("SurfTransp.XFEMReduced"));
+    else if (method == std::string( "NarrowBandStabilization"))
+    {
+        std::cout<<"Test Method NarrowBand :"<<dist<<std::endl;
+        ret= new SurfactantNarrowBandStblP1CL ( mg,
+                                                P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
+                                                &v, &nd, Bnd_v, lset.Phi, lset.GetBndData(),the_normal_fun, dist,
+                                                1./(P.get<DROPS::Point3DCL>("Mesh.E1")[0]/(P.get<double>("Mesh.N1"))),
+                                                P.get<int>("SurfTransp.Solver.Iter"),P.get<double>("SurfTransp.Solver.Tol"),
+                                                P.get<double>("SurfTransp.XFEMReduced"));/**/
+    }
+    /* else if (method == std::string( "CahnHilliardNarrowBand"))
+     {
+         std::cout<<"Test Method NarrowBand :"<<dist<<std::endl;
+         ret= new CahnHilliardNarrowBandStblP1CL ( mg,
+                                                 P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"), 0.1,
+                                                 &v, Bnd_v, lset.Phi, lset.GetBndData(),the_normal_fun, dist,
+                                                 1./(P.get<DROPS::Point3DCL>("Mesh.E1")[0]/(P.get<double>("Mesh.N1"))), 1,
+                                                 P.get<int>("SurfTransp.Solver.Iter"),P.get<double>("SurfTransp.Solver.Tol")
+                                                 );
+
+     }/**/
+    else
+        throw DROPSErrCL( std::string( "make_surfactant_timedisc: Unknown method '") + method + std::string( "'.\n"));
+
+    return ret;
+}
+
+SurfactantP1BaseCL* make_surfactant_timedisc( MultiGridCL& mg, LevelsetP2CL& lset,
+        VecDescCL& v, const BndDataCL<Point3DCL>& Bnd_v,
+        const ParamCL& P, const double & dist=0)
+{
+    SurfactantP1BaseCL* ret= 0;
+    const std::string method= P.get<std::string>( "SurfTransp.Method");
+
+    if (method == std::string( "cGcG"))
+        ret= new SurfactantcGP1CL( mg,
+                                   P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
+                                   &v, Bnd_v, lset.Phi, lset.GetBndData(),
+                                   P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
+                                   P.get<double>("SurfTransp.XFEMReduced"));
+    else if (method == std::string( "spacetime-cGdG"))
+        ret= new SurfactantSTP1CL( mg,
+                                   P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
+                                   &v, Bnd_v, lset.Phi, lset.GetBndData(),
+                                   /* cG_in_t_ */ false, /* use_mass_div */ P.get<bool>( "SurfTransp.UseMassDiv"),
+                                   P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
+                                   P.get<double>("SurfTransp.XFEMReduced"));
+    else if (method == std::string( "spacetime-cGcG"))
+        ret= new SurfactantSTP1CL( mg,
+                                   P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
+                                   &v, Bnd_v, lset.Phi, lset.GetBndData(),
+                                   /* cG_in_t_ */ true, /* use_mass_div */ P.get<bool>( "SurfTransp.UseMassDiv"),
+                                   P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
+                                   P.get<double>("SurfTransp.XFEMReduced"));
+    else if (method == std::string( "characteristic-transport"))
+        ret= new SurfactantCharTransportP1CL ( mg,
+                                               P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"),
+                                               &v, Bnd_v, lset.Phi, lset.GetBndData(),
+                                               P.get<int>("SurfTransp.Solver.Iter"), P.get<double>("SurfTransp.Solver.Tol"),
+                                               P.get<double>("SurfTransp.XFEMReduced"));
     else if (method == std::string( "NarrowBandStabilization"))
     {
         std::cout<<"Test Method NarrowBand :"<<dist<<std::endl;
@@ -822,213 +895,23 @@ SurfactantP1BaseCL* make_surfactant_timedisc( MultiGridCL& mg, LevelsetP2CL& lse
                                                 P.get<int>("SurfTransp.Solver.Iter"),P.get<double>("SurfTransp.Solver.Tol"),
                                                 P.get<double>("SurfTransp.XFEMReduced"));/**/
     }
-   /* else if (method == std::string( "CahnHilliardNarrowBand"))
-    {
-        std::cout<<"Test Method NarrowBand :"<<dist<<std::endl;
-        ret= new CahnHilliardNarrowBandStblP1CL ( mg,
-                                                P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"), 0.1,
-                                                &v, Bnd_v, lset.Phi, lset.GetBndData(),the_normal_fun, dist,
-                                                1./(P.get<DROPS::Point3DCL>("Mesh.E1")[0]/(P.get<double>("Mesh.N1"))), 1,
-                                                P.get<int>("SurfTransp.Solver.Iter"),P.get<double>("SurfTransp.Solver.Tol")
-                                                );
+    /* else if (method == std::string( "CahnHilliardNarrowBand"))
+     {
+         std::cout<<"Test Method NarrowBand :"<<dist<<std::endl;
+         ret= new CahnHilliardNarrowBandStblP1CL ( mg,
+                                                 P.get<double>("SurfTransp.Theta"), P.get<double>("SurfTransp.Visc"), 0.1,
+                                                 &v, Bnd_v, lset.Phi, lset.GetBndData(),the_normal_fun, dist,
+                                                 1./(P.get<DROPS::Point3DCL>("Mesh.E1")[0]/(P.get<double>("Mesh.N1"))), 1,
+                                                 P.get<int>("SurfTransp.Solver.Iter"),P.get<double>("SurfTransp.Solver.Tol")
+                                                 );
 
-    }/**/
+     }/**/
     else
         throw DROPSErrCL( std::string( "make_surfactant_timedisc: Unknown method '") + method + std::string( "'.\n"));
 
     return ret;
 }
 
-
-//used to compare with Strategy, not to run
-void Strategy2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::LevelsetP2CL& lset)
-{
-    using namespace DROPS;
-
-    if (P.get<std::string>("SurfTransp.Exp.Levelset") == std::string( "AxisScalingLset"))
-        dynamic_cast<DistMarkingStrategyCL*>( adap.get_marking_strategy())->SetDistFct( axis_scaling_lset_ini);
-
-    lset.CreateNumbering( mg.GetLastLevel(), &lset.idx);
-    lset.Phi.SetIdx( &lset.idx);
-    // LinearLSInit( mg, lset.Phi, the_lset_fun, 0.);
-    LSInit( mg, lset.Phi, the_lset_fun, 0.);
-
-    //DROPS::LevelsetP2CL& lset2( *LevelsetP2CL::Create( mg, lsbnd, sf, P.get_child("Levelset")) );
-    //lset2.idx.CreateNumbering( mg.GetLastLevel(), mg);
-    //lset2.Phi.SetIdx( &lset2.idx);
-    //LSInit( mg, lset2.Phi, the_lset_fun, 0.);
-
-    const double Vol= lset.GetVolume();
-    lset.InitVolume( Vol);
-    std::cout << "droplet volume: " << Vol << std::endl;
-
-    BndDataCL<Point3DCL> Bnd_v( 6, bc_wind, bf_wind);
-    IdxDescCL vidx( vecP2_FE);
-    vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
-    VecDescCL v( &vidx);
-    InitVel( mg, &v, Bnd_v, the_wind_fun, 0.);
-
-    //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps"));
-    double dist=2*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
-                +2*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
-
-    std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, Bnd_v, P,dist));//narrow band is in make_surfactant_timedisc
-    SurfactantP1BaseCL& timedisc= *timediscp;
-    timedisc.SetRhs( the_rhs_fun);
-
-    LevelsetRepairCL lsetrepair( lset);
-    adap.push_back( &lsetrepair);
-    InterfaceP1RepairCL ic_repair( mg, lset.Phi, lset.GetBndData(), timedisc.ic);
-    adap.push_back( &ic_repair);
-    //LevelsetRepairCL lset2repair( lset2);
-    //adap.push_back( &lset2repair);
-
-    // Init Interface-Sol
-    timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);
-    std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
-    timedisc.ic.SetIdx( &timedisc.idx);
-    timedisc.SetInitialValue( the_sol_fun, 0.);
-    timedisc.iface.SetIdx( &timedisc.idx);
-    timedisc.iface_old.SetIdx( &timedisc.idx);
-
-    BndDataCL<> nobnd( 0);
-    VecDescCL the_sol_vd( &lset.idx);
-    LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);
-    if (vtkwriter.get() != 0) {
-        vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
-        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol"));
-        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
-        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
-        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
-        //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
-        vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
-        vtkwriter->Write( 0.);
-    }
-    //if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0)
-    //    DROPS::WriteFEToFile( timedisc.ic, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
-
-    const double dt= P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps");
-    double L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-    std::cout << "L_2x-error: " << L_2x_err
-              << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
-              << std::endl;
-    double L_inftL_2x_err= L_2x_err;
-    std::cout << "L_inftL_2x-error: " <<  L_inftL_2x_err << std::endl;
-    double H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-    std::cout << "H_1x-error: " << H_1x_err << std::endl;
-    double L_2tH_1x_err_sq= 0.5*dt*std::pow( H_1x_err, 2);
-    BndDataCL<> ifbnd( 0);
-    std::cout << "initial surfactant on \\Gamma: " << Integral_Gamma( mg, lset.Phi, lset.GetBndData(), make_P1Eval(  mg, ifbnd, timedisc.ic)) << '\n';
-
-    dynamic_cast<DistMarkingStrategyCL*>( adap.get_marking_strategy())->SetDistFct( lset);
-
-    double total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
-    //In the first step, we use some smaller time step to solve the problem
-    // double discrete_mass=0;
-    int N1=(int)1./dt;
-    for (int step= 1; step <= N1; ++step)
-      {
-          const double cur_time= step*dt/N1;
-          timedisc.InitTimeStep();
-
-          LSInit( mg, lset.Phi, the_lset_fun, cur_time);
-          InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
-          timedisc.DoStep0( cur_time);
-          total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
-        //  if(step==1)
-       //   	discrete_mass=total_mass;
-          //L_2tL_2x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/10*std::pow( L_2x_err, 2);
-          L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-          std::cout << "L_2x-error: " << L_2x_err
-                            << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
-                            << std::endl;
-          L_inftL_2x_err= std::max( L_inftL_2x_err, L_2x_err);
-          std::cout << "L_inftL_2x-eerror: " << L_inftL_2x_err << std::endl;
-          //L_2tL_2x_err_sq+= 0.5*dt/10*std::pow( L_2x_err, 2);
-         // std::cout << "L_2tL_2x-error: " << std::sqrt( L_2tL_2x_err_sq) << std::endl;
-          L_2tH_1x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/N1*std::pow( H_1x_err, 2);
-              //    H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-          H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-          std::cout << "H_1x-error: " << H_1x_err << std::endl;
-          L_2tH_1x_err_sq+= 0.5*dt/N1*std::pow( H_1x_err, 2);
-              //    L_2tH_1x_err_sq+= dt*std::pow( H_1x_err, 2);
-          std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
-      }
-
-    for (int step= 2; step <= P.get<int>("Time.NumSteps"); ++step) {
-        std::cout << "======================================================== step " << step << ":\n";
-        ScopeTimerCL timer( "Strategy: Time-loop");
-        const double cur_time= step*dt;
-        // Assumes (as the rest of Drops), that the current triangulation is acceptable to perform the time-step.
-        // If dt is large and AdapRef.Width is small, this may not be true.
-        // Watch for large differences in numbers of old and new dof.
-        timedisc.InitTimeStep();
-        LSInit( mg, lset.Phi, the_lset_fun, cur_time);
-        InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
-        timedisc.DoStep( cur_time);
-        //timedisc.DoStep0( cur_time);//only use back-forward Euler scheme
-        std::cout << "surfactant on \\Gamma: " << Integral_Gamma( mg, lset.Phi, lset.GetBndData(), make_P1Eval(  mg, ifbnd, timedisc.ic)) << '\n';
-        L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-        std::cout << "L_2x-error: " << L_2x_err
-                  << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
-                  << std::endl;
-        L_inftL_2x_err= std::max( L_inftL_2x_err, L_2x_err);
-        std::cout << "L_inftL_2x-error: " << L_inftL_2x_err << std::endl;
-        L_2tH_1x_err_sq+= (step > 1 ? 0.5 : 0.)*dt*std::pow( H_1x_err, 2);
-        H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-        std::cout << "H_1x-error: " << H_1x_err << std::endl;
-        L_2tH_1x_err_sq+= 0.5*dt*std::pow( H_1x_err, 2);
-        std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
-        if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0) {
-            LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
-            vtkwriter->Write( cur_time);
-        }
-        if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0 && step % P.get<int>( "SurfTransp.SolutionOutput.Freq") == 0) {
-            std::ostringstream os1,
-                               os2;
-            os1 << P.get<int>( "Time.NumSteps");
-            os2 << P.get<std::string>( "SurfTransp.SolutionOutput.Path") << std::setw( os1.str().size()) << step;
-            DROPS::WriteFEToFile( timedisc.ic, mg, os2.str(), P.get<bool>( "SurfTransp.SolutionOutput.Binary"));
-        }
-//        lset2.DoStep();
-//        VectorCL rhs( lset2.Phi.Data.size());
-//        lset2.ComputeRhs( rhs);
-//        lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v, cur_time));
-//        lset2.SetTimeStep( dt);
-//        lset2.DoStep( rhs);
-
-//         std::cout << "rel. Volume: " << lset.GetVolume()/Vol << std::endl;
-//         if (P.get("Levelset.VolCorr", 0)) {
-//             double dphi= lset.AdjustVolume( Vol, 1e-9);
-//             std::cout << "volume correction is " << dphi << std::endl;
-//             lset.Phi.Data+= dphi;
-//             std::cout << "new rel. Volume: " << lset.GetVolume()/Vol << std::endl;
-//         }
-        //if (C.rpm_Freq && step%C.rpm_Freq==0) { // reparam levelset function
-            // lset.ReparamFastMarching( C.rpm_Method);
-
-        const bool doGridMod= P.get<int>("Mesh.AdaptRef.Freq") && step%P.get<int>("Mesh.AdaptRef.Freq") == 0;
-        const bool gridChanged= doGridMod ? adap.UpdateTriang() : false;
-        if (gridChanged) {
-            std::cout << "Triangulation changed.\n";
-            vidx.DeleteNumbering( mg);
-            vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
-            v.SetIdx( &vidx);
-            InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
-            LSInit( mg, lset.Phi, the_lset_fun, cur_time);
-            the_sol_vd.SetIdx( &lset.idx);
-            LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
-            // timedisc.Update(); // Called unconditionally in DoStep.
-            //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), dt);
-
-            std::cout << "rel. Volume: " << lset.GetVolume()/Vol << std::endl;
-            lset.AdjustVolume();
-            lset.GetVolumeAdjuster()->DebugOutput( std::cout);
-        }
-    }
-    std::cout << std::endl;
-    //delete &lset2;
-}
 
 
 void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::LevelsetP2CL& lset)
@@ -1061,7 +944,7 @@ void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levelse
     //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps"));
     double dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
                 +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
-                //10*|0 0 0|*1/32+10*3.33333/32/(2^1)
+    //10*|0 0 0|*1/32+10*3.33333/32/(2^1)
 
     std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, Bnd_v, P,dist));//key step, narrow band in it
     SurfactantP1BaseCL& timedisc= *timediscp;
@@ -1085,7 +968,8 @@ void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levelse
     BndDataCL<> nobnd( 0);
     VecDescCL the_sol_vd( &lset.idx);
     LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);
-    if (vtkwriter.get() != 0) {
+    if (vtkwriter.get() != 0)
+    {
         vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
         vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol"));
         vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
@@ -1116,37 +1000,38 @@ void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levelse
     double total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
     //In the first step, we use some smaller time step to solve the problem
     // double discrete_mass=0;
-  /*  int N1=10;
-    for (int step= 1; step <= N1; ++step)
-      {
-          const double cur_time= step*dt/N1;
-          timedisc.InitTimeStep();
+    /*  int N1=10;
+      for (int step= 1; step <= N1; ++step)
+        {
+            const double cur_time= step*dt/N1;
+            timedisc.InitTimeStep();
 
-          LSInit( mg, lset.Phi, the_lset_fun, cur_time);
-          InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
-          timedisc.DoStep0( cur_time);
-          total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
-        //  if(step==1)
-       //   	discrete_mass=total_mass;
-          //L_2tL_2x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/10*std::pow( L_2x_err, 2);
-          L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-          std::cout << "L_2x-error: " << L_2x_err
-                            << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
-                            << std::endl;
-          L_inftL_2x_err= std::max( L_inftL_2x_err, L_2x_err);
-          std::cout << "L_inftL_2x-eerror: " << L_inftL_2x_err << std::endl;
-          //L_2tL_2x_err_sq+= 0.5*dt/10*std::pow( L_2x_err, 2);
-         // std::cout << "L_2tL_2x-error: " << std::sqrt( L_2tL_2x_err_sq) << std::endl;
-          L_2tH_1x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/N1*std::pow( H_1x_err, 2);
-              //    H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-          H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-          std::cout << "H_1x-error: " << H_1x_err << std::endl;
-          L_2tH_1x_err_sq+= 0.5*dt/N1*std::pow( H_1x_err, 2);
-              //    L_2tH_1x_err_sq+= dt*std::pow( H_1x_err, 2);
-          std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
-      }*/
-  //  for (int step= 2; step <= P.get<int>("Time.NumSteps"); ++step) {
-    for (int step= 1; step <= P.get<int>("Time.NumSteps"); ++step) {
+            LSInit( mg, lset.Phi, the_lset_fun, cur_time);
+            InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
+            timedisc.DoStep0( cur_time);
+            total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
+          //  if(step==1)
+         //   	discrete_mass=total_mass;
+            //L_2tL_2x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/10*std::pow( L_2x_err, 2);
+            L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+            std::cout << "L_2x-error: " << L_2x_err
+                              << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
+                              << std::endl;
+            L_inftL_2x_err= std::max( L_inftL_2x_err, L_2x_err);
+            std::cout << "L_inftL_2x-eerror: " << L_inftL_2x_err << std::endl;
+            //L_2tL_2x_err_sq+= 0.5*dt/10*std::pow( L_2x_err, 2);
+           // std::cout << "L_2tL_2x-error: " << std::sqrt( L_2tL_2x_err_sq) << std::endl;
+            L_2tH_1x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/N1*std::pow( H_1x_err, 2);
+                //    H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+            H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+            std::cout << "H_1x-error: " << H_1x_err << std::endl;
+            L_2tH_1x_err_sq+= 0.5*dt/N1*std::pow( H_1x_err, 2);
+                //    L_2tH_1x_err_sq+= dt*std::pow( H_1x_err, 2);
+            std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
+        }*/
+    //  for (int step= 2; step <= P.get<int>("Time.NumSteps"); ++step) {
+    for (int step= 1; step <= P.get<int>("Time.NumSteps"); ++step)
+    {
         std::cout << "======================================================== step " << step << ":\n";
         ScopeTimerCL timer( "Strategy: Time-loop");
         const double cur_time= step*dt;
@@ -1157,7 +1042,7 @@ void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levelse
         LSInit( mg, lset.Phi, the_lset_fun, cur_time);
         InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
         timedisc.DoStep( cur_time);
-      //  timedisc.DoStep0( cur_time);
+        //  timedisc.DoStep0( cur_time);
         std::cout << "surfactant on \\Gamma: " << Integral_Gamma( mg, lset.Phi, lset.GetBndData(), make_P1Eval(  mg, ifbnd, timedisc.ic)) << '\n';
         L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
         std::cout << "L_2x-error: " << L_2x_err
@@ -1170,13 +1055,15 @@ void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levelse
         std::cout << "H_1x-error: " << H_1x_err << std::endl;
         L_2tH_1x_err_sq+= 0.5*dt*std::pow( H_1x_err, 2);
         std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
-        if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0) {
+        if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0)
+        {
             LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
             vtkwriter->Write( cur_time);
         }
-        if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0 && step % P.get<int>( "SurfTransp.SolutionOutput.Freq") == 0) {
+        if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0 && step % P.get<int>( "SurfTransp.SolutionOutput.Freq") == 0)
+        {
             std::ostringstream os1,
-                               os2;
+                os2;
             os1 << P.get<int>( "Time.NumSteps");
             os2 << P.get<std::string>( "SurfTransp.SolutionOutput.Path") << std::setw( os1.str().size()) << step;
             DROPS::WriteFEToFile( timedisc.ic, mg, os2.str(), P.get<bool>( "SurfTransp.SolutionOutput.Binary"));
@@ -1196,10 +1083,11 @@ void Strategy (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::Levelse
 //             std::cout << "new rel. Volume: " << lset.GetVolume()/Vol << std::endl;
 //         }
         //if (C.rpm_Freq && step%C.rpm_Freq==0) { // reparam levelset function
-            // lset.ReparamFastMarching( C.rpm_Method);
+        // lset.ReparamFastMarching( C.rpm_Method);
         const bool doGridMod= P.get<int>("Mesh.AdaptRef.Freq") && step%P.get<int>("Mesh.AdaptRef.Freq") == 0;
         const bool gridChanged= doGridMod ? adap.UpdateTriang() : false;//gird changed? or surface moved?
-        if (gridChanged) {
+        if (gridChanged)
+        {
             std::cout << "Triangulation changed.\n";
             vidx.DeleteNumbering( mg);
             vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
@@ -1249,12 +1137,15 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
     VecDescCL v( &vidx);
     InitVel( mg, &v, Bnd_v, the_wind_fun, 0.);//make vector-value fun to be vector-val vectors
 
+    VecDescCL nd( &vidx);
+    InitVel( mg, &nd, Bnd_v, the_normal_fun, 0.);
+
     //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps"));
     double dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
                 +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
-                //10*|0 0 0|*1/32+10*3.33333/32/(2^1)
+    //10*|0 0 0|*1/32+10*3.33333/32/(2^1)
 
-    std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, Bnd_v, P,dist));//key step, narrow band in it
+    std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, nd, Bnd_v, P,dist));//key step, narrow band in it
     SurfactantP1BaseCL& timedisc= *timediscp;
     timedisc.SetRhs( the_rhs_fun);
 
@@ -1277,7 +1168,8 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
     BndDataCL<> nobnd( 0);
     VecDescCL the_sol_vd( &lset.idx);
     LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);
-    if (vtkwriter.get() != 0) {
+    if (vtkwriter.get() != 0)
+    {
         vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
         vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol"));
         vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
@@ -1308,37 +1200,38 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
     double total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
     //In the first step, we use some smaller time step to solve the problem
     // double discrete_mass=0;
-  /*  int N1=10;
-    for (int step= 1; step <= N1; ++step)
-      {
-          const double cur_time= step*dt/N1;
-          timedisc.InitTimeStep();
+    /*  int N1=10;
+      for (int step= 1; step <= N1; ++step)
+        {
+            const double cur_time= step*dt/N1;
+            timedisc.InitTimeStep();
 
-          LSInit( mg, lset.Phi, the_lset_fun, cur_time);
-          InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
-          timedisc.DoStep0( cur_time);
-          total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
-        //  if(step==1)
-       //   	discrete_mass=total_mass;
-          //L_2tL_2x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/10*std::pow( L_2x_err, 2);
-          L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-          std::cout << "L_2x-error: " << L_2x_err
-                            << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
-                            << std::endl;
-          L_inftL_2x_err= std::max( L_inftL_2x_err, L_2x_err);
-          std::cout << "L_inftL_2x-eerror: " << L_inftL_2x_err << std::endl;
-          //L_2tL_2x_err_sq+= 0.5*dt/10*std::pow( L_2x_err, 2);
-         // std::cout << "L_2tL_2x-error: " << std::sqrt( L_2tL_2x_err_sq) << std::endl;
-          L_2tH_1x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/N1*std::pow( H_1x_err, 2);
-              //    H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-          H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-          std::cout << "H_1x-error: " << H_1x_err << std::endl;
-          L_2tH_1x_err_sq+= 0.5*dt/N1*std::pow( H_1x_err, 2);
-              //    L_2tH_1x_err_sq+= dt*std::pow( H_1x_err, 2);
-          std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
-      }*/
-  //  for (int step= 2; step <= P.get<int>("Time.NumSteps"); ++step) {
-    for (int step= 1; step <= P.get<int>("Time.NumSteps"); ++step) {
+            LSInit( mg, lset.Phi, the_lset_fun, cur_time);
+            InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
+            timedisc.DoStep0( cur_time);
+            total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
+          //  if(step==1)
+         //   	discrete_mass=total_mass;
+            //L_2tL_2x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/10*std::pow( L_2x_err, 2);
+            L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+            std::cout << "L_2x-error: " << L_2x_err
+                              << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
+                              << std::endl;
+            L_inftL_2x_err= std::max( L_inftL_2x_err, L_2x_err);
+            std::cout << "L_inftL_2x-eerror: " << L_inftL_2x_err << std::endl;
+            //L_2tL_2x_err_sq+= 0.5*dt/10*std::pow( L_2x_err, 2);
+           // std::cout << "L_2tL_2x-error: " << std::sqrt( L_2tL_2x_err_sq) << std::endl;
+            L_2tH_1x_err_sq+= (step > 1 ? 0.5 : 0.)*dt/N1*std::pow( H_1x_err, 2);
+                //    H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+            H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+            std::cout << "H_1x-error: " << H_1x_err << std::endl;
+            L_2tH_1x_err_sq+= 0.5*dt/N1*std::pow( H_1x_err, 2);
+                //    L_2tH_1x_err_sq+= dt*std::pow( H_1x_err, 2);
+            std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
+        }*/
+    //  for (int step= 2; step <= P.get<int>("Time.NumSteps"); ++step) {
+    for (int step= 1; step <= P.get<int>("Time.NumSteps"); ++step)
+    {
         std::cout << "======================================================== step " << step << ":\n";
         ScopeTimerCL timer( "Strategy: Time-loop");
         const double cur_time= step*dt;
@@ -1351,7 +1244,7 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
         //timedisc.DoStep( cur_time);
         timedisc.DoStep0PatternFM( cur_time);//only use back-forward Euler scheme
 
-      //  timedisc.DoStep0( cur_time);
+        //  timedisc.DoStep0( cur_time);
         std::cout << "surfactant on \\Gamma: " << Integral_Gamma( mg, lset.Phi, lset.GetBndData(), make_P1Eval(  mg, ifbnd, timedisc.ic)) << '\n';
         L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
         std::cout << "L_2x-error: " << L_2x_err
@@ -1364,13 +1257,15 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
         std::cout << "H_1x-error: " << H_1x_err << std::endl;
         L_2tH_1x_err_sq+= 0.5*dt*std::pow( H_1x_err, 2);
         std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
-        if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0) {
+        if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0)
+        {
             LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
             vtkwriter->Write( cur_time);
         }
-        if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0 && step % P.get<int>( "SurfTransp.SolutionOutput.Freq") == 0) {
+        if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0 && step % P.get<int>( "SurfTransp.SolutionOutput.Freq") == 0)
+        {
             std::ostringstream os1,
-                               os2;
+                os2;
             os1 << P.get<int>( "Time.NumSteps");
             os2 << P.get<std::string>( "SurfTransp.SolutionOutput.Path") << std::setw( os1.str().size()) << step;
             DROPS::WriteFEToFile( timedisc.ic, mg, os2.str(), P.get<bool>( "SurfTransp.SolutionOutput.Binary"));
@@ -1390,10 +1285,11 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
 //             std::cout << "new rel. Volume: " << lset.GetVolume()/Vol << std::endl;
 //         }
         //if (C.rpm_Freq && step%C.rpm_Freq==0) { // reparam levelset function
-            // lset.ReparamFastMarching( C.rpm_Method);
+        // lset.ReparamFastMarching( C.rpm_Method);
         const bool doGridMod= P.get<int>("Mesh.AdaptRef.Freq") && step%P.get<int>("Mesh.AdaptRef.Freq") == 0;
         const bool gridChanged= doGridMod ? adap.UpdateTriang() : false;//gird changed? or surface moved?
-        if (gridChanged) {
+        if (gridChanged)
+        {
             std::cout << "Triangulation changed.\n";
             vidx.DeleteNumbering( mg);
             vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
@@ -1461,7 +1357,8 @@ void StationaryStrategyP1 (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DR
     DROPS::VecDescCL xext( &ifacefullidx);
     DROPS::Extend( mg, x, xext);
     DROPS::NoBndDataCL<> nobnd;
-    if (vtkwriter.get() != 0) {
+    if (vtkwriter.get() != 0)
+    {
         vtkwriter->Register( make_VTKScalar( lset.GetSolution(), "Levelset") );
         vtkwriter->Register( make_VTKIfaceScalar( mg, x, "InterfaceSol"));
         vtkwriter->Write( 0.);
@@ -1475,7 +1372,7 @@ void StationaryStrategyP1 (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DR
 /// Works for P1IF_FE, P2IF_FE, and C-functions. All functions are evaluated on the P2-levelset.
 class InterfaceL2AccuP2CL : public TetraAccumulatorCL
 {
-  private:
+private:
     const InterfaceCommonDataP2CL& cdata_;
     const MultiGridCL& mg;
     std::string name_;
@@ -1493,16 +1390,16 @@ class InterfaceL2AccuP2CL : public TetraAccumulatorCL
 
     InterfaceL2AccuP2CL* tid0p; // The object in OpenMP-thread 0, in which the following variables are updated.
     std::vector<double> f_grid_norm,
-                        f_grid_int,
-                        f_norm,
-                        f_int,
-                        err,
-                        area,
-                        f_grid_grad_norm,
-                        f_grad_norm,
-                        grad_err;
+        f_grid_int,
+        f_norm,
+        f_int,
+        err,
+        area,
+        f_grid_grad_norm,
+        f_grad_norm,
+        grad_err;
 
-  public:
+public:
     double f_grid_norm_acc,
            f_grid_int_acc,
            f_norm_acc,
@@ -1514,21 +1411,30 @@ class InterfaceL2AccuP2CL : public TetraAccumulatorCL
            grad_err_acc;
 
     InterfaceL2AccuP2CL (const InterfaceCommonDataP2CL& cdata, const MultiGridCL& mg_arg, std::string name= std::string())
-        : cdata_( cdata), mg( mg_arg), name_( name), fvd( 0), f( 0), f_time( 0.),  loc_lb( 1.), f_grad( 0), f_grad_time( 0.){}
+        : cdata_( cdata), mg( mg_arg), name_( name), fvd( 0), f( 0), f_time( 0.),  loc_lb( 1.), f_grad( 0), f_grad_time( 0.) {}
     virtual ~InterfaceL2AccuP2CL () {}
 
-    void set_name (const std::string& n) { name_= n; }
-    void set_grid_function (const VecDescCL& fvdarg) { fvd= &fvdarg; }
-    void set_function (const instat_scalar_fun_ptr farg, double f_time_arg= 0.) {
+    void set_name (const std::string& n)
+    {
+        name_= n;
+    }
+    void set_grid_function (const VecDescCL& fvdarg)
+    {
+        fvd= &fvdarg;
+    }
+    void set_function (const instat_scalar_fun_ptr farg, double f_time_arg= 0.)
+    {
         f= farg;
         f_time= f_time_arg;
     }
-    void set_grad_function (const instat_vector_fun_ptr farg, double f_time_arg= 0.) {
+    void set_grad_function (const instat_vector_fun_ptr farg, double f_time_arg= 0.)
+    {
         f_grad= farg;
         f_grad_time= f_time_arg;
     }
 
-    virtual void begin_accumulation () {
+    virtual void begin_accumulation ()
+    {
         std::cout << "InterfaceL2AccuP2CL::begin_accumulation";
         if (name_ != std::string())
             std::cout << " for \"" << name_ << "\".\n";
@@ -1560,25 +1466,29 @@ class InterfaceL2AccuP2CL : public TetraAccumulatorCL
         f_grid_grad_norm_acc= f_grad_norm_acc= grad_err_acc= 0.;
     }
 
-    virtual void finalize_accumulation() {
+    virtual void finalize_accumulation()
+    {
         std::cout << "InterfaceL2AccuP2CL::finalize_accumulation";
         if (name_ != std::string())
             std::cout << " for \"" << name_ << "\":";
         area_acc= std::accumulate( area.begin(), area.end(), 0.);
         std::cout << "\n\tarea: " << area_acc;
-        if (fvd != 0) {
+        if (fvd != 0)
+        {
             f_grid_norm_acc=  std::sqrt( std::accumulate( f_grid_norm.begin(), f_grid_norm.end(), 0.));
             f_grid_int_acc= std::accumulate( f_grid_int.begin(), f_grid_int.end(), 0.);
             std::cout << "\n\t|| f_grid ||_L2: " << f_grid_norm_acc
                       << "\tintegral: " << f_grid_int_acc;
         }
-        if (f != 0) {
+        if (f != 0)
+        {
             f_norm_acc=  std::sqrt( std::accumulate( f_norm.begin(), f_norm.end(), 0.));
             f_int_acc= std::accumulate( f_int.begin(), f_int.end(), 0.);
             std::cout << "\n\t|| f ||_L2: " << f_norm_acc
                       << "\t integral: " << f_int_acc;
         }
-        if (fvd != 0 && f != 0) {
+        if (fvd != 0 && f != 0)
+        {
             err_acc=  std::sqrt( std::accumulate( err.begin(), err.end(), 0.));
             std::cout << "\n\t|| f - f_grid ||_L2: " << err_acc;
 
@@ -1586,22 +1496,26 @@ class InterfaceL2AccuP2CL : public TetraAccumulatorCL
             std:: cout << "\t|| f - c_f - (f_grid -c_{f_grid}) ||_L2: " << mvf_err;
         }
 
-        if (fvd != 0) {
+        if (fvd != 0)
+        {
             f_grid_grad_norm_acc=  std::sqrt( std::accumulate( f_grid_grad_norm.begin(), f_grid_grad_norm.end(), 0.));
             std::cout << "\n\t|| f_grid_grad ||_L2: " << f_grid_grad_norm_acc;
         }
-        if (f_grad != 0) {
+        if (f_grad != 0)
+        {
             f_grad_norm_acc=  std::sqrt( std::accumulate( f_grad_norm.begin(), f_grad_norm.end(), 0.));
             std::cout << "\n\t|| f_grad ||_L2: " << f_grad_norm_acc;
         }
-        if (fvd != 0 && f_grad != 0) {
+        if (fvd != 0 && f_grad != 0)
+        {
             grad_err_acc=  std::sqrt( std::accumulate( grad_err.begin(), grad_err.end(), 0.));
             std::cout << "\n\t|| f_grad - f_grid_grad ||_L2: " << grad_err_acc;
         }
         std::cout << std::endl;
     }
 
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         const InterfaceCommonDataP2CL& cdata= cdata_.get_clone();
         if (cdata.empty())
             return;
@@ -1611,8 +1525,9 @@ class InterfaceL2AccuP2CL : public TetraAccumulatorCL
         tid0p->area[tid]+= quad_2D( cdata.qdom_projected.absdets(), cdata.qdom);
 
         std::valarray<double> qfgrid,
-                              qf;
-        if (fvd != 0) {
+            qf;
+        if (fvd != 0)
+        {
             // XXX: Check, whether incomplete P2-Data exists locally (which is allowed for P2IF_FE, but not handled correctly by this class --> Extend fvd). Likewise for P1IF_FE...
             if (fvd->RowIdx->GetFE() == P2IF_FE)
                 resize_and_evaluate_on_vertexes( make_P2Eval( mg, nobnddata, *fvd), t, cdata.qdom, qfgrid);
@@ -1622,27 +1537,32 @@ class InterfaceL2AccuP2CL : public TetraAccumulatorCL
             tid0p->f_grid_int[tid]+=  quad_2D( cdata.qdom_projected.absdets()*qfgrid,        cdata.qdom);
             tid0p->f_grid_norm[tid]+= quad_2D( cdata.qdom_projected.absdets()*qfgrid*qfgrid, cdata.qdom);
         }
-        if (f != 0) {
+        if (f != 0)
+        {
             resize_and_evaluate_on_vertexes( f, cdata.qdom_projected.vertexes(), f_time, qf);
             tid0p->f_int[tid]+= quad_2D( cdata.qdom_projected.absdets()*qf, cdata.qdom);
             tid0p->f_norm[tid]+= quad_2D( cdata.qdom_projected.absdets()*qf*qf, cdata.qdom);
         }
-        if (fvd != 0 && f != 0) {
+        if (fvd != 0 && f != 0)
+        {
             std::valarray<double> qerr= qfgrid - qf;
             tid0p->err[tid]+= quad_2D( cdata.qdom_projected.absdets()*qerr*qerr, cdata.qdom);
         }
 
         GridFunctionCL<Point3DCL> qfgradgrid,
-                                  qfgrad;
-        if (fvd != 0) {
+                       qfgrad;
+        if (fvd != 0)
+        {
             qfgradgrid.resize( cdata.qdom.vertex_size());
-            if (fvd->RowIdx->GetFE() == P2IF_FE) {
+            if (fvd->RowIdx->GetFE() == P2IF_FE)
+            {
                 LocalP2CL<> lp2( t, *fvd, nobnddata);
                 loc_lb.setup( t, cdata);
                 for (Uint i= 0; i < 10; ++i)
                     qfgradgrid+= lp2[i]*loc_lb.get_qgradp2( i);
             }
-            else if (fvd->RowIdx->GetFE() == P1IF_FE) {
+            else if (fvd->RowIdx->GetFE() == P1IF_FE)
+            {
 // // XXX Implement this case.
 //                 LocalP1CL<> lp1( t, *fvd, nobnddata);
 //                 loc_lb_p1.setup( t, cdata);
@@ -1651,22 +1571,28 @@ class InterfaceL2AccuP2CL : public TetraAccumulatorCL
             }
             tid0p->f_grid_grad_norm[tid]+= quad_2D( cdata.qdom_projected.absdets()*dot( qfgradgrid, qfgradgrid), cdata.qdom);
         }
-        if (f_grad != 0) {
+        if (f_grad != 0)
+        {
             resize_and_evaluate_on_vertexes( f_grad, cdata.qdom_projected.vertexes(), f_grad_time, qfgrad);
-            for (Uint i= 0; i < cdata.qdom_projected.vertexes().size(); ++i) {
+            for (Uint i= 0; i < cdata.qdom_projected.vertexes().size(); ++i)
+            {
                 Point3DCL n= cdata.quaqua.local_ls_grad( *cdata.qdom_projected.vertexes()[i].first, cdata.qdom_projected.vertexes()[i].second);
                 n/= n.norm();
                 qfgrad[i]-= inner_prod( n, qfgrad[i])*n;
             }
             tid0p->f_grad_norm[tid]+= quad_2D( cdata.qdom_projected.absdets()*dot( qfgrad, qfgrad), cdata.qdom);
         }
-        if (fvd != 0 && f_grad != 0) {
+        if (fvd != 0 && f_grad != 0)
+        {
             GridFunctionCL<Point3DCL> qerr( qfgradgrid - qfgrad);
             tid0p->grad_err[tid]+= quad_2D( cdata.qdom_projected.absdets()*dot( qerr, qerr), cdata.qdom);
         }
     }
 
-    virtual InterfaceL2AccuP2CL* clone (int /*clone_id*/) { return new InterfaceL2AccuP2CL( *this); }
+    virtual InterfaceL2AccuP2CL* clone (int /*clone_id*/)
+    {
+        return new InterfaceL2AccuP2CL( *this);
+    }
 };
 
 
@@ -1674,9 +1600,9 @@ class InterfaceL2AccuP2CL : public TetraAccumulatorCL
 /// set function $\varphi$ by the piecewise linear approximation $\varphi_h$.
 class InterfaceApproxErrorDeformAccuCL : public TetraAccumulatorCL
 {
-  private:
+private:
     VecDescCL* yG_, ///< error-term for H^1 smooth \varphi
-             * ydist_; ///< distance per QuaQuamapper
+               * ydist_; ///< distance per QuaQuamapper
 
     InterfaceCommonDataDeformP2CL* cdata_;
 
@@ -1689,26 +1615,36 @@ class InterfaceApproxErrorDeformAccuCL : public TetraAccumulatorCL
     GridFunctionCL<Point3DCL> qDderr;
 
     OpenMPVar_MinInit_Max_CL<double> max_h,
-                                     max_d,
-                                     max_Dderr;
+                             max_d,
+                             max_Dderr;
 
-  public:
+public:
     InterfaceApproxErrorDeformAccuCL (InterfaceCommonDataDeformP2CL* cdataarg, VecDescCL* yg, VecDescCL* ydist)
         : yG_( yg), ydist_( ydist), cdata_ (cdataarg), d_ (0), Dd_ (0) {}
     virtual ~InterfaceApproxErrorDeformAccuCL () {}
 
-    InterfaceApproxErrorDeformAccuCL& set_d  (instat_scalar_fun_ptr darg)  {  d_= darg;  return *this; }
-    InterfaceApproxErrorDeformAccuCL& set_Dd (instat_vector_fun_ptr Ddarg) { Dd_= Ddarg; return *this; }
+    InterfaceApproxErrorDeformAccuCL& set_d  (instat_scalar_fun_ptr darg)
+    {
+        d_= darg;
+        return *this;
+    }
+    InterfaceApproxErrorDeformAccuCL& set_Dd (instat_vector_fun_ptr Ddarg)
+    {
+        Dd_= Ddarg;
+        return *this;
+    }
 
-    virtual void begin_accumulation () {
+    virtual void begin_accumulation ()
+    {
         std::cout << "#InterfaceApproxErrorDeformAccuCL::begin_accumulation"
-                     ": " << ydist_->RowIdx->NumUnknowns() << " rows.\n";
+                  ": " << ydist_->RowIdx->NumUnknowns() << " rows.\n";
         max_h.scatter ();
         max_d.scatter ();
         max_Dderr.scatter ();
     }
 
-    virtual void finalize_accumulation() {
+    virtual void finalize_accumulation()
+    {
         std::cout << "#InterfaceApproxErrorDeformAccuCL::finalize_accumulation: ";
         max_h.reduce();
         std::cout << "\n\tmax_h: " << max_h.value() << "\n";
@@ -1718,7 +1654,8 @@ class InterfaceApproxErrorDeformAccuCL : public TetraAccumulatorCL
         std::cout << "\tmax_dDerr: " << max_Dderr.value() << "\n";
     }
 
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         InterfaceCommonDataDeformP2CL& cdata= cdata_->get_clone ();
         const int tid= omp_get_thread_num();
         if (cdata.empty ())
@@ -1731,9 +1668,11 @@ class InterfaceApproxErrorDeformAccuCL : public TetraAccumulatorCL
         const SurfacePatchCL::FacetT& facet= cdata.surf.facet_begin()[0];
         const BaryCoordCL verts[3]= { cdata.surf.vertex_begin()[facet[0]],
                                       cdata.surf.vertex_begin()[facet[1]],
-                                      cdata.surf.vertex_begin()[facet[2]] };
+                                      cdata.surf.vertex_begin()[facet[2]]
+                                    };
         cdata.Phi.set_surface_patch (verts, cdata.pos_pt);
-        for (Uint i= 0; i < cdata.qdom2d_full.vertex_size (); ++i) {
+        for (Uint i= 0; i < cdata.qdom2d_full.vertex_size (); ++i)
+        {
             cdata.Phi.set_point (cdata.qdom2d_only_weights.vertex_begin ()[i], true);
             Point3DCL n= cdata.Phi.dPhi(cdata.qdom2d_only_weights.vertex_begin ()[i])*cdata.Phi.w;
             n/=n.norm();
@@ -1746,13 +1685,15 @@ class InterfaceApproxErrorDeformAccuCL : public TetraAccumulatorCL
 //         }
         max_h.value (tid)= std::max (max_h.value (tid), ::cbrt( std::abs( cdata.det_T)));
         GetLocalNumbP1NoBnd( numry, t, *ydist_->RowIdx);
-        for (int i= 0; i < 4; ++i) {
+        for (int i= 0; i < 4; ++i)
+        {
             ydist_->Data[numry[i]]= std::max (ydist_->Data[numry[i]], max_d.value (tid));
 //             yG_->Data[numry[i]]= std::max( yG_->Data[numry[i]], G.norm ());
         }
     }
 
-    virtual InterfaceApproxErrorDeformAccuCL* clone (int /*clone_id*/) {
+    virtual InterfaceApproxErrorDeformAccuCL* clone (int /*clone_id*/)
+    {
         InterfaceApproxErrorDeformAccuCL* p= new InterfaceApproxErrorDeformAccuCL( *this);
         p->max_h.make_reference_to (max_h);
         p->max_d.make_reference_to (max_d);
@@ -1765,7 +1706,7 @@ class InterfaceApproxErrorDeformAccuCL : public TetraAccumulatorCL
 /// Works for P1IF_FE, P2IF_FE, and C-functions. All functions are evaluated on the deformed levelset.
 class InterfaceL2AccuDeformP2CL : public TetraAccumulatorCL
 {
-  private:
+private:
     const InterfaceCommonDataDeformP2CL& cdata_;
     const MultiGridCL& mg;
     std::string name_;
@@ -1784,17 +1725,17 @@ class InterfaceL2AccuDeformP2CL : public TetraAccumulatorCL
 
     InterfaceL2AccuDeformP2CL* tid0p; // The object in OpenMP-thread 0, in which the following variables are updated.
     std::vector<double> f_grid_norm,
-                        f_grid_int,
-                        f_norm,
-                        f_int,
-                        err,
-                        area,
-                        f_grid_grad_norm,
-                        f_grad_norm,
-                        grad_err,
-                        normal_grad;
+        f_grid_int,
+        f_norm,
+        f_int,
+        err,
+        area,
+        f_grid_grad_norm,
+        f_grad_norm,
+        grad_err,
+        normal_grad;
 
-  public:
+public:
     double f_grid_norm_acc,
            f_grid_int_acc,
            f_norm_acc,
@@ -1807,21 +1748,30 @@ class InterfaceL2AccuDeformP2CL : public TetraAccumulatorCL
            normal_grad_acc;
 
     InterfaceL2AccuDeformP2CL (const InterfaceCommonDataDeformP2CL& cdata, const MultiGridCL& mg_arg, std::string name= std::string())
-        : cdata_( cdata), mg( mg_arg), name_( name), fvd( 0), f( 0), f_time( 0.),  loc_lb( 1.), loc_ngrad (1.), f_grad( 0), f_grad_time( 0.){}
+        : cdata_( cdata), mg( mg_arg), name_( name), fvd( 0), f( 0), f_time( 0.),  loc_lb( 1.), loc_ngrad (1.), f_grad( 0), f_grad_time( 0.) {}
     virtual ~InterfaceL2AccuDeformP2CL () {}
 
-    void set_name (const std::string& n) { name_= n; }
-    void set_grid_function (const VecDescCL& fvdarg) { fvd= &fvdarg; }
-    void set_function (const instat_scalar_fun_ptr farg, double f_time_arg= 0.) {
+    void set_name (const std::string& n)
+    {
+        name_= n;
+    }
+    void set_grid_function (const VecDescCL& fvdarg)
+    {
+        fvd= &fvdarg;
+    }
+    void set_function (const instat_scalar_fun_ptr farg, double f_time_arg= 0.)
+    {
         f= farg;
         f_time= f_time_arg;
     }
-    void set_grad_function (const instat_vector_fun_ptr farg, double f_time_arg= 0.) {
+    void set_grad_function (const instat_vector_fun_ptr farg, double f_time_arg= 0.)
+    {
         f_grad= farg;
         f_grad_time= f_time_arg;
     }
 
-    virtual void begin_accumulation () {
+    virtual void begin_accumulation ()
+    {
         std::cout << "InterfaceL2AccuDeformP2CL::begin_accumulation";
         if (name_ != std::string())
             std::cout << " for \"" << name_ << "\".\n";
@@ -1855,25 +1805,29 @@ class InterfaceL2AccuDeformP2CL : public TetraAccumulatorCL
         f_grid_grad_norm_acc= f_grad_norm_acc= grad_err_acc= 0.;
     }
 
-    virtual void finalize_accumulation() {
+    virtual void finalize_accumulation()
+    {
         std::cout << "InterfaceL2AccuDeformP2CL::finalize_accumulation";
         if (name_ != std::string())
             std::cout << " for \"" << name_ << "\":";
         area_acc= std::accumulate( area.begin(), area.end(), 0.);
         std::cout << "\n\tarea: " << area_acc;
-        if (fvd != 0) {
+        if (fvd != 0)
+        {
             f_grid_norm_acc=  std::sqrt( std::accumulate( f_grid_norm.begin(), f_grid_norm.end(), 0.));
             f_grid_int_acc= std::accumulate( f_grid_int.begin(), f_grid_int.end(), 0.);
             std::cout << "\n\t|| f_grid ||_L2: " << f_grid_norm_acc
                       << "\tintegral: " << f_grid_int_acc;
         }
-        if (f != 0) {
+        if (f != 0)
+        {
             f_norm_acc=  std::sqrt( std::accumulate( f_norm.begin(), f_norm.end(), 0.));
             f_int_acc= std::accumulate( f_int.begin(), f_int.end(), 0.);
             std::cout << "\n\t|| f ||_L2: " << f_norm_acc
                       << "\t integral: " << f_int_acc;
         }
-        if (fvd != 0 && f != 0) {
+        if (fvd != 0 && f != 0)
+        {
             err_acc=  std::sqrt( std::accumulate( err.begin(), err.end(), 0.));
             std::cout << "\n\t|| f - f_grid ||_L2: " << err_acc;
 
@@ -1881,26 +1835,31 @@ class InterfaceL2AccuDeformP2CL : public TetraAccumulatorCL
             std:: cout << "\t|| f - c_f - (f_grid -c_{f_grid}) ||_L2: " << mvf_err;
         }
 
-        if (fvd != 0) {
+        if (fvd != 0)
+        {
             f_grid_grad_norm_acc=  std::sqrt( std::accumulate( f_grid_grad_norm.begin(), f_grid_grad_norm.end(), 0.));
             std::cout << "\n\t|| f_grid_grad ||_L2: " << f_grid_grad_norm_acc;
         }
-        if (f_grad != 0) {
+        if (f_grad != 0)
+        {
             f_grad_norm_acc=  std::sqrt( std::accumulate( f_grad_norm.begin(), f_grad_norm.end(), 0.));
             std::cout << "\n\t|| f_grad ||_L2: " << f_grad_norm_acc;
         }
-        if (fvd != 0 && f_grad != 0) {
+        if (fvd != 0 && f_grad != 0)
+        {
             grad_err_acc=  std::sqrt( std::accumulate( grad_err.begin(), grad_err.end(), 0.));
             std::cout << "\n\t|| f_grad - f_grid_grad ||_L2: " << grad_err_acc;
         }
-        if (fvd != 0) {
+        if (fvd != 0)
+        {
             normal_grad_acc=  std::sqrt( std::accumulate( normal_grad.begin(), normal_grad.end(), 0.));
             std::cout << "\n\t|| n^Tf_grid_grad ||_L2(vol): " << normal_grad_acc;
         }
         std::cout << std::endl;
     }
 
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         const InterfaceCommonDataDeformP2CL& cdata= cdata_.get_clone();
         if (cdata.empty())
             return;
@@ -1911,8 +1870,9 @@ class InterfaceL2AccuDeformP2CL : public TetraAccumulatorCL
         tid0p->area[tid]+= quad_2D( ones, cdata.qdom2d_only_weights);
 
         std::valarray<double> qfgrid,
-                              qf;
-        if (fvd != 0) {
+            qf;
+        if (fvd != 0)
+        {
             // XXX: Check, whether incomplete P2-Data exists locally (which is allowed for P2IF_FE, but not handled correctly by this class --> Extend fvd). Likewise for P1IF_FE...
             if (fvd->RowIdx->GetFE() == P2IF_FE)
                 resize_and_evaluate_on_vertexes( make_P2Eval( mg, nobnddata, *fvd), t, cdata.qdom2d_only_weights, qfgrid);
@@ -1922,18 +1882,22 @@ class InterfaceL2AccuDeformP2CL : public TetraAccumulatorCL
             tid0p->f_grid_int[tid]+=  quad_2D( qfgrid,        cdata.qdom2d_only_weights);
             tid0p->f_grid_norm[tid]+= quad_2D( qfgrid*qfgrid, cdata.qdom2d_only_weights);
         }
-        if (f != 0) {
+        if (f != 0)
+        {
             resize_and_evaluate_on_vertexes( f, t, cdata.qdom2d_full, f_time, qf);
             tid0p->f_int[tid]+= quad_2D( qf, cdata.qdom2d_full);
             tid0p->f_norm[tid]+= quad_2D( qf*qf, cdata.qdom2d_full);
         }
-        if (fvd != 0 && f != 0) {
+        if (fvd != 0 && f != 0)
+        {
             std::valarray<double> qerr= qfgrid - qf;
             tid0p->err[tid]+= quad_2D( qerr*qerr, cdata.qdom2d_full);
         }
 
-        if (fvd != 0) {
-            if (fvd->RowIdx->GetFE() == P2IF_FE) {
+        if (fvd != 0)
+        {
+            if (fvd->RowIdx->GetFE() == P2IF_FE)
+            {
                 LocalP2CL<> lp2( t, *fvd, nobnddata);
                 loc_ngrad.setup( t, cdata);
                 for (Uint i= 0; i < 10; ++i)
@@ -1975,7 +1939,10 @@ class InterfaceL2AccuDeformP2CL : public TetraAccumulatorCL
 //         }
     }
 
-    virtual InterfaceL2AccuDeformP2CL* clone (int /*clone_id*/) { return new InterfaceL2AccuDeformP2CL( *this); }
+    virtual InterfaceL2AccuDeformP2CL* clone (int /*clone_id*/)
+    {
+        return new InterfaceL2AccuDeformP2CL( *this);
+    }
 };
 
 void StationaryStrategyP2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::LevelsetP2CL& lset)
@@ -2095,7 +2062,8 @@ void StationaryStrategyP2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DR
     DROPS::NoBndDataCL<Point3DCL> nobnd_vec;
     VecDescCL the_sol_vd( &lset.idx);
     LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);
-    if (vtkwriter.get() != 0) {
+    if (vtkwriter.get() != 0)
+    {
         vtkwriter->Register( make_VTKScalar( lset.GetSolution(), "Levelset") );
         vtkwriter->Register( make_VTKIfaceScalar( mg, xp2, "InterfaceSolP2"));
         vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
@@ -2127,23 +2095,23 @@ void StationaryStrategyDeformationP2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangC
     p2idx.CreateNumbering( mg.GetLastLevel(), mg);
     VecDescCL deformation( &vecp2idx);
     LocalQuaMapperCL locqua (mg, lset.Phi,
-        /*maxiter*/ P.get<int>( "LevelsetMapper.Iter"),
-        /*tol*/ P.get<double>( "LevelsetMapper.Tol"),
-        /*armijo_c*/ P.get<double>( "LevelsetMapper.ArmijoConstant"),
-        /*max_damping_steps*/ P.get<Uint>( "LevelsetMapper.MaxDampingSteps"));
+                             /*maxiter*/ P.get<int>( "LevelsetMapper.Iter"),
+                             /*tol*/ P.get<double>( "LevelsetMapper.Tol"),
+                             /*armijo_c*/ P.get<double>( "LevelsetMapper.ArmijoConstant"),
+                             /*max_damping_steps*/ P.get<Uint>( "LevelsetMapper.MaxDampingSteps"));
     locqua.set_trust_region (P.get<double>( "LevelsetMapper.TrustRegion"))
-          .set_deformation_method (P.get<std::string>( "LevelsetMapper.DeformationMethod") == "map_local_level_sets" ? LocalQuaMapperCL::MAP_LOCAL_LEVEL_SETS : LocalQuaMapperCL::MAP_ZERO_LEVEL_SETS);
+    .set_deformation_method (P.get<std::string>( "LevelsetMapper.DeformationMethod") == "map_local_level_sets" ? LocalQuaMapperCL::MAP_LOCAL_LEVEL_SETS : LocalQuaMapperCL::MAP_ZERO_LEVEL_SETS);
     LocalQuaMapperDistanceP2CL locquap2(locqua); // Provides the interface for the Oswald-projection class.
     VecDescCL locdist_vd ( &p2idx);
     OswaldProjectionP2AccuCL<LocalQuaMapperDistanceP2CL> loc_dist_accu(locquap2, locdist_vd);
-        loc_dist_accu.set_level_set_function (&lset.Phi, &lset.GetBndData(), &PrincipalLatticeCL::instance (1))
-                     .set_check_averaging (true);
+    loc_dist_accu.set_level_set_function (&lset.Phi, &lset.GetBndData(), &PrincipalLatticeCL::instance (1))
+    .set_check_averaging (true);
     TetraAccumulatorTupleCL accus2;
-        accus2.push_back( &loc_dist_accu);
+    accus2.push_back( &loc_dist_accu);
     LocalQuaMapperDeformationP2CL locquadefp2(locqua); // Provides the interface for the Oswald-projection class.
     OswaldProjectionP2AccuCL<LocalQuaMapperDeformationP2CL> loc_def_accu(locquadefp2, deformation);
     loc_def_accu.set_level_set_function (&lset.Phi, &lset.GetBndData(), &PrincipalLatticeCL::instance (1))
-                .set_check_averaging (true);
+    .set_check_averaging (true);
     accus2.push_back( &loc_def_accu);
     accumulate( accus2, mg, p2idx.TriangLevel(), p2idx.GetBndInfo());
 
@@ -2174,7 +2142,7 @@ void StationaryStrategyDeformationP2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangC
     VecDescCL d_iface_vd (&p1idx);
     InterfaceApproxErrorDeformAccuCL ifaceerroraccu (&cdatap2, /*yg*/ 0, &d_iface_vd);
     ifaceerroraccu.set_d  (&sphere_dist)
-                  .set_Dd (&d_sphere_dist);
+    .set_Dd (&d_sphere_dist);
     accus.push_back( &ifaceerroraccu);
 
 //     accumulate( accus, mg, ifacep2idx.TriangLevel(), ifacep2idx.GetMatchingFunction(), ifacep2idx.GetBndInfo());
@@ -2234,7 +2202,8 @@ void StationaryStrategyDeformationP2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangC
     DROPS::NoBndDataCL<Point3DCL> nobnd_vec;
     VecDescCL the_sol_vd( &lset.idx);
     LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);
-    if (vtkwriter.get() != 0) {
+    if (vtkwriter.get() != 0)
+    {
         vtkwriter->Register( make_VTKScalar( lset.GetSolution(), "Levelset") );
         vtkwriter->Register( make_VTKIfaceScalar( mg, xp2, "InterfaceSolP2"));
         vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
@@ -2248,75 +2217,81 @@ void StationaryStrategyDeformationP2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangC
 
 int main (int argc, char* argv[])
 {
-  try {
-    ScopeTimerCL timer( "main");
+    try
+    {
+        ScopeTimerCL timer( "main");
 
-    DROPS::read_parameter_file_from_cmdline( P, argc, argv, "../../param/surfactant/surfactant/surfpatternfm.json");
-    std::cout << P << std::endl;
+        DROPS::read_parameter_file_from_cmdline( P, argc, argv, "../../param/surfactant/surfactant/surfpatternfm.json");
+        std::cout << P << std::endl;
 
-    DROPS::dynamicLoad(P.get<std::string>("General.DynamicLibsPrefix"), P.get<std::vector<std::string> >("General.DynamicLibs") );
+        DROPS::dynamicLoad(P.get<std::string>("General.DynamicLibsPrefix"), P.get<std::vector<std::string> >("General.DynamicLibs") );
 
-    std::cout << "Setting up interface-PDE.\n";
-    WindVelocity= P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity");
-    RadDrop=      P.get<DROPS::Point3DCL>("SurfTransp.Exp.RadDrop");
-    PosDrop=      P.get<DROPS::Point3DCL>("SurfTransp.Exp.PosDrop");
-    RadTorus=     P.get<DROPS::Point2DCL>("SurfTransp.Exp.RadTorus");
-    the_wind_fun= invecmap[P.get<std::string>("SurfTransp.Exp.Wind")];
-    the_lset_fun= inscamap[P.get<std::string>("SurfTransp.Exp.Levelset")];
-      the_normal_fun= invecmap[P.get<std::string>("SurfTransp.Exp.Normal")];
-      the_rhs_fun=  inscamap[P.get<std::string>("SurfTransp.Exp.Rhs")];
-    the_sol_fun=  inscamap[P.get<std::string>("SurfTransp.Exp.Solution")];
-      the_sol_grad_fun = invecmap[P.get<std::string>("SurfTransp.Exp.SurfGradSol")];
+        std::cout << "Setting up interface-PDE.\n";
+        WindVelocity= P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity");
+        RadDrop=      P.get<DROPS::Point3DCL>("SurfTransp.Exp.RadDrop");
+        PosDrop=      P.get<DROPS::Point3DCL>("SurfTransp.Exp.PosDrop");
+        RadTorus=     P.get<DROPS::Point2DCL>("SurfTransp.Exp.RadTorus");
+        the_wind_fun= invecmap[P.get<std::string>("SurfTransp.Exp.Wind")];
+        the_lset_fun= inscamap[P.get<std::string>("SurfTransp.Exp.Levelset")];
+        the_normal_fun= invecmap[P.get<std::string>("SurfTransp.Exp.Normal")];
+        the_rhs_fun=  inscamap[P.get<std::string>("SurfTransp.Exp.Rhs")];
+        the_sol_fun=  inscamap[P.get<std::string>("SurfTransp.Exp.Solution")];
+        the_sol_grad_fun = invecmap[P.get<std::string>("SurfTransp.Exp.SurfGradSol")];
 
-      if (P.get<std::string>("SurfTransp.Exp.Solution") == "LaplaceBeltrami0Sol")
-        the_sol_grad_fun=  &laplace_beltrami_0_sol_grad;
-    for (Uint i= 0; i < 6; ++i)
-        bf_wind[i]= the_wind_fun;
+        if (P.get<std::string>("SurfTransp.Exp.Solution") == "LaplaceBeltrami0Sol")
+            the_sol_grad_fun=  &laplace_beltrami_0_sol_grad;
+        for (Uint i= 0; i < 6; ++i)
+            bf_wind[i]= the_wind_fun;
 
-    std::cout << "Setting up domain:\n";
-    std::unique_ptr<MGBuilderCL> builder( make_MGBuilder( P));
-    DROPS::MultiGridCL mg( *builder);
-    typedef DistMarkingStrategyCL MarkerT;
-    MarkerT marker( the_lset_fun, P.get<double>( "Mesh.AdaptRef.Width"),
-                    P.get<int>( "Mesh.AdaptRef.CoarsestLevel"), P.get<int>( "Mesh.AdaptRef.FinestLevel"));
+        std::cout << "Setting up domain:\n";
+        std::unique_ptr<MGBuilderCL> builder( make_MGBuilder( P));
+        DROPS::MultiGridCL mg( *builder);
+        typedef DistMarkingStrategyCL MarkerT;
+        MarkerT marker( the_lset_fun, P.get<double>( "Mesh.AdaptRef.Width"),
+                        P.get<int>( "Mesh.AdaptRef.CoarsestLevel"), P.get<int>( "Mesh.AdaptRef.FinestLevel"));
 
-    DROPS::AdapTriangCL adap( mg, &marker);
+        DROPS::AdapTriangCL adap( mg, &marker);
 
-    // DROPS::LevelsetP2CL lset( mg, lsbnd, sf);
-    DROPS::LevelsetP2CL& lset( *LevelsetP2CL::Create( mg, lsbnd, sf, P.get_child("Levelset")) );
+        // DROPS::LevelsetP2CL lset( mg, lsbnd, sf);
+        DROPS::LevelsetP2CL& lset( *LevelsetP2CL::Create( mg, lsbnd, sf, P.get_child("Levelset")) );
 
-    if (P.get<int>("VTK.Freq",0))
-        vtkwriter= std::unique_ptr<VTKOutCL>( new VTKOutCL(
-            adap.GetMG(),
-            "DROPS data",
-            P.get<int>("Time.NumSteps")/P.get<int>("VTK.Freq") + 1,
-            P.get<std::string>("VTK.VTKDir"),
-            P.get<std::string>("VTK.VTKName"),
-            P.get<std::string>("VTK.TimeFileName"),
-            P.get<int>("VTK.Binary"),
-            P.get<bool>("VTK.UseOnlyP1"),
-            false, /* <- P2DG */
-            -1,    /* <- level */
-            P.get<bool>("VTK.ReUseTimeFile")));
-    if (P.get<bool>( "SurfTransp.Exp.StationaryPDE")) {
-        if (P.get<std::string>("LevelsetMapper.DeformationMethod") != "")
-            StationaryStrategyDeformationP2( mg, adap, lset);
-        else {
-            if (P.get<int>( "SurfTransp.FEDegree") == 1)
-                StationaryStrategyP1( mg, adap, lset);
+        if (P.get<int>("VTK.Freq",0))
+            vtkwriter= std::unique_ptr<VTKOutCL>( new VTKOutCL(
+                    adap.GetMG(),
+                    "DROPS data",
+                    P.get<int>("Time.NumSteps")/P.get<int>("VTK.Freq") + 1,
+                    P.get<std::string>("VTK.VTKDir"),
+                    P.get<std::string>("VTK.VTKName"),
+                    P.get<std::string>("VTK.TimeFileName"),
+                    P.get<int>("VTK.Binary"),
+                    P.get<bool>("VTK.UseOnlyP1"),
+                    false, /* <- P2DG */
+                    -1,    /* <- level */
+                    P.get<bool>("VTK.ReUseTimeFile")));
+        if (P.get<bool>( "SurfTransp.Exp.StationaryPDE"))
+        {
+            if (P.get<std::string>("LevelsetMapper.DeformationMethod") != "")
+                StationaryStrategyDeformationP2( mg, adap, lset);
             else
-                StationaryStrategyP2( mg, adap, lset);
+            {
+                if (P.get<int>( "SurfTransp.FEDegree") == 1)
+                    StationaryStrategyP1( mg, adap, lset);
+                else
+                    StationaryStrategyP2( mg, adap, lset);
+            }
         }
-    }
-    else
-        //Strategy( mg, adap, lset);
-        StrategyPatternFM( mg, adap, lset);
+        else
+            //Strategy( mg, adap, lset);
+            StrategyPatternFM( mg, adap, lset);
 
-    delete &lset;
-    rusage usage;
-    getrusage( RUSAGE_SELF, &usage);
-    std::cout << "ru_maxrss: " << usage.ru_maxrss << " kB.\n";
-    return 0;
-  }
-  catch (DROPS::DROPSErrCL err) { err.handle(); }
+        delete &lset;
+        rusage usage;
+        getrusage( RUSAGE_SELF, &usage);
+        std::cout << "ru_maxrss: " << usage.ru_maxrss << " kB.\n";
+        return 0;
+    }
+    catch (DROPS::DROPSErrCL err)
+    {
+        err.handle();
+    }
 }

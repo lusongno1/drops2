@@ -1524,6 +1524,7 @@ class SurfacePDEP1BaseCL
 
         const VelBndDataT&  Bnd_v_;  ///< Boundary condition for the velocity
         VecDescCL*          v_;      ///< velocity at current time step
+        VecDescCL*          nd_;      ///< normal at current time step
         VecDescCL&          lset_vd_;///< levelset at current time step
         const BndDataCL<>&  lsetbnd_;///< level set boundary
 
@@ -1533,9 +1534,14 @@ class SurfacePDEP1BaseCL
 
     public:
         SurfacePDEP1BaseCL(MultiGridCL& mg,
+                         double theta, VecDescCL* v, VecDescCL* nd, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                         int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+                : MG_( mg), theta_( theta), dt_( 0.), Bnd_v_( Bnd_v), v_( v), nd_(nd),lset_vd_( lset_vd), lsetbnd_( lsetbnd)
+        {}
+        SurfacePDEP1BaseCL(MultiGridCL& mg,
                          double theta, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
                          int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
-                : MG_( mg), theta_( theta), dt_( 0.), Bnd_v_( Bnd_v), v_( v), lset_vd_( lset_vd), lsetbnd_( lsetbnd)
+                : MG_( mg), theta_( theta), dt_( 0.), Bnd_v_( Bnd_v), v_( v),lset_vd_( lset_vd), lsetbnd_( lsetbnd)
         {}
         virtual ~SurfacePDEP1BaseCL () {}
 
@@ -1587,7 +1593,15 @@ class SurfacePDEP1BaseCL
 
     public:
         SurfactantP1BaseCL (MultiGridCL& mg,
-                            double theta, double D, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                            double theta, double D, VecDescCL* v, VecDescCL* nd,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                            int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+                : SurfacePDEP1BaseCL(mg, theta, v, nd, Bnd_v, lset_vd, lsetbnd),
+                  idx( P1IF_FE), D_( D),  rhs_fun_( 0), oldidx_( P1IF_FE), gm_( pc_, 100, iter, tol, true),
+                  omit_bound_( omit_bound)
+        { idx.GetXidx().SetBound( omit_bound);}
+
+        SurfactantP1BaseCL (MultiGridCL& mg,
+                            double theta, double D, VecDescCL* v,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
                             int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
                 : SurfacePDEP1BaseCL(mg, theta, v, Bnd_v, lset_vd, lsetbnd),
                   idx( P1IF_FE), D_( D),  rhs_fun_( 0), oldidx_( P1IF_FE), gm_( pc_, 100, iter, tol, true),
@@ -1662,7 +1676,17 @@ class SurfacePDEP1BaseCL
 
     public:
         SurfactantNarrowBandStblP1CL (MultiGridCL& mg,
-                                      double theta, double D, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                                      double theta, double D, VecDescCL* v, VecDescCL* nd,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                                      instat_vector_fun_ptr normal,const double width, double rho,
+                                      int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+                :  SurfactantP1BaseCL( mg, theta, D, v,nd, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound),
+                //: SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, width, iter, tol, omit_bound),
+        full_idx( P2_FE), rhsext1(), normal_(normal), width_(width), rho_(rho)
+                   {}
+
+
+        SurfactantNarrowBandStblP1CL (MultiGridCL& mg,
+                                      double theta, double D, VecDescCL* v,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
                                       instat_vector_fun_ptr normal,const double width, double rho,
                                       int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
                 :  SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound),
