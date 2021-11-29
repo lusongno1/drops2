@@ -1152,6 +1152,8 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
     adap.push_back( &lsetrepair);
     InterfaceP1RepairCL ic_repair( mg, lset.Phi, lset.GetBndData(), timedisc.ic);
     adap.push_back( &ic_repair);
+    InterfaceP1RepairCL icw_repair( mg, lset.Phi, lset.GetBndData(), timedisc.icw);
+    adap.push_back( &icw_repair);
     //LevelsetRepairCL lset2repair( lset2);
     //adap.push_back( &lset2repair);
 
@@ -1180,8 +1182,13 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
         vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
         vtkwriter->Write( 0.);
     }
-    //if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0)
-    //    DROPS::WriteFEToFile( timedisc.ic, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
+    if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0)
+    {
+        DROPS::WriteFEToFile( timedisc.ic, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
+        DROPS::WriteFEToFile( timedisc.icw, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
+
+    }
+
 
     const double dt= P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps");//1/32
     double L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
