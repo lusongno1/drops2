@@ -3050,6 +3050,8 @@ void SurfactantP1BaseCL::InitTimeStep ()
     oldidx_.swap( idx);
     oldic_.resize( ic.Data.size());
     oldic_= ic.Data;
+    oldicw_.resize( icw.Data.size());
+    oldicw_= icw.Data;
     oldt_= ic.t;
 
     oldls_.RowIdx= lset_vd_.RowIdx;
@@ -3432,7 +3434,6 @@ void SurfactantNarrowBandStblP1CL::DoStep0 (double new_t)
 void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern formulation
 {
     ScopeTimerCL timer( "SurfactantNarrowP1CL::::DoStep0PatternFM");
-
     /** InitStep1( new_t): < get rhs1_ = Mass*(\vec u_h^n*1/dt)  */
     {
         // ScopeTimerCL timer( "SurfactantNarrowBandStblP1CL::InitStep");

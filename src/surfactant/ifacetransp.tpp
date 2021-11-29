@@ -26,11 +26,12 @@
 #include "misc/scopetimer.h"
 #include <cstring>
 
-namespace DROPS {
+namespace DROPS
+{
 
 template <class LocalMatrixT>
-  void
-  update_global_matrix (MatrixBuilderCL& M, const LocalMatrixT& loc, const IdxT* numr, const IdxT* numc)
+void
+update_global_matrix (MatrixBuilderCL& M, const LocalMatrixT& loc, const IdxT* numr, const IdxT* numc)
 {
     const int num_row_dofs= LocalMatrixT::row_fe_type == P1IF_FE ? 4 : 10,
               num_col_dofs= LocalMatrixT::col_fe_type == P1IF_FE ? 4 : 10;
@@ -43,8 +44,8 @@ template <class LocalMatrixT>
 }
 
 template <Uint Dim>
-  void
-  resize_and_scatter_piecewise_normal (const SPatchCL<Dim>& surf, const QuadDomainCodim1CL<Dim>& qdom, std::valarray<typename SPatchCL<Dim>::WorldVertexT>& normal)
+void
+resize_and_scatter_piecewise_normal (const SPatchCL<Dim>& surf, const QuadDomainCodim1CL<Dim>& qdom, std::valarray<typename SPatchCL<Dim>::WorldVertexT>& normal)
 {
     normal.resize( qdom.vertex_size());
     if (normal.size() == 0)
@@ -61,15 +62,17 @@ template <Uint Dim>
 }
 
 template <class T, class ResultIterT>
-  inline ResultIterT
-  evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraBaryPairVectorT& pos, double t, ResultIterT result_iterator)
+inline ResultIterT
+evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraBaryPairVectorT& pos, double t, ResultIterT result_iterator)
 {
     BaryEvalCL<T> eval;
     eval.set( f);
     eval.set_time( t);
     const TetraCL* prev_tetra= 0;
-    for (Uint i= 0; i < pos.size(); ++i) {
-        if (prev_tetra != pos[i].first) {
+    for (Uint i= 0; i < pos.size(); ++i)
+    {
+        if (prev_tetra != pos[i].first)
+        {
             prev_tetra= pos[i].first;
             eval.set( *pos[i].first);
         }
@@ -79,8 +82,8 @@ template <class T, class ResultIterT>
 }
 
 template <class T, class ResultContT>
-  inline ResultContT&
-  resize_and_evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraBaryPairVectorT& pos, double t, ResultContT& result_container)
+inline ResultContT&
+resize_and_evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraBaryPairVectorT& pos, double t, ResultContT& result_container)
 {
     result_container.resize( pos.size());
     evaluate_on_vertexes( f, pos, t, sequence_begin( result_container));
@@ -88,13 +91,15 @@ template <class T, class ResultContT>
 }
 
 template <class PEvalT, class ResultIterT>
-  inline ResultIterT
-  evaluate_on_vertexes (const PEvalT& f, const TetraBaryPairVectorT& pos, ResultIterT result_iterator)
+inline ResultIterT
+evaluate_on_vertexes (const PEvalT& f, const TetraBaryPairVectorT& pos, ResultIterT result_iterator)
 {
     typename PEvalT::LocalFET loc_f;
     const TetraCL* prev_tetra= 0;
-    for (Uint i= 0; i < pos.size(); ++i) {
-        if (prev_tetra != pos[i].first) {
+    for (Uint i= 0; i < pos.size(); ++i)
+    {
+        if (prev_tetra != pos[i].first)
+        {
             prev_tetra= pos[i].first;
             loc_f.assign( *pos[i].first, f);
         }
@@ -104,8 +109,8 @@ template <class PEvalT, class ResultIterT>
 }
 
 template <class PEvalT, class ResultContT>
-  inline ResultContT&
-  resize_and_evaluate_on_vertexes (const PEvalT& f, const TetraBaryPairVectorT& pos, ResultContT& result_container)
+inline ResultContT&
+resize_and_evaluate_on_vertexes (const PEvalT& f, const TetraBaryPairVectorT& pos, ResultContT& result_container)
 {
     result_container.resize( pos.size());
     evaluate_on_vertexes( f, pos, sequence_begin( result_container));
@@ -149,7 +154,8 @@ void SetupConvectionP1 (const MultiGridCL& mg, MatDescCL* mat, const VecDescCL& 
 
 template <class DiscVelSolT>
 void LocalInterfaceMassDivP1CL<DiscVelSolT>::setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata)
-{//set up divmass matrix
+{
+    //set up divmass matrix
     make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
     resize_and_scatter_piecewise_normal( cdata.surf, qdom, n);
 
@@ -159,20 +165,22 @@ void LocalInterfaceMassDivP1CL<DiscVelSolT>::setup (const TetraCL& t, const Inte
     qgradp2i.resize( qdom.vertex_size());
     qdivgamma_w.resize( qdom.vertex_size());
     qdivgamma_w= 0.;
-    for (int i= 0; i < 10; ++i) {
+    for (int i= 0; i < 10; ++i)
+    {
         evaluate_on_vertexes( gradp2[i], qdom, Addr( qgradp2i));
         qdivgamma_w+= dot(w_loc[i], qgradp2i) - dot( w_loc[i], n)*dot( n, qgradp2i);//w_loc is a coefficient of w written as a linear combination of P2 basis functions
     }
-/*
-    for(auto &it:qdivgamma_w)
-    {
-        std::cout<< "qdivgamma_w:"<<it<<std::endl;
-    }
-*/
+    /*
+        for(auto &it:qdivgamma_w)
+        {
+            std::cout<< "qdivgamma_w:"<<it<<std::endl;
+        }
+    */
     for (int i= 0; i < 4; ++i)
         resize_and_evaluate_on_vertexes (cdata.p1[i], qdom, q[i]);
 
-    for (int i= 0; i < 4; ++i) {
+    for (int i= 0; i < 4; ++i)
+    {
         coup[i][i]= quad_2D( qdivgamma_w*q[i]*q[i], qdom);
         for(int j= 0; j < i; ++j)
             coup[i][j]= coup[j][i]= quad_2D( qdivgamma_w*q[j]*q[i], qdom);

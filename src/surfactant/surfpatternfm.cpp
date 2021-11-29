@@ -1126,7 +1126,6 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
     //lset2.idx.CreateNumbering( mg.GetLastLevel(), mg);
     //lset2.Phi.SetIdx( &lset2.idx);
     //LSInit( mg, lset2.Phi, the_lset_fun, 0.);
-
     const double Vol= lset.GetVolume();
     lset.InitVolume( Vol);
     std::cout << "droplet volume: " << Vol << std::endl;
@@ -1176,6 +1175,7 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
         vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
         vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
         vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
+        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, nd),      "Normal"));
         //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
         vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
         vtkwriter->Write( 0.);
