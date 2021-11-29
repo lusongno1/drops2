@@ -3539,6 +3539,8 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         VecDescCL vd_loadF2( &idx);
         TetraAccumulatorTupleCL accus;
 
+        SetPars();
+
         /**< push back information of element */
         InterfaceCommonDataP1CL cdata( lset_vd_, lsetbnd_);//InterfaceCommonDataP2CL
         accus.push_back( &cdata);
@@ -3585,10 +3587,16 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         //accus.push_back( &massH_accu);
 
         /**< push back right-hand side w.r.t first equation */
-        SetPars();
+
         accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF1P1CL, InterfaceCommonDataP1CL>( &vd_loadF1,
                                  LocalVectorF1P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF1"));
         //MultiGridCL& MG_ const VelBndDataT& Bnd_v_
+
+        /**< push back right-hand side w.r.t second equation */
+        accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF2P1CL, InterfaceCommonDataP1CL>( &vd_loadF2,
+                                 LocalVectorF2P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF2"));
+
+
 
 
 
@@ -3639,6 +3647,13 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
             std::cout<<"test 2"<<std::endl;
         }
         std::cout << "SurfactantExtensionP1CL::DoStep: res = " << gm_.GetResid() << ", iter = " << gm_.GetIter() << std::endl;
+
+        /**< solve the second equation */
+        L1_.LinComb( 1./dt_, Mass.Data, -epsilon,MassH.Data, 1.0,MassU.Data,d2, Laplace.Data, rho_, Volume_stab.Data);
+        load = vd_loadF2.Data;
+        const VectorCL therhs2(rhs2_ + load);
+        gm_.Solve( L2_, icw.Data, therhs2, ic.RowIdx->GetEx());
+
     }
 
     /**< CommitStep */

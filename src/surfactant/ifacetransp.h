@@ -968,6 +968,52 @@ public:
     }
 };
 
+/// \brief Compute the load-vector corresponding to the function f on a single tetra.
+class LocalVectorF2P1CL
+{
+private:
+    instat_scalar_fun_ptr f_;
+    double time_;
+
+    LocalP1CL<> p1[4];
+    std::valarray<double> qp1,
+        qf,
+        qu,
+        qw;
+    QuadDomain2DCL qdom;
+    double a_,b_,delta_,gamma_;
+    VecDescCL ic_,icw_;
+    MultiGridCL& MG_;
+    const BndDataCL<Point3DCL>& Bnd_v_;
+
+public:
+    static const FiniteElementT row_fe_type= P1IF_FE;
+
+    double vec[4];
+
+    LocalVectorF2P1CL (instat_scalar_fun_ptr f, double time, double a,double b,
+                     double delta,double gamma,VecDescCL& ic,VecDescCL& icw,
+                     MultiGridCL& MG, const BndDataCL<Point3DCL>& Bnd_v)
+                      : f_( f), time_( time),a_(a),b_(b),delta_(delta),gamma_(gamma),
+                      ic_(ic),icw_(icw),MG_(MG),Bnd_v_(Bnd_v)
+    {
+        p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.;
+    }
+
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata, const IdxT numr[4])
+    {
+        make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
+        qp1.resize( qdom.vertex_size());
+        for (Uint i= 0; i < 4; ++i)
+        {
+            if (numr[i] == NoIdx)
+                continue;
+            evaluate_on_vertexes( p1[i], qdom, Addr( qp1));
+            vec[i]= quad_2D( b_*qp1, qdom);
+        }
+    }
+};
+
 /// \brief Compute local_mat_*x_ on a single tetra.
 template <class  LocalMatrixT>
 class LocalMatVecP1CL
