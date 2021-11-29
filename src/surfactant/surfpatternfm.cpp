@@ -1246,6 +1246,7 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
         timedisc.DoStep0PatternFM( cur_time);//only use back-forward Euler scheme
 
         //  timedisc.DoStep0( cur_time);
+        /*
         std::cout << "surfactant on \\Gamma: " << Integral_Gamma( mg, lset.Phi, lset.GetBndData(), make_P1Eval(  mg, ifbnd, timedisc.ic)) << '\n';
         L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
         std::cout << "L_2x-error: " << L_2x_err
@@ -1258,6 +1259,7 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
         std::cout << "H_1x-error: " << H_1x_err << std::endl;
         L_2tH_1x_err_sq+= 0.5*dt*std::pow( H_1x_err, 2);
         std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
+        */
         if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0)
         {
             LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
@@ -1270,6 +1272,7 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
             os1 << P.get<int>( "Time.NumSteps");
             os2 << P.get<std::string>( "SurfTransp.SolutionOutput.Path") << std::setw( os1.str().size()) << step;
             DROPS::WriteFEToFile( timedisc.ic, mg, os2.str(), P.get<bool>( "SurfTransp.SolutionOutput.Binary"));
+            DROPS::WriteFEToFile( timedisc.icw, mg, os2.str(), P.get<bool>( "SurfTransp.SolutionOutput.Binary"));
         }
 //        lset2.DoStep();
 //        VectorCL rhs( lset2.Phi.Data.size());
