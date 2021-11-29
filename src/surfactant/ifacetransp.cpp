@@ -3512,111 +3512,111 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         ic.SetIdx( &idx);
         std::cout<<"test---2  DoStep1()"<<std::endl;
         /**< Update()*/
-        {
+        //{
 
-            ScopeTimerCL timer( "SurfactantNarrowBandStblP1CL::Update");
-            std::cout << "SurfactantNarrowBandStblP1CL::Update:\n";
+        ScopeTimerCL timer( "SurfactantNarrowBandStblP1CL::Update");
+        std::cout << "SurfactantNarrowBandStblP1CL::Update:\n";
 
-            IdxDescCL* cidx= ic.RowIdx;
-            Mass.Data.clear();
-            Mass.SetIdx( cidx, cidx);
-            Laplace.Data.clear();
-            Laplace.SetIdx( cidx, cidx);
+        IdxDescCL* cidx= ic.RowIdx;
+        Mass.Data.clear();
+        Mass.SetIdx( cidx, cidx);
+        Laplace.Data.clear();
+        Laplace.SetIdx( cidx, cidx);
 
-            Volume_stab.Data.clear();
-            Volume_stab.SetIdx( cidx, cidx);
-            Conv.Data.clear();
-            Conv.SetIdx( cidx, cidx);
-            Massd.Data.clear();
-            Massd.SetIdx( cidx, cidx);
-            MassH.Data.clear();
-            MassH.SetIdx( cidx, cidx);
-            MassU.Data.clear();
-            MassU.SetIdx( cidx, cidx);
+        Volume_stab.Data.clear();
+        Volume_stab.SetIdx( cidx, cidx);
+        Conv.Data.clear();
+        Conv.SetIdx( cidx, cidx);
+        Massd.Data.clear();
+        Massd.SetIdx( cidx, cidx);
+        MassH.Data.clear();
+        MassH.SetIdx( cidx, cidx);
+        MassU.Data.clear();
+        MassU.SetIdx( cidx, cidx);
 
-            VecDescCL vd_load( &idx);
-            VecDescCL vd_loadF1( &idx);
-            VecDescCL vd_loadF2( &idx);
-            TetraAccumulatorTupleCL accus;
+        VecDescCL vd_load( &idx);
+        VecDescCL vd_loadF1( &idx);
+        VecDescCL vd_loadF2( &idx);
+        TetraAccumulatorTupleCL accus;
 
-            /**< push back information of element */
-            InterfaceCommonDataP1CL cdata( lset_vd_, lsetbnd_);//InterfaceCommonDataP2CL
-            accus.push_back( &cdata);
+        /**< push back information of element */
+        InterfaceCommonDataP1CL cdata( lset_vd_, lsetbnd_);//InterfaceCommonDataP2CL
+        accus.push_back( &cdata);
 
-            /**< push back mass term */
-            InterfaceMatrixAccuCL<LocalInterfaceMassP1CL, InterfaceCommonDataP1CL> mass_accu( &Mass, LocalInterfaceMassP1CL(), cdata, "mass");
-            //InterfaceMatrixAccuP1CL<LocalInterfaceMassP1CL> mass_accu( &M, LocalInterfaceMassP1CL(), cdata, "mass");
-            accus.push_back( &mass_accu);
+        /**< push back mass term */
+        InterfaceMatrixAccuCL<LocalInterfaceMassP1CL, InterfaceCommonDataP1CL> mass_accu( &Mass, LocalInterfaceMassP1CL(), cdata, "mass");
+        //InterfaceMatrixAccuP1CL<LocalInterfaceMassP1CL> mass_accu( &M, LocalInterfaceMassP1CL(), cdata, "mass");
+        accus.push_back( &mass_accu);
 
-            /**< push back stiffness term */
-            //InterfaceMatrixAccuP1CL<LocalLaplaceBeltramiP1CL> lb_accu( &A, LocalLaplaceBeltramiP1CL( D_), cdata, "Laplace-Beltrami");/// To implement method 1 using surface gradient
-            InterfaceMatrixAccuCL<LocalLaplaceBeltramiP1CL, InterfaceCommonDataP1CL> lb_accu( &Laplace, LocalLaplaceBeltramiP1CL( D_), cdata, "Laplace-Beltrami");
-            accus.push_back( &lb_accu);
+        /**< push back stiffness term */
+        //InterfaceMatrixAccuP1CL<LocalLaplaceBeltramiP1CL> lb_accu( &A, LocalLaplaceBeltramiP1CL( D_), cdata, "Laplace-Beltrami");/// To implement method 1 using surface gradient
+        InterfaceMatrixAccuCL<LocalLaplaceBeltramiP1CL, InterfaceCommonDataP1CL> lb_accu( &Laplace, LocalLaplaceBeltramiP1CL( D_), cdata, "Laplace-Beltrami");
+        accus.push_back( &lb_accu);
 
-            /**< push back information of each tetra w.r.t narrow band */
-            NarrowBandCommonDataP1CL bdata( lset_vd_, lsetbnd_,width_);
-            accus.push_back( &bdata);
+        /**< push back information of each tetra w.r.t narrow band */
+        NarrowBandCommonDataP1CL bdata( lset_vd_, lsetbnd_,width_);
+        accus.push_back( &bdata);
 
-            /**< push back stabilization term */
-            //NarrowBandMatrixAccuP1CL<LocalNormalLaplaceBulkP1CL> sb_accu( &Sb, LocalNormalLaplaceBulkP1CL(D_,dt_,normal_,ic.t), bdata, "NormalLaplaceBulk"); ///4* To implement the stabilization Normal gradient
-            NarrowBandMatrixAccuP1CL<LocalNormalLaplaceBulkP1CL> sb_accu( &Volume_stab, LocalNormalLaplaceBulkP1CL(1.,dt_,normal_,ic.t), bdata, "NormalLaplaceBulk");  ///4* To implement the stabilization Normal gradient
-            accus.push_back( &sb_accu);
+        /**< push back stabilization term */
+        //NarrowBandMatrixAccuP1CL<LocalNormalLaplaceBulkP1CL> sb_accu( &Sb, LocalNormalLaplaceBulkP1CL(D_,dt_,normal_,ic.t), bdata, "NormalLaplaceBulk"); ///4* To implement the stabilization Normal gradient
+        NarrowBandMatrixAccuP1CL<LocalNormalLaplaceBulkP1CL> sb_accu( &Volume_stab, LocalNormalLaplaceBulkP1CL(1.,dt_,normal_,ic.t), bdata, "NormalLaplaceBulk");  ///4* To implement the stabilization Normal gradient
+        accus.push_back( &sb_accu);
 
-            /**< push back convection  w*nabla_Gamma u */
-            //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceConvectionP1CL>( &C,  cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "convection"));
-            //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceConvectionSkewP1CL>( &C,  cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "convection"));
-            //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu1<LocalInterfaceConvectionSkew1P1CL>( &C,  cdata,  make_P2Eval( MG_, Bnd_v_, *v_),normal_,ic.t, "convection"));
-            accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceConvectionP1CL>( &Conv,  cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "convection"));
+        /**< push back convection  w*nabla_Gamma u */
+        //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceConvectionP1CL>( &C,  cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "convection"));
+        //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceConvectionSkewP1CL>( &C,  cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "convection"));
+        //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu1<LocalInterfaceConvectionSkew1P1CL>( &C,  cdata,  make_P2Eval( MG_, Bnd_v_, *v_),normal_,ic.t, "convection"));
+        accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceConvectionP1CL>( &Conv,  cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "convection"));
 
-            /**< push back term like quasi-mass with div w as coefficient */
-            //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &Md, cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "massdiv"));
-            //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu1<LocalInterfaceMassDivSkewP1CL>( &Md, cdata,  make_P2Eval( MG_, Bnd_v_, *v_),normal_,ic.t, "massdiv"));
-            accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &Massd, cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "massdiv"));
+        /**< push back term like quasi-mass with div w as coefficient */
+        //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &Md, cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "massdiv"));
+        //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu1<LocalInterfaceMassDivSkewP1CL>( &Md, cdata,  make_P2Eval( MG_, Bnd_v_, *v_),normal_,ic.t, "massdiv"));
+        accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &Massd, cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "massdiv"));
 
-            /**< push back term like quasi-mass with curvature H as coefficient */
-            accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &MassH, cdata,  make_P2Eval( MG_, Bnd_v_, *nd_), "massH"));
-            //InterfaceMatrixAccuCL<LocalInterfaceMassHP1CL, InterfaceCommonDataP1CL> massH_accu( &MassH, LocalInterfaceMassHP1CL(), cdata, "masscurvature");
-            //accus.push_back( &massH_accu);
+        /**< push back term like quasi-mass with curvature H as coefficient */
+        accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &MassH, cdata,  make_P2Eval( MG_, Bnd_v_, *nd_), "massH"));
+        //InterfaceMatrixAccuCL<LocalInterfaceMassHP1CL, InterfaceCommonDataP1CL> massH_accu( &MassH, LocalInterfaceMassHP1CL(), cdata, "masscurvature");
+        //accus.push_back( &massH_accu);
 
-            /**< push back right-hand side w.r.t first equation */
-//            auto rhs_fun_F1 = [](const DROPS::Point3DCL& p, double t)->double//instat_scalar_fun_ptr
-//            {
-//                return 0;
-//            };
-            SetPars();
-            accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF1P1CL, InterfaceCommonDataP1CL>( &vd_loadF1,
-                                     LocalVectorF1P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF1"));
-                                     //MultiGridCL& MG_ const VelBndDataT& Bnd_v_
+        /**< push back right-hand side w.r.t first equation */
+        SetPars();
+        accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF1P1CL, InterfaceCommonDataP1CL>( &vd_loadF1,
+                                 LocalVectorF1P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF1"));
+        //MultiGridCL& MG_ const VelBndDataT& Bnd_v_
 
 
 
-            /**< push back source term */
-            if (rhs_fun_)
-                accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorP1CL, InterfaceCommonDataP1CL>( &vd_load,
-                                         LocalVectorP1CL( rhs_fun_, ic.t), cdata, "load"));
+        /**< push back source term */
+        if (rhs_fun_)
+            accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorP1CL, InterfaceCommonDataP1CL>( &vd_load,
+                                     LocalVectorP1CL( rhs_fun_, ic.t), cdata, "load"));
 //        accus.push_back_acquire( new InterfaceVectorAccuP1CL<LocalVectorP1CL>( &vd_load, LocalVectorP1CL( rhs_fun_, ic.t), cdata, "load"));
 
 
-            /**< begin accumulating all accumulators in accus */
-            {
-                ScopeTimerCL timer( "SurfactantExtensionP1CL::setup-Matrix");
-                accumulate( accus, MG_, cidx->TriangLevel(), cidx->GetBndInfo());
-                //accumulate( accus, MG_, cidx->TriangLevel(), cidx->GetMatchingFunction(), cidx->GetBndInfo());
-            }
-            load.resize( idx.NumUnknowns());
-            load= vd_load.Data;//default to be 0
-
-            //    WriteToFile( Mass.Data, "chartranspM.txt", "mass");
-            //     WriteToFile( Laplace.Data, "chartranspA.txt", "Laplace-Beltrami");
-            //     WriteToFile( Volume_stab.Data, "Stabilization.txt", "Stab-matrix");
-            //     WriteToFile( Md.Data,"chartranspMd.txt","mass-div");
-            //         WriteToFile( vd_load.Data,"chartranspload.txt","load");
-            //    WriteToFile( C.Data,"convection.txt","convection");
-
-            // std::cout << "SurfactantCharTransportP1CL::Update: Finished\n";
+        /**< begin accumulating all accumulators in accus */
+        {
+            ScopeTimerCL timer( "SurfactantExtensionP1CL::setup-Matrix");
+            accumulate( accus, MG_, cidx->TriangLevel(), cidx->GetBndInfo());
+            //accumulate( accus, MG_, cidx->TriangLevel(), cidx->GetMatchingFunction(), cidx->GetBndInfo());
         }
+        load.resize( idx.NumUnknowns());
+        load= vd_load.Data;//default to be 0
 
-        L_.LinComb( 1./dt_, Mass.Data, 1., Laplace.Data, rho_, Volume_stab.Data, 1., Massd.Data,1.,Conv.Data);
+        //    WriteToFile( Mass.Data, "chartranspM.txt", "mass");
+        //     WriteToFile( Laplace.Data, "chartranspA.txt", "Laplace-Beltrami");
+        //     WriteToFile( Volume_stab.Data, "Stabilization.txt", "Stab-matrix");
+        //     WriteToFile( Md.Data,"chartranspMd.txt","mass-div");
+        //         WriteToFile( vd_load.Data,"chartranspload.txt","load");
+        //    WriteToFile( C.Data,"convection.txt","convection");
+
+        // std::cout << "SurfactantCharTransportP1CL::Update: Finished\n";
+        // }
+        /**< solve the first equation */
+        L1_.LinComb( 1+1./dt_, Mass.Data, -epsilon,MassH.Data, d1, Laplace.Data, rho_, Volume_stab.Data);
+        load = vd_loadF1.Data;
+        const VectorCL therhs1(rhs1_ + load);
+        //L1_.LinComb( 1./dt_, Mass.Data, 1., Laplace.Data, rho_, Volume_stab.Data, 1., Massd.Data,1.,Conv.Data);
+        gm_.Solve( L1_, ic.Data, therhs1, ic.RowIdx->GetEx());
         // if(new_t/(new_t-oldt_)==1)
         // WriteToFile( L_, "Matrix.txt", "system");
         //  L_.LinComb( 1./dt_, M.Data, 1., Sb.Data,  1., Md.Data,1.,C.Data);
@@ -3628,7 +3628,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         {
             std::cout<<"test 1"<<std::endl;
             ScopeTimerCL timer( "SurfactantExtensionP1CL::DoStep: Solve");
-            gm_.Solve( L_, ic.Data, therhs, ic.RowIdx->GetEx());
+            //gm_.Solve( L_, ic.Data, therhs, ic.RowIdx->GetEx());
 
             std::cout<<"test 2"<<std::endl;
         }

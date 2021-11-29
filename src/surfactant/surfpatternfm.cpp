@@ -1171,7 +1171,8 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
     if (vtkwriter.get() != 0)
     {
         vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
-        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol"));
+        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol1"));
+        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.icw,                 "InterfaceSol2"));
         vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
         vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
         vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));

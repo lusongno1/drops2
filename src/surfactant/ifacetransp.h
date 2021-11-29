@@ -1922,7 +1922,7 @@ public:
 
 
 private:
-    MatrixCL      L_; ///< sum of matrices
+    MatrixCL      L_,L1_,L2_; ///< sum of matrices
     //  instat_scalar_fun_ptr lvlset_; ///< must be the signed distance function
     instat_vector_fun_ptr normal_; ///< the level-set function
     TransportP2FunctionCL* fulltransport_;
