@@ -3535,6 +3535,8 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
             MassU.SetIdx( cidx, cidx);
 
             VecDescCL vd_load( &idx);
+            VecDescCL vd_loadF1( &idx);
+            VecDescCL vd_loadF2( &idx);
             TetraAccumulatorTupleCL accus;
 
             /**< push back information of element */
@@ -3575,6 +3577,18 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
             accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &MassH, cdata,  make_P2Eval( MG_, Bnd_v_, *nd_), "massH"));
             //InterfaceMatrixAccuCL<LocalInterfaceMassHP1CL, InterfaceCommonDataP1CL> massH_accu( &MassH, LocalInterfaceMassHP1CL(), cdata, "masscurvature");
             //accus.push_back( &massH_accu);
+
+            /**< push back right-hand side w.r.t first equation */
+//            auto rhs_fun_F1 = [](const DROPS::Point3DCL& p, double t)->double//instat_scalar_fun_ptr
+//            {
+//                return 0;
+//            };
+            SetPars();
+            accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF1P1CL, InterfaceCommonDataP1CL>( &vd_loadF1,
+                                     LocalVectorF1P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF1"));
+                                     //MultiGridCL& MG_ const VelBndDataT& Bnd_v_
+
+
 
             /**< push back source term */
             if (rhs_fun_)

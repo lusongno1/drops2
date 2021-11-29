@@ -41,7 +41,8 @@
 #ifndef DROPS_IFACETRANSP_H
 #define DROPS_IFACETRANSP_H
 
-namespace DROPS {
+namespace DROPS
+{
 
 /// \brief Given a P1IF_FE/P2IF_FE-vecdesc (on the interface) x and a P1/P2-vecdesc xext (on mg), the values of x
 ///        are copied to xext and the remaining values of xext are set to 0.
@@ -54,8 +55,8 @@ void Restrict (const MultiGridCL& mg, const VecDescCL& xext, VecDescCL& x);
 /// \brief Helper for the accumulators: inserts the local matrix loc.coup into M.
 /// Works for P1IF_FE and P2IF_FE.
 template <class LocalMatrixT>
-  void
-  update_global_matrix (MatrixBuilderCL& M, const LocalMatrixT& loc, const IdxT* numr, const IdxT* numc);
+void
+update_global_matrix (MatrixBuilderCL& M, const LocalMatrixT& loc, const IdxT* numr, const IdxT* numc);
 
 /// \brief The routine sets up the mass-matrix in matM on the interface defined by ls.
 ///        It belongs to the FE induced by standard P1-elements.
@@ -70,7 +71,7 @@ void SetupInterfaceMassP1X (const MultiGridCL& MG, MatDescCL* mat, const VecDesc
 ///        sets up the ad/de-sorption terms for coupled mass/surfactant transport.
 ///        The jumping coefficients \a k_a, \a k_d are defined w.r.t. the positive(0) and negative(1) part of the domain.
 void SetupInterfaceSorptionP1X (const MultiGridCL& MG, const VecDescCL& ls, const BndDataCL<>& lsetbnd,
-        MatDescCL* R, MatDescCL* C, MatDescCL* R_i, MatDescCL* C_i, const IdxDescCL* mass_idx, const IdxDescCL* surf_idx, const double k_a[2], const double k_d[2]);
+                                MatDescCL* R, MatDescCL* C, MatDescCL* R_i, MatDescCL* C_i, const IdxDescCL* mass_idx, const IdxDescCL* surf_idx, const double k_a[2], const double k_d[2]);
 
 /// \brief Copies P1IF_FE-unknown-indices or P2IF_FE-indices from idx on s into Numb.
 /// Non-existent dofs get NoIdx.
@@ -78,15 +79,15 @@ void GetLocalNumbInterface(IdxT* Numb, const TetraCL& s, const IdxDescCL& idx);
 
 
 /// \brief Helper for the accumulators: inserts the local matrix coup into M.
-    void update_global_matrix_P1 (MatrixBuilderCL& M, const double coup[4][4], const IdxT numr[4], const IdxT numc[4]);
+void update_global_matrix_P1 (MatrixBuilderCL& M, const double coup[4][4], const IdxT numr[4], const IdxT numc[4]);
 
 /// \todo This should be a generic function somewhere in num or misc.
 void P1Init (instat_scalar_fun_ptr icf, VecDescCL& ic, const MultiGridCL& mg, double t);
 
 /// \brief Resize normal according to qdom and fill in surf.normal. The normal must be precomputed.
 template <Uint Dim>
-  void
-  resize_and_scatter_piecewise_normal (const SPatchCL<Dim>& surf, const QuadDomainCodim1CL<Dim>& qdom, std::valarray<typename SPatchCL<Dim>::WorldVertexT>& normal);
+void
+resize_and_scatter_piecewise_normal (const SPatchCL<Dim>& surf, const QuadDomainCodim1CL<Dim>& qdom, std::valarray<typename SPatchCL<Dim>::WorldVertexT>& normal);
 
 
 /// \brief The routine sets up the mass-matrix in matM on the interface defined by ls.
@@ -101,44 +102,55 @@ void SetupMixedMassP1 (const MultiGridCL& mg, MatDescCL* mat, const VecDescCL& l
 
 class InterfaceCommonDataP1CL : public TetraAccumulatorCL
 {
-  private:
+private:
     InterfaceCommonDataP1CL** the_clones;
 
     const VecDescCL*   ls;      // P2-level-set
     const BndDataCL<>* lsetbnd; // boundary data for the level set function
     LocalP2CL<> locp2_ls;
 
-  public:
+public:
     const PrincipalLatticeCL& lat;
     LocalP1CL<> p1[4];
 
     std::valarray<double> ls_loc;
     SurfacePatchCL surf;
 
-    const InterfaceCommonDataP1CL& get_clone () const {
+    const InterfaceCommonDataP1CL& get_clone () const
+    {
         const int tid= omp_get_thread_num();
         return tid == 0 ? *this : the_clones[tid][0];
     }
 
-    bool empty () const { return surf.empty(); }
+    bool empty () const
+    {
+        return surf.empty();
+    }
 
     InterfaceCommonDataP1CL (const VecDescCL& ls_arg, const BndDataCL<>& lsetbnd_arg)
         : ls( &ls_arg), lsetbnd( &lsetbnd_arg), lat( PrincipalLatticeCL::instance( 2)), ls_loc( lat.vertex_size())
-    { p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.; } // P1-Basis-Functions
+    {
+        p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.;    // P1-Basis-Functions
+    }
     InterfaceCommonDataP1CL ()
         : ls( 0), lsetbnd( 0), lat( PrincipalLatticeCL::instance( 2))
-    { p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.; } // P1-Basis-Functions
+    {
+        p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.;    // P1-Basis-Functions
+    }
 
     virtual ~InterfaceCommonDataP1CL () {}
 
-    virtual void begin_accumulation   () {
+    virtual void begin_accumulation   ()
+    {
         the_clones= new InterfaceCommonDataP1CL*[omp_get_max_threads()];
         the_clones[0]= this;
     }
-    virtual void finalize_accumulation() {
+    virtual void finalize_accumulation()
+    {
         delete[] the_clones;
     }
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         surf.clear();
         locp2_ls.assign( t, *ls, *lsetbnd);
         evaluate_on_vertexes( locp2_ls, lat, Addr( ls_loc));
@@ -146,7 +158,8 @@ class InterfaceCommonDataP1CL : public TetraAccumulatorCL
             return;
         surf.make_patch<MergeCutPolicyCL>( lat, ls_loc);
     }
-    virtual InterfaceCommonDataP1CL* clone (int clone_id) {
+    virtual InterfaceCommonDataP1CL* clone (int clone_id)
+    {
         return the_clones[clone_id]= new InterfaceCommonDataP1CL( *this);
     }
 };
@@ -155,50 +168,60 @@ typedef std::pair<const TetraCL*, BaryCoordCL> TetraBaryPairT;
 typedef std::vector<TetraBaryPairT>            TetraBaryPairVectorT;
 
 template <class T, class ResultIterT>
-  inline ResultIterT
-  evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraBaryPairVectorT& pos, double t, ResultIterT result_iterator);
+inline ResultIterT
+evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraBaryPairVectorT& pos, double t, ResultIterT result_iterator);
 
 template <class T, class ResultContT>
-  inline ResultContT&
-  resize_and_evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraBaryPairVectorT& pos, double t, ResultContT& result_container);
+inline ResultContT&
+resize_and_evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraBaryPairVectorT& pos, double t, ResultContT& result_container);
 
 template <class PEvalT, class ResultIterT>
-  inline ResultIterT
-  evaluate_on_vertexes (const PEvalT& f, const TetraBaryPairVectorT& pos, ResultIterT result_iterator);
+inline ResultIterT
+evaluate_on_vertexes (const PEvalT& f, const TetraBaryPairVectorT& pos, ResultIterT result_iterator);
 
 template <class PEvalT, class ResultContT>
-  inline ResultContT&
-  resize_and_evaluate_on_vertexes (const PEvalT& f, const TetraBaryPairVectorT& pos, ResultContT& result_container);
+inline ResultContT&
+resize_and_evaluate_on_vertexes (const PEvalT& f, const TetraBaryPairVectorT& pos, ResultContT& result_container);
 
 
 class ProjectedQuadDomain2DCL
 {
-  private:
+private:
     bool compute_absdets_;
     const QuadDomain2DCL* qdom;
     TetraBaryPairVectorT  vertexes_;
     std::valarray<double> absdets_;
 
-    void resize (size_t s) {
+    void resize (size_t s)
+    {
         vertexes_.resize( s);
         if (compute_absdets_)
             absdets_.resize( s);
     }
 
-  public:
+public:
     ProjectedQuadDomain2DCL () : compute_absdets_( true), qdom( 0) {}
     void assign (const SurfacePatchCL& p, const QuadDomain2DCL& qdomarg, const QuaQuaMapperCL& quaqua);
 
-    void compute_absdets (bool b) { compute_absdets_= b; }
+    void compute_absdets (bool b)
+    {
+        compute_absdets_= b;
+    }
 
-    const TetraBaryPairVectorT&  vertexes() const { return vertexes_; }
-    const std::valarray<double>& absdets () const { return absdets_; }
+    const TetraBaryPairVectorT&  vertexes() const
+    {
+        return vertexes_;
+    }
+    const std::valarray<double>& absdets () const
+    {
+        return absdets_;
+    }
 };
 
 
 class InterfaceCommonDataP2CL : public TetraAccumulatorCL
 {
-  private:
+private:
     InterfaceCommonDataP2CL** the_clones;
 
     const VecDescCL*   ls;      // P2-level-set
@@ -208,7 +231,7 @@ class InterfaceCommonDataP2CL : public TetraAccumulatorCL
 
     bool compute_quaddomains_;
 
-  public:
+public:
     /// common data @{
     LocalP2CL<> locp2_ls;
 
@@ -221,37 +244,59 @@ class InterfaceCommonDataP2CL : public TetraAccumulatorCL
     ProjectedQuadDomain2DCL   qdom_projected;
     QuaQuaMapperCL            quaqua;
 
-    const PrincipalLatticeCL& get_lattice () const { return *lat; }
+    const PrincipalLatticeCL& get_lattice () const
+    {
+        return *lat;
+    }
     /// @}
 
-    LocalP2CL<> get_local_p2_ls (const TetraCL& t) const { return LocalP2CL<>( t, *ls, *lsetbnd); };
+    LocalP2CL<> get_local_p2_ls (const TetraCL& t) const
+    {
+        return LocalP2CL<>( t, *ls, *lsetbnd);
+    };
 
-    const InterfaceCommonDataP2CL& get_clone () const {
+    const InterfaceCommonDataP2CL& get_clone () const
+    {
         const int tid= omp_get_thread_num();
         return tid == 0 ? *this : the_clones[tid][0];
     }
 
-    bool empty () const { return surf.empty(); }
+    bool empty () const
+    {
+        return surf.empty();
+    }
 
-    void compute_absdet (bool b) { qdom_projected.compute_absdets( b); }
-    void compute_quaddomains (bool b) { compute_quaddomains_= b; }
+    void compute_absdet (bool b)
+    {
+        qdom_projected.compute_absdets( b);
+    }
+    void compute_quaddomains (bool b)
+    {
+        compute_quaddomains_= b;
+    }
 
-    void set_lattice (const PrincipalLatticeCL& newlat) {
+    void set_lattice (const PrincipalLatticeCL& newlat)
+    {
         lat= &newlat;
         ls_loc.resize( lat->vertex_size());
     }
 
     InterfaceCommonDataP2CL (const VecDescCL& ls_arg, const BndDataCL<>& lsetbnd_arg,
-        const QuaQuaMapperCL& quaquaarg, const PrincipalLatticeCL& lat_arg);
+                             const QuaQuaMapperCL& quaquaarg, const PrincipalLatticeCL& lat_arg);
     virtual ~InterfaceCommonDataP2CL () {}
 
-    virtual void begin_accumulation () {
+    virtual void begin_accumulation ()
+    {
         the_clones= new InterfaceCommonDataP2CL*[omp_get_max_threads()];
         the_clones[0]= this;
     }
-    virtual void finalize_accumulation() { delete[] the_clones; }
+    virtual void finalize_accumulation()
+    {
+        delete[] the_clones;
+    }
 
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         surf.clear();
         locp2_ls.assign( t, *ls, *lsetbnd);
         evaluate_on_vertexes( locp2_ls, *lat, Addr( ls_loc));
@@ -261,14 +306,16 @@ class InterfaceCommonDataP2CL : public TetraAccumulatorCL
         if (surf.empty())
             return;
 
-        if (compute_quaddomains_) {
+        if (compute_quaddomains_)
+        {
             make_CompositeQuad5Domain2D ( qdom, surf, t);
             quaqua.set_point( &t, BaryCoordCL()); // set the current tetra.
             qdom_projected.assign( surf, qdom, quaqua);
         }
     }
 
-    virtual InterfaceCommonDataP2CL* clone (int clone_id) {
+    virtual InterfaceCommonDataP2CL* clone (int clone_id)
+    {
         return the_clones[clone_id]= new InterfaceCommonDataP2CL( *this);
     }
 };
@@ -278,7 +325,7 @@ class InterfaceCommonDataDeformP2CL;
 
 class LocalMeshTransformationCL
 {
-  public:
+public:
     InterfaceCommonDataDeformP2CL* cdata; // Must be set before use of members.
 
     LocalP2CL<Point3DCL> Psi; // Phi= id + Psi
@@ -290,7 +337,7 @@ class LocalMeshTransformationCL
 
     LocalP1CL<SMatrixCL<3, 3> > dPhi;
     SMatrixCL<3, 3> G,
-                    Ginv_wwT;
+              Ginv_wwT;
     QRDecompCL<3, 3> Gqr;
     Point3DCL w;  // the pull-back of n_Gamma (scaled to unit length)
 
@@ -302,7 +349,8 @@ class LocalMeshTransformationCL
 
     void set_tetra (const TetraCL* t);
 
-    void set_surface_patch (const BaryCoordCL verts[3], const Point3DCL& pos_pt) { // Set Q, n_lin
+    void set_surface_patch (const BaryCoordCL verts[3], const Point3DCL& pos_pt)   // Set Q, n_lin
+    {
         QRDecompCL<3, 2> qr;
         SMatrixCL<3, 2>& M= qr.GetMatrix ();
         M.col( 0, b2w( verts[1]) - b2w( verts[0]));
@@ -314,7 +362,8 @@ class LocalMeshTransformationCL
         n_lin= QQ.col (2)*sign (inner_prod (pos_pt - b2w (verts[1]), QQ.col (2))); // n_lin points out of the neg. domain.
     }
 
-    void set_point (const BaryCoordCL& xb, bool surface_data_p) {
+    void set_point (const BaryCoordCL& xb, bool surface_data_p)
+    {
         SMatrixCL<3, 3> dPhix= dPhi(xb);
         G= GramMatrix (dPhix);
         Gqr.GetMatrix ()= G;
@@ -352,14 +401,18 @@ class LocalMeshTransformationCL
 
     void map_QuadDomain (QuadDomainCL& qdom);
 
-    void map_QuadDomain2D (QuadDomain2DCL& qdom, const SurfacePatchCL& p, const Point3DCL& pos_pt) {
+    void map_QuadDomain2D (QuadDomain2DCL& qdom, const SurfacePatchCL& p, const Point3DCL& pos_pt)
+    {
         const Uint nodes_per_facet= qdom.vertex_size()/p.facet_size();
-        for (Uint i= 0; i < qdom.vertex_size(); ++i) {
-            if (i % nodes_per_facet == 0) {
+        for (Uint i= 0; i < qdom.vertex_size(); ++i)
+        {
+            if (i % nodes_per_facet == 0)
+            {
                 const SurfacePatchCL::FacetT& facet= p.facet_begin()[i/nodes_per_facet];
                 const BaryCoordCL verts[3]= { p.vertex_begin()[facet[0]],
                                               p.vertex_begin()[facet[1]],
-                                              p.vertex_begin()[facet[2]] };
+                                              p.vertex_begin()[facet[2]]
+                                            };
                 set_surface_patch (verts, pos_pt);
             }
             set_point (qdom.vertex_begin ()[i], /*surface_data_p=*/ true);
@@ -371,7 +424,7 @@ class LocalMeshTransformationCL
 
 class InterfaceCommonDataDeformP2CL : public TetraAccumulatorCL
 {
-  private:
+private:
     InterfaceCommonDataDeformP2CL** the_clones;
 
     const VecDescCL*   ls;      // P2-level-set
@@ -379,7 +432,7 @@ class InterfaceCommonDataDeformP2CL : public TetraAccumulatorCL
 
     const PrincipalLatticeCL* lat;
 
-  public:
+public:
     /// common data @{
     VecDescCL* Psi_vd;
     LocalP2CL<> locp2_ls;
@@ -399,38 +452,50 @@ class InterfaceCommonDataDeformP2CL : public TetraAccumulatorCL
 
     mutable LocalMeshTransformationCL Phi;
 
-    const PrincipalLatticeCL& get_lattice () const { return *lat; }
+    const PrincipalLatticeCL& get_lattice () const
+    {
+        return *lat;
+    }
     /// @}
 
-    InterfaceCommonDataDeformP2CL& get_clone () {
+    InterfaceCommonDataDeformP2CL& get_clone ()
+    {
         const int tid= omp_get_thread_num();
         return tid == 0 ? *this : the_clones[tid][0];
     }
-    const InterfaceCommonDataDeformP2CL& get_clone () const {
+    const InterfaceCommonDataDeformP2CL& get_clone () const
+    {
         const int tid= omp_get_thread_num();
         return tid == 0 ? *this : the_clones[tid][0];
     }
 
-    bool empty () const { return surf.empty(); }
+    bool empty () const
+    {
+        return surf.empty();
+    }
 
-    void set_lattice (const PrincipalLatticeCL& newlat) {
+    void set_lattice (const PrincipalLatticeCL& newlat)
+    {
         lat= &newlat;
         ls_loc.resize( lat->vertex_size());
     }
 
     InterfaceCommonDataDeformP2CL (const VecDescCL& ls_arg, const BndDataCL<>& lsetbnd_arg,
-        VecDescCL& Psi_vdarg, const PrincipalLatticeCL& lat_arg);
+                                   VecDescCL& Psi_vdarg, const PrincipalLatticeCL& lat_arg);
     virtual ~InterfaceCommonDataDeformP2CL () {}
 
-    virtual void begin_accumulation () {
+    virtual void begin_accumulation ()
+    {
         the_clones= new InterfaceCommonDataDeformP2CL*[omp_get_max_threads()];
         the_clones[0]= this;
     }
-    virtual void finalize_accumulation() {
+    virtual void finalize_accumulation()
+    {
         delete[] the_clones;
     }
 
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         surf.clear();
         locp2_ls.assign( t, *ls, *lsetbnd);
         evaluate_on_vertexes( locp2_ls, *lat, Addr( ls_loc));
@@ -460,7 +525,8 @@ class InterfaceCommonDataDeformP2CL : public TetraAccumulatorCL
         Phi.map_QuadDomain (qdom);
     }
 
-    virtual InterfaceCommonDataDeformP2CL* clone (int clone_id) {
+    virtual InterfaceCommonDataDeformP2CL* clone (int clone_id)
+    {
         the_clones[clone_id]= new InterfaceCommonDataDeformP2CL( *this);
         the_clones[clone_id]->Phi.cdata= the_clones[clone_id];
         return the_clones[clone_id];
@@ -469,7 +535,8 @@ class InterfaceCommonDataDeformP2CL : public TetraAccumulatorCL
 
 
 inline void LocalMeshTransformationCL::set_tetra (const TetraCL* t)
-{ // Set Psi, dPhi
+{
+    // Set Psi, dPhi
     b2w.assign (*t);
     w2b.assign (*t);
     const NoBndDataCL<Point3DCL> nobnd;
@@ -481,7 +548,8 @@ inline void LocalMeshTransformationCL::set_tetra (const TetraCL* t)
 
 inline void LocalMeshTransformationCL::map_QuadDomain (QuadDomainCL& qdom)
 {
-    for (Uint i= 0; i < qdom.vertex_size (); ++i) {
+    for (Uint i= 0; i < qdom.vertex_size (); ++i)
+    {
         set_point (qdom.vertex_begin ()[i], /*surface_data_p=*/ false);
         qdom.weight_begin ()[i]*= JPhi*std::abs(cdata->det_T);
     }
@@ -495,44 +563,51 @@ inline void LocalMeshTransformationCL::map_QuadDomain (QuadDomainCL& qdom)
 /// XXX Not OpenMP-thread-safe.
 class QuaQuaQuadDomainMapperAccuCL : public TetraAccumulatorCL
 {
-  private:
+private:
     const InterfaceCommonDataP2CL& cdata_;
 
-  public:
+public:
     DROPS_STD_UNORDERED_MAP<const TetraCL*, QuadDomain2DCL> qmap;
 
     QuaQuaQuadDomainMapperAccuCL (const InterfaceCommonDataP2CL& cdata)
         : cdata_( cdata)
     {}
 
-    void begin_accumulation () {
+    void begin_accumulation ()
+    {
         std::cerr << "QuaQuaQuadDomainMapperAccuCL::begin_accumulation.\n";
         qmap.clear();
     }
-    void finalize_accumulation() {
+    void finalize_accumulation()
+    {
         std::cerr << "QuaQuaQuadDomainMapperAccuCL::finalize_accumulation.\n";
     }
 
-    void visit (const TetraCL&) {
+    void visit (const TetraCL&)
+    {
         const InterfaceCommonDataP2CL& cdata= cdata_.get_clone();
         if (cdata.empty())
             return;
 
-        for (Uint i= 0; i < cdata.qdom.vertex_size(); ++i) {
+        for (Uint i= 0; i < cdata.qdom.vertex_size(); ++i)
+        {
             const TetraBaryPairT& p= cdata.qdom_projected.vertexes()[i];
             const double newweight= cdata.qdom.weight_begin()[i]*cdata.qdom_projected.absdets()[i];
             qmap[p.first].push_back_quad_node( p.second, newweight);
         }
     };
 
-    TetraAccumulatorCL* clone (int /*tid*/) { return new QuaQuaQuadDomainMapperAccuCL( *this); };
+    TetraAccumulatorCL* clone (int /*tid*/)
+    {
+        return new QuaQuaQuadDomainMapperAccuCL( *this);
+    };
 };
 
 
 template <class LocalMatrixT, class InterfaceCommonDataT>
 class InterfaceMatrixAccuCL : public TetraAccumulatorCL
 {
-  private:
+private:
     const InterfaceCommonDataT& cdata_;
     std::string name_;
 
@@ -545,15 +620,19 @@ class InterfaceMatrixAccuCL : public TetraAccumulatorCL
     SArrayCL<IdxT, LocalMatrixT::row_fe_type == P1IF_FE ? 4 : 10> numr;
     SArrayCL<IdxT, LocalMatrixT::col_fe_type == P1IF_FE ? 4 : 10> numc;
 
-  public:
+public:
     InterfaceMatrixAccuCL (MatDescCL* Mmat, const LocalMatrixT& loc_mat, const InterfaceCommonDataT& cdata,
                            std::string name= std::string())
         : cdata_( cdata), name_( name), mat_( Mmat), M( 0), local_mat( loc_mat) {}
     virtual ~InterfaceMatrixAccuCL () {}
 
-    void set_name (const std::string& n) { name_= n; }
+    void set_name (const std::string& n)
+    {
+        name_= n;
+    }
 
-    virtual void begin_accumulation () {
+    virtual void begin_accumulation ()
+    {
         const IdxT num_rows= mat_->RowIdx->NumUnknowns();
         const IdxT num_cols= mat_->ColIdx->NumUnknowns();
 
@@ -573,17 +652,19 @@ class InterfaceMatrixAccuCL : public TetraAccumulatorCL
         M= new MatrixBuilderCL( &mat_->Data, num_rows, num_cols);
     }
 
-    virtual void finalize_accumulation () {
+    virtual void finalize_accumulation ()
+    {
         M->Build();
         delete M;
         M= 0;
-       /* std::cout << "InterfaceMatrixAccuCL::finalize_accumulation";
-        if (name_ != std::string())
-            std::cout << " for \"" << name_ << "\"";
-        std::cout << ": " << mat_->Data.num_nonzeros() << " nonzeros." << std::endl;*/
+        /* std::cout << "InterfaceMatrixAccuCL::finalize_accumulation";
+         if (name_ != std::string())
+             std::cout << " for \"" << name_ << "\"";
+         std::cout << ": " << mat_->Data.num_nonzeros() << " nonzeros." << std::endl;*/
     }
 
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         const InterfaceCommonDataT& cdata= cdata_.get_clone();
         if (cdata.empty())
             return;
@@ -593,14 +674,17 @@ class InterfaceMatrixAccuCL : public TetraAccumulatorCL
         update_global_matrix( *M, local_mat, numr.begin(), numc.begin());
     }
 
-    virtual InterfaceMatrixAccuCL* clone (int /*clone_id*/) { return new InterfaceMatrixAccuCL( *this); }
+    virtual InterfaceMatrixAccuCL* clone (int /*clone_id*/)
+    {
+        return new InterfaceMatrixAccuCL( *this);
+    }
 };
 
 /// \brief Accumulate an interface-vector.
 template <class LocalVectorT, class InterfaceCommonDataT>
 class InterfaceVectorAccuCL : public TetraAccumulatorCL
 {
-  private:
+private:
     const InterfaceCommonDataT& cdata_;
     std::string name_;
 
@@ -608,15 +692,19 @@ class InterfaceVectorAccuCL : public TetraAccumulatorCL
     LocalVectorT local_vec;
     SArrayCL<IdxT, LocalVectorT::row_fe_type == P1IF_FE ? 4 : 10> numry;
 
-  public:
+public:
     InterfaceVectorAccuCL (VecDescCL* y, const LocalVectorT& loc_vec, const InterfaceCommonDataT& cdata,
-                             std::string name= std::string())
+                           std::string name= std::string())
         : cdata_( cdata), name_( name), y_( y), local_vec( loc_vec) {}
     virtual ~InterfaceVectorAccuCL () {}
 
-    void set_name (const std::string& n) { name_= n; }
+    void set_name (const std::string& n)
+    {
+        name_= n;
+    }
 
-    virtual void begin_accumulation () {
+    virtual void begin_accumulation ()
+    {
         /*std::cout << "InterfaceVectorAccuCL::begin_accumulation";
         if (name_ != std::string())
             std::cout << " for \"" << name_ << "\"";
@@ -627,7 +715,8 @@ class InterfaceVectorAccuCL : public TetraAccumulatorCL
 
     virtual void finalize_accumulation() {}
 
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         const InterfaceCommonDataT& cdata= cdata_.get_clone();
         if (cdata.empty())
             return;
@@ -639,158 +728,242 @@ class InterfaceVectorAccuCL : public TetraAccumulatorCL
                 y_->Data[numry[i]]+= local_vec.vec[i];
     }
 
-    virtual InterfaceVectorAccuCL* clone (int /*clone_id*/) { return new InterfaceVectorAccuCL( *this); }
+    virtual InterfaceVectorAccuCL* clone (int /*clone_id*/)
+    {
+        return new InterfaceVectorAccuCL( *this);
+    }
 };
 
 
-    class NarrowBandCommonDataP1CL : public TetraAccumulatorCL
+class NarrowBandCommonDataP1CL : public TetraAccumulatorCL
+{
+private:
+    NarrowBandCommonDataP1CL** the_clones;
+
+    const VecDescCL*   ls;      // P2-level-set
+    const BndDataCL<>* lsetbnd; // boundary data for the level set function
+    const double & dist;//to characterize the width of the narrow band
+    LocalP2CL<> locp2_ls;
+    bool inband_;
+
+public:
+    const PrincipalLatticeCL& lat;
+    LocalP1CL<> p1[4];
+
+    std::valarray<double> ls_loc;
+    SurfacePatchCL surf;
+
+    const NarrowBandCommonDataP1CL& get_clone () const
     {
-    private:
-        NarrowBandCommonDataP1CL** the_clones;
+        const int tid= omp_get_thread_num();
+        return tid == 0 ? *this : the_clones[tid][0];
+    }
 
-        const VecDescCL*   ls;      // P2-level-set
-        const BndDataCL<>* lsetbnd; // boundary data for the level set function
-        const double & dist;//to characterize the width of the narrow band
-        LocalP2CL<> locp2_ls;
-        bool inband_;
-
-    public:
-        const PrincipalLatticeCL& lat;
-        LocalP1CL<> p1[4];
-
-        std::valarray<double> ls_loc;
-        SurfacePatchCL surf;
-
-        const NarrowBandCommonDataP1CL& get_clone () const {
-            const int tid= omp_get_thread_num();
-            return tid == 0 ? *this : the_clones[tid][0];
-        }
-
-        bool empty () const { return surf.empty(); }
-        bool in_band() const {return inband_;}
-
-        NarrowBandCommonDataP1CL (const VecDescCL& ls_arg, const BndDataCL<>& lsetbnd_arg, const double & dst)//need check the distantce~!!!!!!
-                : ls( &ls_arg), lsetbnd( &lsetbnd_arg),dist(dst) ,lat( PrincipalLatticeCL::instance( 2)), ls_loc( lat.vertex_size())
-        { p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.; inband_=true;} // P1-Basis-Functions
-        NarrowBandCommonDataP1CL ()
-                : ls( 0), lsetbnd( 0),dist(0), lat( PrincipalLatticeCL::instance( 2))
-        { p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.; } // P1-Basis-Functions
-
-        virtual ~NarrowBandCommonDataP1CL () {}
-
-        virtual void begin_accumulation   () {
-            the_clones= new NarrowBandCommonDataP1CL*[omp_get_max_threads()];
-            the_clones[0]= this;
-        }
-        virtual void finalize_accumulation() {
-            delete[] the_clones;
-        }
-        virtual void visit (const TetraCL& t) {
-            surf.clear();
-            locp2_ls.assign( t, *ls, *lsetbnd);
-            evaluate_on_vertexes( locp2_ls, lat, Addr( ls_loc));
-            //  std::cout<<dist<<std::endl;
-            inband_=true;
-            if (distance( ls_loc)>dist)
-                // if (equal_signs( ls_loc))
-            {
-                inband_=false;
-                return;
-            }
-            surf.make_patch<MergeCutPolicyCL>( lat, ls_loc);
-        }
-        virtual NarrowBandCommonDataP1CL* clone (int clone_id) {
-            return the_clones[clone_id]= new NarrowBandCommonDataP1CL( *this);
-        }
-    };
-
-    template <class LocalMatrixT>
-    class NarrowBandMatrixAccuP1CL : public TetraAccumulatorCL
+    bool empty () const
     {
-    private:
-        const NarrowBandCommonDataP1CL& cdata_;
-        std::string name_;
+        return surf.empty();
+    }
+    bool in_band() const
+    {
+        return inband_;
+    }
 
-        MatDescCL* mat_; // the matrix
-        MatrixBuilderCL* M;
+    NarrowBandCommonDataP1CL (const VecDescCL& ls_arg, const BndDataCL<>& lsetbnd_arg, const double & dst)//need check the distantce~!!!!!!
+        : ls( &ls_arg), lsetbnd( &lsetbnd_arg),dist(dst),lat( PrincipalLatticeCL::instance( 2)), ls_loc( lat.vertex_size())
+    {
+        p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.;    // P1-Basis-Functions
+        inband_=true;
+    }
+    NarrowBandCommonDataP1CL ()
+        : ls( 0), lsetbnd( 0),dist(0), lat( PrincipalLatticeCL::instance( 2))
+    {
+        p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.;    // P1-Basis-Functions
+    }
 
-        LocalMatrixT local_mat;
+    virtual ~NarrowBandCommonDataP1CL () {}
 
-        Uint lvl;
-        IdxT numr[4],
-                numc[4];
-
-    public:
-        NarrowBandMatrixAccuP1CL (MatDescCL* Mmat, const LocalMatrixT& loc_mat, const NarrowBandCommonDataP1CL& cdata,
-                                  std::string name= std::string())
-                : cdata_( cdata), name_( name), mat_( Mmat), M( 0), local_mat( loc_mat) {}
-        virtual ~NarrowBandMatrixAccuP1CL () {}
-
-        void set_name (const std::string& n) { name_= n; }
-
-        virtual void begin_accumulation () {
-            const IdxT num_rows= mat_->RowIdx->NumUnknowns();
-            const IdxT num_cols= mat_->ColIdx->NumUnknowns();
-            std::cout << "NarrowBandMatrixAccuP1CL::begin_accumulation";
-            if (name_ != std::string())
-                std::cout << " for \"" << name_ << "\"";
-            std::cout  << ": " << num_rows << " rows, " << num_cols << " cols.\n";
-            lvl = mat_->GetRowLevel();
-            M= new MatrixBuilderCL( &mat_->Data, num_rows, num_cols);
+    virtual void begin_accumulation   ()
+    {
+        the_clones= new NarrowBandCommonDataP1CL*[omp_get_max_threads()];
+        the_clones[0]= this;
+    }
+    virtual void finalize_accumulation()
+    {
+        delete[] the_clones;
+    }
+    virtual void visit (const TetraCL& t)
+    {
+        surf.clear();
+        locp2_ls.assign( t, *ls, *lsetbnd);
+        evaluate_on_vertexes( locp2_ls, lat, Addr( ls_loc));
+        //  std::cout<<dist<<std::endl;
+        inband_=true;
+        if (distance( ls_loc)>dist)
+            // if (equal_signs( ls_loc))
+        {
+            inband_=false;
+            return;
         }
+        surf.make_patch<MergeCutPolicyCL>( lat, ls_loc);
+    }
+    virtual NarrowBandCommonDataP1CL* clone (int clone_id)
+    {
+        return the_clones[clone_id]= new NarrowBandCommonDataP1CL( *this);
+    }
+};
 
-        virtual void finalize_accumulation () {
-            M->Build();
-            delete M;
-            M= 0;
-            std::cout << "NarrowBandMatrixAccuP1CL::finalize_accumulation";
-            if (name_ != std::string())
-                std::cout << " for \"" << name_ << "\"";
-            std::cout << ": " << mat_->Data.num_nonzeros() << " nonzeros." << std::endl;
-        }
+template <class LocalMatrixT>
+class NarrowBandMatrixAccuP1CL : public TetraAccumulatorCL
+{
+private:
+    const NarrowBandCommonDataP1CL& cdata_;
+    std::string name_;
 
-        virtual void visit (const TetraCL& t) {
+    MatDescCL* mat_; // the matrix
+    MatrixBuilderCL* M;
 
-            const NarrowBandCommonDataP1CL& cdata= cdata_.get_clone();
-            if (!cdata.in_band())
-                return;
-            local_mat.setup( t, cdata);
-            GetLocalNumbP1NoBnd( numr, t, *mat_->RowIdx);
-            GetLocalNumbP1NoBnd( numc, t, *mat_->ColIdx);
-            update_global_matrix_P1( *M, local_mat.coup, numr, numc);
-        }
+    LocalMatrixT local_mat;
 
-        virtual NarrowBandMatrixAccuP1CL* clone (int /*clone_id*/) { return new NarrowBandMatrixAccuP1CL( *this); }
-    };
+    Uint lvl;
+    IdxT numr[4],
+         numc[4];
+
+public:
+    NarrowBandMatrixAccuP1CL (MatDescCL* Mmat, const LocalMatrixT& loc_mat, const NarrowBandCommonDataP1CL& cdata,
+                              std::string name= std::string())
+        : cdata_( cdata), name_( name), mat_( Mmat), M( 0), local_mat( loc_mat) {}
+    virtual ~NarrowBandMatrixAccuP1CL () {}
+
+    void set_name (const std::string& n)
+    {
+        name_= n;
+    }
+
+    virtual void begin_accumulation ()
+    {
+        const IdxT num_rows= mat_->RowIdx->NumUnknowns();
+        const IdxT num_cols= mat_->ColIdx->NumUnknowns();
+        std::cout << "NarrowBandMatrixAccuP1CL::begin_accumulation";
+        if (name_ != std::string())
+            std::cout << " for \"" << name_ << "\"";
+        std::cout  << ": " << num_rows << " rows, " << num_cols << " cols.\n";
+        lvl = mat_->GetRowLevel();
+        M= new MatrixBuilderCL( &mat_->Data, num_rows, num_cols);
+    }
+
+    virtual void finalize_accumulation ()
+    {
+        M->Build();
+        delete M;
+        M= 0;
+        std::cout << "NarrowBandMatrixAccuP1CL::finalize_accumulation";
+        if (name_ != std::string())
+            std::cout << " for \"" << name_ << "\"";
+        std::cout << ": " << mat_->Data.num_nonzeros() << " nonzeros." << std::endl;
+    }
+
+    virtual void visit (const TetraCL& t)
+    {
+
+        const NarrowBandCommonDataP1CL& cdata= cdata_.get_clone();
+        if (!cdata.in_band())
+            return;
+        local_mat.setup( t, cdata);
+        GetLocalNumbP1NoBnd( numr, t, *mat_->RowIdx);
+        GetLocalNumbP1NoBnd( numc, t, *mat_->ColIdx);
+        update_global_matrix_P1( *M, local_mat.coup, numr, numc);
+    }
+
+    virtual NarrowBandMatrixAccuP1CL* clone (int /*clone_id*/)
+    {
+        return new NarrowBandMatrixAccuP1CL( *this);
+    }
+};
 
 /// \brief Compute the load-vector corresponding to the function f on a single tetra.
 class LocalVectorP1CL
 {
-  private:
+private:
     instat_scalar_fun_ptr f_;
     double time_;
 
     LocalP1CL<> p1[4];
     std::valarray<double> qp1,
-                          qf;
+        qf;
     QuadDomain2DCL qdom;
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P1IF_FE;
 
     double vec[4];
 
-    LocalVectorP1CL (instat_scalar_fun_ptr f, double time) : f_( f), time_( time) { p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.; }
+    LocalVectorP1CL (instat_scalar_fun_ptr f, double time) : f_( f), time_( time)
+    {
+        p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.;
+    }
 
-    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata, const IdxT numr[4]) {
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata, const IdxT numr[4])
+    {
         make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
         resize_and_evaluate_on_vertexes( f_, t, qdom, time_, qf);
         qp1.resize( qdom.vertex_size());
-        for (Uint i= 0; i < 4; ++i) {
-                if (numr[i] == NoIdx)
-                    continue;
-                evaluate_on_vertexes( p1[i], qdom, Addr( qp1));
-                vec[i]= quad_2D( qf*qp1, qdom);
+        for (Uint i= 0; i < 4; ++i)
+        {
+            if (numr[i] == NoIdx)
+                continue;
+            evaluate_on_vertexes( p1[i], qdom, Addr( qp1));
+            vec[i]= quad_2D( qf*qp1, qdom);
+        }
+    }
+};
+
+/// \brief Compute the load-vector corresponding to the function f on a single tetra.
+class LocalVectorF1P1CL
+{
+private:
+    instat_scalar_fun_ptr f_;
+    double time_;
+
+    LocalP1CL<> p1[4];
+    std::valarray<double> qp1,
+        qf,
+        qu,
+        qw;
+    QuadDomain2DCL qdom;
+    double a_,b_,delta_,gamma_;
+    VecDescCL ic_,icw_;
+    MultiGridCL& MG_;
+    const BndDataCL<Point3DCL>& Bnd_v_;
+
+public:
+    static const FiniteElementT row_fe_type= P1IF_FE;
+
+    double vec[4];
+
+    LocalVectorF1P1CL (instat_scalar_fun_ptr f, double time, double a,double b,
+                     double delta,double gamma,VecDescCL& ic,VecDescCL& icw,
+                     MultiGridCL& MG, const BndDataCL<Point3DCL>& Bnd_v)
+                      : f_( f), time_( time),a_(a),b_(b),delta_(delta),gamma_(gamma),
+                      ic_(ic),icw_(icw),MG_(MG),Bnd_v_(Bnd_v)
+    {
+        p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.;
+    }
+
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata, const IdxT numr[4])
+    {
+        make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
+        BndDataCL<> nobnd( 0);
+        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, ic_), t, qdom, qu);
+        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, icw_), t, qdom, qw);
+        //resize_and_evaluate_on_vertexes( f_, t, qdom, time_, qf);
+        qp1.resize( qdom.vertex_size());
+        for (Uint i= 0; i < 4; ++i)
+        {
+            if (numr[i] == NoIdx)
+                continue;
+            evaluate_on_vertexes( p1[i], qdom, Addr( qp1));
+            //vec[i]= quad_2D( qf*qp1, qdom);
+            vec[i]= quad_2D( (-delta_*qu*qu+a_*gamma_+gamma_*qu*qu*qw)*qp1, qdom);
         }
     }
 };
@@ -799,22 +972,24 @@ class LocalVectorP1CL
 template <class  LocalMatrixT>
 class LocalMatVecP1CL
 {
-  private:
+private:
     LocalMatrixT local_mat_;
     IdxT numx_[4];
     const VecDescCL& x_;
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P1IF_FE;
 
     double vec[4];
 
     LocalMatVecP1CL (const LocalMatrixT& local_mat, const VecDescCL* x) : local_mat_( local_mat), x_( *x) {}
 
-    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata, const IdxT numr[4]) {
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata, const IdxT numr[4])
+    {
         local_mat_.setup( t, cdata);
         GetLocalNumbP1NoBnd( numx_, t, *x_.RowIdx);
-        for (int i= 0; i < 4; ++i) {
+        for (int i= 0; i < 4; ++i)
+        {
             vec[i]= 0.;
             if (numr[i] != NoIdx)
                 for (int j= 0; j < 4; ++j)
@@ -827,49 +1002,51 @@ class LocalMatVecP1CL
 
 /// \brief Convenience-function to reduce the number of explicit template-parameters for the massdiv- and the convection-rhs.
 template <template <class> class LocalMatrixT, class DiscVelSolT>
-  inline InterfaceVectorAccuCL<LocalMatVecP1CL< LocalMatrixT<DiscVelSolT> >, InterfaceCommonDataP1CL>*
-  make_wind_dependent_vectorP1_accu (VecDescCL* y, const VecDescCL* x, const InterfaceCommonDataP1CL& cdata, const DiscVelSolT& wind, std::string name= std::string())
+inline InterfaceVectorAccuCL<LocalMatVecP1CL< LocalMatrixT<DiscVelSolT> >, InterfaceCommonDataP1CL>*
+make_wind_dependent_vectorP1_accu (VecDescCL* y, const VecDescCL* x, const InterfaceCommonDataP1CL& cdata, const DiscVelSolT& wind, std::string name= std::string())
 {
     return new InterfaceVectorAccuCL<LocalMatVecP1CL< LocalMatrixT<DiscVelSolT> >, InterfaceCommonDataP1CL>( y,
-        LocalMatVecP1CL< LocalMatrixT<DiscVelSolT> >( LocalMatrixT<DiscVelSolT>( wind), x), cdata, name);
+            LocalMatVecP1CL< LocalMatrixT<DiscVelSolT> >( LocalMatrixT<DiscVelSolT>( wind), x), cdata, name);
 }
 
 /// \brief Convenience-function to reduce the number of explicit template-parameters for the massdiv- and the convection-matrix.
 template <template <class> class LocalMatrixT, class DiscVelSolT>
-  inline InterfaceMatrixAccuCL< LocalMatrixT<DiscVelSolT>, InterfaceCommonDataP1CL>*
-  make_wind_dependent_matrixP1_accu (MatDescCL* mat, const InterfaceCommonDataP1CL& cdata, const DiscVelSolT& wind, std::string name= std::string())
+inline InterfaceMatrixAccuCL< LocalMatrixT<DiscVelSolT>, InterfaceCommonDataP1CL>*
+make_wind_dependent_matrixP1_accu (MatDescCL* mat, const InterfaceCommonDataP1CL& cdata, const DiscVelSolT& wind, std::string name= std::string())
 {
     return new InterfaceMatrixAccuCL< LocalMatrixT<DiscVelSolT>, InterfaceCommonDataP1CL>( mat,
-        LocalMatrixT<DiscVelSolT>( wind), cdata, name);
+            LocalMatrixT<DiscVelSolT>( wind), cdata, name);
 }
 
 /// \brief Convenience-function to reduce the number of explicit template-parameters for the massdiv- and the convection-matrix.
-    template <template <class> class LocalMatrixT, class DiscVelSolT>
-    inline InterfaceMatrixAccuCL< LocalMatrixT<DiscVelSolT>, InterfaceCommonDataP1CL>*
-    make_concentration_dependent_matrixP1_accu (MatDescCL* mat, const InterfaceCommonDataP1CL& cdata, const  instat_vector_fun_ptr normal, double time, const DiscVelSolT& wind, std::string name= std::string())
-    {
-        return new InterfaceMatrixAccuCL< LocalMatrixT<DiscVelSolT>, InterfaceCommonDataP1CL>( mat,
-                LocalMatrixT<DiscVelSolT>( wind, normal, time), cdata, name);
-    }
+template <template <class> class LocalMatrixT, class DiscVelSolT>
+inline InterfaceMatrixAccuCL< LocalMatrixT<DiscVelSolT>, InterfaceCommonDataP1CL>*
+make_concentration_dependent_matrixP1_accu (MatDescCL* mat, const InterfaceCommonDataP1CL& cdata, const  instat_vector_fun_ptr normal, double time, const DiscVelSolT& wind, std::string name= std::string())
+{
+    return new InterfaceMatrixAccuCL< LocalMatrixT<DiscVelSolT>, InterfaceCommonDataP1CL>( mat,
+            LocalMatrixT<DiscVelSolT>( wind, normal, time), cdata, name);
+}
 
 class LocalInterfaceMassP1CL//set up local mass matrix P1
 {
-  private:
+private:
     std::valarray<double> q[4];
     QuadDomain2DCL qdom;
     double alpha_;
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P1IF_FE,
                                 col_fe_type= P1IF_FE;
 
     double coup[4][4];
 
-    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata) {
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata)
+    {
         make_CompositeQuad2Domain2D ( qdom, cdata.surf, t);
         for (int i= 0; i < 4; ++i)
             resize_and_evaluate_on_vertexes ( cdata.p1[i], qdom, q[i]);
-        for (int i= 0; i < 4; ++i) {
+        for (int i= 0; i < 4; ++i)
+        {
             coup[i][i]= quad_2D( q[i]*q[i], qdom);
             for(int j= 0; j < i; ++j)
                 coup[i][j]= coup[j][i]= alpha_*quad_2D( q[j]*q[i], qdom);
@@ -893,36 +1070,37 @@ void SetupNavierStokesIF_P1P1( const MultiGridCL& MG_, MatDescCL* A_P1, MatDescC
 void SetupStokesIF_P1P2      ( const MultiGridCL& MG_, MatDescCL* A_P1, MatDescCL* A_P1_stab, MatDescCL* B_P2P1, MatDescCL* M_P1, MatDescCL* S_P1, MatDescCL* L_P2P1, MatDescCL* L_P2P1_stab, MatDescCL* M_ScalarP2, MatDescCL* A_ScalarP2_stab, const VecDescCL& lset, const LsetBndDataCL& lset_bnd, bool fullgrad);
 void SetupStokesIF_P2P2      ( const MultiGridCL& MG_, MatDescCL* A_P2, MatDescCL* A_P2_stab, MatDescCL* B_P2P2, MatDescCL* M_P2, MatDescCL* S_P2, MatDescCL* L_P2P2, MatDescCL* L_P2P2_stab, MatDescCL* M_ScalarP2, MatDescCL* A_ScalarP2_stab, const VecDescCL& lset, const LsetBndDataCL& lset_bnd, bool fullgrad);
 
-void SetupCahnHilliardIF_P1P1( const MultiGridCL& MG_,  MatDescCL* M_P1, MatDescCL* NormalStab_P1, MatDescCL* TangentStab_P1, MatDescCL* VolumeStab_P1, MatDescCL* L_P1P1 ,MatDescCL* LM_P1P1 ,MatDescCL* Gprimeprime_P1P1 , const VecDescCL& lset, const LsetBndDataCL& lset_bnd, const VecDescCL& velocity, const BndDataCL<Point3DCL>& velocity_bnd,const VecDescCL& volume_fraction, const BndDataCL<>& volume_fraction_bnd);
-    double Mobility_function(double x);
-    double Potential_function(double x);
-    double Potential_prime_function(double x);
-    double Potential_prime_convex_function(double x);
-    double Potential_prime_concave_function(double x);
+void SetupCahnHilliardIF_P1P1( const MultiGridCL& MG_,  MatDescCL* M_P1, MatDescCL* NormalStab_P1, MatDescCL* TangentStab_P1, MatDescCL* VolumeStab_P1, MatDescCL* L_P1P1,MatDescCL* LM_P1P1,MatDescCL* Gprimeprime_P1P1, const VecDescCL& lset, const LsetBndDataCL& lset_bnd, const VecDescCL& velocity, const BndDataCL<Point3DCL>& velocity_bnd,const VecDescCL& volume_fraction, const BndDataCL<>& volume_fraction_bnd);
+double Mobility_function(double x);
+double Potential_function(double x);
+double Potential_prime_function(double x);
+double Potential_prime_convex_function(double x);
+double Potential_prime_concave_function(double x);
 
 void SetupInterfaceVectorRhsP1 (const MultiGridCL& mg, VecDescCL* v,
-    const VecDescCL& ls, const BndDataCL<>& lsbnd, instat_vector_fun_ptr f, double t = 0.);
+                                const VecDescCL& ls, const BndDataCL<>& lsbnd, instat_vector_fun_ptr f, double t = 0.);
 void SetupInterfaceVectorRhsP2 (const MultiGridCL& mg, VecDescCL* v,
-    const VecDescCL& ls, const BndDataCL<>& lsbnd, instat_vector_fun_ptr f);
+                                const VecDescCL& ls, const BndDataCL<>& lsbnd, instat_vector_fun_ptr f);
 
 class LocalLaplaceBeltramiP1CL
 {
-  private:
+private:
     double D_; // diffusion coefficient
 
     Point3DCL grad[4];
     double dummy;
     GridFunctionCL<Point3DCL> n,
-                              q[4];
+                   q[4];
     std::valarray<double> absdet;
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P1IF_FE,
                                 col_fe_type= P1IF_FE;
 
     double coup[4][4];
 
-    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata) {
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata)
+    {
         n.resize( cdata.surf.facet_size());
         absdet.resize( cdata.surf.facet_size());
         if (cdata.surf.normal_empty())
@@ -930,11 +1108,13 @@ class LocalLaplaceBeltramiP1CL
         std::copy( cdata.surf.normal_begin(), cdata.surf.normal_end(), sequence_begin( n));
         std::copy( cdata.surf.absdet_begin(), cdata.surf.absdet_end(), sequence_begin( absdet));
         P1DiscCL::GetGradients( grad, dummy, t);
-        for(int i= 0; i < 4; ++i) {
+        for(int i= 0; i < 4; ++i)
+        {
             q[i].resize( cdata.surf.facet_size());
             q[i]= grad[i] - dot( grad[i], n)*n;
         }
-        for (int i= 0; i < 4; ++i) {
+        for (int i= 0; i < 4; ++i)
+        {
             coup[i][i]= D_* 0.5*(dot(q[i], q[i])*absdet).sum();
             for(int j= 0; j < i; ++j)
                 coup[i][j]= coup[j][i]= D_* 0.5*(dot(q[i], q[j])*absdet).sum();
@@ -945,158 +1125,165 @@ class LocalLaplaceBeltramiP1CL
         :D_( D) {}
 };
 
-    template <typename DiscVelSolT>
-    class LocalLaplaceMobilityP1CL
+template <typename DiscVelSolT>
+class LocalLaplaceMobilityP1CL
+{
+private:
+
+    QuadDomain2DCL qdom;
+    double time_;
+    instat_vector_fun_ptr normal_;
+
+    std::valarray<double> mobility;
+    std::valarray<double> qmobility;
+
+    const DiscVelSolT concentr_;
+
+    LocalP1CL<double> concentr_loc;
+    GridFunctionCL<> qconcentr;
+
+    LocalP1CL<double> P1Hat[4];
+
+    Point3DCL grad[4];
+    double dummy;
+    GridFunctionCL<Point3DCL> n, q[4], qq[4];
+    LocalP1CL<Point3DCL> Normals;
+
+    GridFunctionCL<Point3DCL> qnormal;
+
+    std::valarray<double> absdet;
+
+public:
+    static const FiniteElementT row_fe_type= P1IF_FE,
+                                col_fe_type= P1IF_FE;
+
+    double coup[4][4];
+
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata)
     {
-    private:
 
-        QuadDomain2DCL qdom;
-        double time_;
-        instat_vector_fun_ptr normal_;
+        make_CompositeQuad5Domain2D( qdom, cdata.surf, t);
+        concentr_loc.assign( t, concentr_);
+        //resize_and_evaluate_on_vertexes( concentr_loc, qdom, qconcentr);
 
-        std::valarray<double> mobility;
-        std::valarray<double> qmobility;
+        P1DiscCL::GetGradients( grad, dummy, t);
 
-        const DiscVelSolT concentr_;
+        //qnormal.assign(t, normal_, time_);
+        resize_and_evaluate_on_vertexes( normal_, t, qdom, time_, qnormal);
 
-        LocalP1CL<double> concentr_loc;
-        GridFunctionCL<> qconcentr;
+        /*// Scale Normals accordingly to the Euclidean Norm (only consider the ones which make a contribution in the sense of them being big enough... otherwise one has to expect problems with division through small numbers)
+        for(Uint i=0; i<qnormal.size(); ++i) {
+            //if(qnormal[i].norm()> 1e-8)
+            qnormal[i]= qnormal[i]/qnormal[i].norm();
+        }*/
 
-        LocalP1CL<double> P1Hat[4];
-
-        Point3DCL grad[4];
-        double dummy;
-        GridFunctionCL<Point3DCL> n, q[4], qq[4];
-        LocalP1CL<Point3DCL> Normals;
-
-        GridFunctionCL<Point3DCL> qnormal;
-
-        std::valarray<double> absdet;
-
-    public:
-        static const FiniteElementT row_fe_type= P1IF_FE,
-                col_fe_type= P1IF_FE;
-
-        double coup[4][4];
-
-        void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata) {
-
-            make_CompositeQuad5Domain2D( qdom, cdata.surf, t);
-            concentr_loc.assign( t, concentr_);
-            //resize_and_evaluate_on_vertexes( concentr_loc, qdom, qconcentr);
-
-            P1DiscCL::GetGradients( grad, dummy, t);
-
-            //qnormal.assign(t, normal_, time_);
-            resize_and_evaluate_on_vertexes( normal_, t, qdom, time_, qnormal);
-
-            /*// Scale Normals accordingly to the Euclidean Norm (only consider the ones which make a contribution in the sense of them being big enough... otherwise one has to expect problems with division through small numbers)
-            for(Uint i=0; i<qnormal.size(); ++i) {
-                //if(qnormal[i].norm()> 1e-8)
-                qnormal[i]= qnormal[i]/qnormal[i].norm();
-            }*/
-
-            for(int j=0; j<4 ;++j) {
-                qq[j].resize( qdom.vertex_size());
-                qq[j]= grad[j];
-                qq[j]-= dot( qq[j], qnormal)*qnormal;
-            }
-
-            LocalP1CL<> mobility;
-            for(int i=0; i<4 ; ++i)
-            {
-                mobility += Mobility_function(concentr_loc[i])*cdata.p1[i];
-            }
-            resize_and_evaluate_on_vertexes (mobility, qdom, qmobility);
-
-
-            for (int i= 0; i < 4; ++i)
-                for(int j= 0; j < 4; ++j) {
-                    coup[i][j]= quad_2D( qmobility*dot(qq[i],qq[j]), qdom);
-                }
-
+        for(int j=0; j<4 ; ++j)
+        {
+            qq[j].resize( qdom.vertex_size());
+            qq[j]= grad[j];
+            qq[j]-= dot( qq[j], qnormal)*qnormal;
         }
 
-        LocalLaplaceMobilityP1CL (const DiscVelSolT& conc, instat_vector_fun_ptr normal, double t)
-                :concentr_(conc), normal_(normal), time_(t) {}
-    };
+        LocalP1CL<> mobility;
+        for(int i=0; i<4 ; ++i)
+        {
+            mobility += Mobility_function(concentr_loc[i])*cdata.p1[i];
+        }
+        resize_and_evaluate_on_vertexes (mobility, qdom, qmobility);
+
+
+        for (int i= 0; i < 4; ++i)
+            for(int j= 0; j < 4; ++j)
+            {
+                coup[i][j]= quad_2D( qmobility*dot(qq[i],qq[j]), qdom);
+            }
+
+    }
+
+    LocalLaplaceMobilityP1CL (const DiscVelSolT& conc, instat_vector_fun_ptr normal, double t)
+        :concentr_(conc), normal_(normal), time_(t) {}
+};
 
 /// \brief The routine sets up the Laplace-matrix in mat in bulk element in a narrow band near the interface defined by ls.
 ///        It belongs to the FE induced by standard P1-elements.
 ///        Notmal gradient is used for stabilization in solving surface diffusion equation
 /// D is the diffusion-coefficient
 
-    class LocalNormalLaplaceBulkP1CL
+class LocalNormalLaplaceBulkP1CL
+{
+private:
+    double D_; // diffusion coefficient- stabilization parameter?
+    double dt_;
+    instat_vector_fun_ptr normal_;
+    double time_;
+
+    Point3DCL grad[4];
+    double dummy;
+    double absdet;
+    //GridFunctionCL<Point3DCL> q[4];
+    Quad5CL<double> U_Grad[4];
+    Quad5CL<Point3DCL> qnormal;
+
+public:
+    static const FiniteElementT row_fe_type= P1IF_FE,
+                                col_fe_type= P1IF_FE;
+    double coup[4][4];
+
+    void setup (const TetraCL& tet, const NarrowBandCommonDataP1CL& cdata)
     {
-    private:
-        double D_; // diffusion coefficient- stabilization parameter?
-        double dt_;
-        instat_vector_fun_ptr normal_;
-        double time_;
 
-        Point3DCL grad[4];
-        double dummy;
-        double absdet;
-        //GridFunctionCL<Point3DCL> q[4];
-        Quad5CL<double> U_Grad[4];
-        Quad5CL<Point3DCL> qnormal;
+        P1DiscCL::GetGradients( grad, dummy, tet);
 
-    public:
-        static const FiniteElementT row_fe_type= P1IF_FE,
-                col_fe_type= P1IF_FE;
-        double coup[4][4];
+        qnormal.assign(tet,normal_,time_,Quad5DataCL::Node);
 
-        void setup (const TetraCL& tet, const NarrowBandCommonDataP1CL& cdata) {
+        for(int i=0; i<4; ++i)
+            U_Grad[i]=dot( qnormal, Quad5CL<Point3DCL>( grad[i]));
 
-            P1DiscCL::GetGradients( grad, dummy, tet);
+        absdet=std::abs(dummy);
 
-            qnormal.assign(tet,normal_,time_,Quad5DataCL::Node);
-
-            for(int i=0; i<4; ++i)
-                U_Grad[i]=dot( qnormal, Quad5CL<Point3DCL>( grad[i]));
-
-            absdet=std::abs(dummy);
-
-            dummy=std::pow(absdet,1./3); //of order h--meshsize of the tetra hedra~~!!!!
-            //  std::cout<<"dummy  "<<dummy<<std::endl;
-            for (int i= 0; i < 4; ++i) {
-                for(int j= 0; j <= i; ++j)
-                {
-                    Quad5CL<double> res3( U_Grad[i] * U_Grad[j]);
-                    coup[i][j]= coup[j][i]=D_*//(1.0+1.0/(dummy+dt_))*
-                            res3.quad(absdet/6);//D_*(D_/dummy+dummy/dt_+0.2)*// D_*
-                    //  	std::cout<<i<<" "<<j<<" : "<<coup[i][j]<<"  "<<coup[j][i]<<" ; ";
-                }
-                //   std::cout<<std::endl;
+        dummy=std::pow(absdet,1./3); //of order h--meshsize of the tetra hedra~~!!!!
+        //  std::cout<<"dummy  "<<dummy<<std::endl;
+        for (int i= 0; i < 4; ++i)
+        {
+            for(int j= 0; j <= i; ++j)
+            {
+                Quad5CL<double> res3( U_Grad[i] * U_Grad[j]);
+                coup[i][j]= coup[j][i]=D_*//(1.0+1.0/(dummy+dt_))*
+                                       res3.quad(absdet/6);//D_*(D_/dummy+dummy/dt_+0.2)*// D_*
+                //  	std::cout<<i<<" "<<j<<" : "<<coup[i][j]<<"  "<<coup[j][i]<<" ; ";
             }
-            // std::cin>>dummy;
+            //   std::cout<<std::endl;
         }
-        void setup (const TetraCL& tet, const InterfaceCommonDataP1CL& cdata) {
+        // std::cin>>dummy;
+    }
+    void setup (const TetraCL& tet, const InterfaceCommonDataP1CL& cdata)
+    {
 
-            P1DiscCL::GetGradients( grad, dummy, tet);
+        P1DiscCL::GetGradients( grad, dummy, tet);
 
-            qnormal.assign(tet,normal_,time_,Quad5DataCL::Node);
+        qnormal.assign(tet,normal_,time_,Quad5DataCL::Node);
 
-            for(int i=0; i<4; ++i)
-                U_Grad[i]=dot( qnormal, Quad5CL<Point3DCL>( grad[i]));
+        for(int i=0; i<4; ++i)
+            U_Grad[i]=dot( qnormal, Quad5CL<Point3DCL>( grad[i]));
 
-            absdet=std::abs(dummy);
+        absdet=std::abs(dummy);
 
-            dummy=std::pow(absdet,1./3); //of order h--meshsize of the tetra hedra~~!!!!
-            //std::cout<<"dummy  "<<dummy<<std::endl;
-            for (int i= 0; i < 4; ++i) {
-                for(int j= 0; j <= i; ++j)
-                {
-                    Quad5CL<double> res3( U_Grad[i] * U_Grad[j]);
-                    coup[i][j]= coup[j][i]= D_*res3.quad(absdet/6);//dummy*
-                    // 	std::cout<<coup[i][j]<<std::endl;
-                }
+        dummy=std::pow(absdet,1./3); //of order h--meshsize of the tetra hedra~~!!!!
+        //std::cout<<"dummy  "<<dummy<<std::endl;
+        for (int i= 0; i < 4; ++i)
+        {
+            for(int j= 0; j <= i; ++j)
+            {
+                Quad5CL<double> res3( U_Grad[i] * U_Grad[j]);
+                coup[i][j]= coup[j][i]= D_*res3.quad(absdet/6);//dummy*
+                // 	std::cout<<coup[i][j]<<std::endl;
             }
-            // std::cin>>dummy;
         }
-        LocalNormalLaplaceBulkP1CL (double D,double dt,instat_vector_fun_ptr normal, double t)
-                :D_( D),dt_(dt),normal_(normal),time_(t) {}
-    };
+        // std::cin>>dummy;
+    }
+    LocalNormalLaplaceBulkP1CL (double D,double dt,instat_vector_fun_ptr normal, double t)
+        :D_( D),dt_(dt),normal_(normal),time_(t) {}
+};
 
 
 /// \brief The routine sets up the convection-matrix in mat on the interface defined by ls.
@@ -1110,7 +1297,7 @@ void SetupConvectionP1 (const MultiGridCL& mg, MatDescCL* mat, const VecDescCL& 
 template <class DiscVelSolT>
 class LocalInterfaceConvectionP1CL
 {
-  private:
+private:
     const DiscVelSolT w_; // wind
 
     QuadDomain2DCL qdom;
@@ -1120,7 +1307,7 @@ class LocalInterfaceConvectionP1CL
     std::valarray<double> q[4];
     GridFunctionCL<Point3DCL> qw;
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P1IF_FE,
                                 col_fe_type= P1IF_FE;
 
@@ -1143,7 +1330,7 @@ void SetupMassDivP1 (const MultiGridCL& mg, MatDescCL* mat, const VecDescCL& ls,
 template <typename DiscVelSolT>
 class LocalInterfaceMassDivP1CL
 {
-  private:
+private:
     const DiscVelSolT w_;
 
     QuadDomain2DCL qdom;
@@ -1152,13 +1339,13 @@ class LocalInterfaceMassDivP1CL
     double dummy;
     SMatrixCL<3,3> T;
     GridFunctionCL<Point3DCL> n,
-                              qgradp2i;
+                   qgradp2i;
     std::valarray<double> qdivgamma_w;
     LocalP1CL<Point3DCL> gradrefp2[10],
-                         gradp2[10];
+              gradp2[10];
 
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P1IF_FE,
                                 col_fe_type= P1IF_FE;
 
@@ -1167,7 +1354,10 @@ class LocalInterfaceMassDivP1CL
     void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata);
 
     LocalInterfaceMassDivP1CL (const DiscVelSolT& w)
-        : w_( w) { P2DiscCL::GetGradientsOnRef( gradrefp2); }
+        : w_( w)
+    {
+        P2DiscCL::GetGradientsOnRef( gradrefp2);
+    }
 };
 
 
@@ -1175,28 +1365,30 @@ class LocalInterfaceMassDivP1CL
 /// \brief Compute the P2 load vector corresponding to the function f on a single tetra.
 class LocalVectorP2CL
 {
-  private:
+private:
     instat_scalar_fun_ptr f_;
     double time_;
 
     std::valarray<double> qp2,
-                          qf;
+        qf;
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P2IF_FE;
 
     double vec[10];
 
     LocalVectorP2CL (instat_scalar_fun_ptr f, double time) : f_( f), time_( time) {}
 
-    void setup (const TetraCL&, const InterfaceCommonDataP2CL& cdata, const IdxT numr[10]) {
+    void setup (const TetraCL&, const InterfaceCommonDataP2CL& cdata, const IdxT numr[10])
+    {
         resize_and_evaluate_on_vertexes( f_, cdata.qdom_projected.vertexes(), time_, qf);
         qp2.resize( cdata.qdom.vertex_size());
-        for (Uint i= 0; i < 10; ++i) {
-                if (numr[i] == NoIdx)
-                    continue;
-                evaluate_on_vertexes( cdata.p2[i], cdata.qdom, Addr( qp2));
-                vec[i]= quad_2D( cdata.qdom_projected.absdets()*qf*qp2, cdata.qdom);
+        for (Uint i= 0; i < 10; ++i)
+        {
+            if (numr[i] == NoIdx)
+                continue;
+            evaluate_on_vertexes( cdata.p2[i], cdata.qdom, Addr( qp2));
+            vec[i]= quad_2D( cdata.qdom_projected.absdets()*qf*qp2, cdata.qdom);
         }
     }
 };
@@ -1208,7 +1400,7 @@ void gradient_trafo (const TetraCL& tet, const BaryCoordCL& xb, const QuaQuaMapp
 
 class LocalLaplaceBeltramiP2CL
 {
-  private:
+private:
     double D_; // diffusion coefficient
 
     LocalP1CL<Point3DCL> gradp2[10];
@@ -1217,15 +1409,19 @@ class LocalLaplaceBeltramiP2CL
     GridFunctionCL<Point3DCL> nl;
     GridFunctionCL<SMatrixCL<3,3> > Winv;
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P2IF_FE,
                                 col_fe_type= P2IF_FE;
 
     double coup[10][10];
 
-    const GridFunctionCL<Point3DCL>& get_qgradp2 (size_t i) { return qgradp2[i]; }
+    const GridFunctionCL<Point3DCL>& get_qgradp2 (size_t i)
+    {
+        return qgradp2[i];
+    }
 
-    void setup (const TetraCL& t, const InterfaceCommonDataP2CL& cdata) {
+    void setup (const TetraCL& t, const InterfaceCommonDataP2CL& cdata)
+    {
         if (cdata.surf.normal_empty())
             cdata.surf.compute_normals( t);
         resize_and_scatter_piecewise_normal( cdata.surf, cdata.qdom, nl);
@@ -1233,10 +1429,12 @@ class LocalLaplaceBeltramiP2CL
         Winv.resize( cdata.qdom.vertex_size());
         QRDecompCL<3,3> qr;
         SVectorCL<3> tmp;
-        for (Uint i= 0; i < cdata.qdom.vertex_size(); ++i) {
+        for (Uint i= 0; i < cdata.qdom.vertex_size(); ++i)
+        {
             gradient_trafo( t, cdata.qdom.vertex_begin()[i], cdata.quaqua, cdata.surf, qr.GetMatrix());
             qr.prepare_solve();
-            for (Uint j= 0; j < 3; ++j) {
+            for (Uint j= 0; j < 3; ++j)
+            {
                 tmp= std_basis<3>( j + 1);
                 qr.Solve( tmp);
                 Winv[i].col( j, tmp);
@@ -1247,15 +1445,18 @@ class LocalLaplaceBeltramiP2CL
         SMatrixCL<3,3> T;
         GetTrafoTr( T, dummy, t);
         P2DiscCL::GetGradients( gradp2, cdata.gradrefp2, T);
-        for (int i= 0; i < 10; ++i) {
+        for (int i= 0; i < 10; ++i)
+        {
             resize_and_evaluate_on_vertexes ( gradp2[i], cdata.qdom, qgradp2[i]);
-            for (Uint j= 0; j < qgradp2[i].size(); ++j) {
+            for (Uint j= 0; j < qgradp2[i].size(); ++j)
+            {
                 tmp=  qgradp2[i][j] - inner_prod( nl[j], qgradp2[i][j])*nl[j];
                 qgradp2[i][j]= Winv[j]*tmp;
             }
         }
 
-        for (int i= 0; i < 10; ++i) {
+        for (int i= 0; i < 10; ++i)
+        {
             coup[i][i]= quad_2D( cdata.qdom_projected.absdets()*dot( qgradp2[i], qgradp2[i]), cdata.qdom);
             for(int j= 0; j < i; ++j)
                 coup[i][j]= coup[j][i]= quad_2D( cdata.qdom_projected.absdets()*dot( qgradp2[j], qgradp2[i]), cdata.qdom);
@@ -1268,20 +1469,22 @@ class LocalLaplaceBeltramiP2CL
 
 class LocalMassP2CL
 {
-  private:
+private:
     std::valarray<double> qp2[10];
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P2IF_FE,
                                 col_fe_type= P2IF_FE;
 
     double coup[10][10];
 
-    void setup (const TetraCL&, const InterfaceCommonDataP2CL& cdata) {
+    void setup (const TetraCL&, const InterfaceCommonDataP2CL& cdata)
+    {
         for (int i= 0; i < 10; ++i)
             resize_and_evaluate_on_vertexes ( cdata.p2[i], cdata.qdom, qp2[i]);
 
-        for (int i= 0; i < 10; ++i) {
+        for (int i= 0; i < 10; ++i)
+        {
             coup[i][i]= quad_2D( cdata.qdom_projected.absdets()*qp2[i]*qp2[i], cdata.qdom);
             for(int j= 0; j < i; ++j)
                 coup[i][j]= coup[j][i]= quad_2D( cdata.qdom_projected.absdets()*qp2[j]*qp2[i], cdata.qdom);
@@ -1294,48 +1497,52 @@ class LocalMassP2CL
 /// \brief Compute the P2 load vector corresponding to the function f on a single tetra.
 class LocalVectorDeformP2CL
 {
-  private:
+private:
     instat_scalar_fun_ptr f_;
     double time_;
 
     std::valarray<double> qp2,
-                          qf;
+        qf;
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P2IF_FE;
 
     double vec[10];
 
     LocalVectorDeformP2CL (instat_scalar_fun_ptr f, double time) : f_( f), time_( time) {}
 
-    void setup (const TetraCL& t, const InterfaceCommonDataDeformP2CL& cdata, const IdxT numr[10]) {
+    void setup (const TetraCL& t, const InterfaceCommonDataDeformP2CL& cdata, const IdxT numr[10])
+    {
         resize_and_evaluate_on_vertexes( f_, t, cdata.qdom2d_full, time_, qf);
         qp2.resize( cdata.qdom2d_full.vertex_size());
-        for (Uint i= 0; i < 10; ++i) {
-                if (numr[i] == NoIdx)
-                    continue;
-                evaluate_on_vertexes( cdata.p2[i], cdata.qdom2d_only_weights, Addr( qp2));
-                vec[i]= quad_2D( qf*qp2, cdata.qdom2d_full);
+        for (Uint i= 0; i < 10; ++i)
+        {
+            if (numr[i] == NoIdx)
+                continue;
+            evaluate_on_vertexes( cdata.p2[i], cdata.qdom2d_only_weights, Addr( qp2));
+            vec[i]= quad_2D( qf*qp2, cdata.qdom2d_full);
         }
     }
 };
 
 class LocalMassDeformP2CL
 {
-  private:
+private:
     std::valarray<double> qp2[10];
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P2IF_FE,
                                 col_fe_type= P2IF_FE;
 
     double coup[10][10];
 
-    void setup (const TetraCL&, const InterfaceCommonDataDeformP2CL& cdata) {
+    void setup (const TetraCL&, const InterfaceCommonDataDeformP2CL& cdata)
+    {
         for (int i= 0; i < 10; ++i)
             resize_and_evaluate_on_vertexes ( cdata.p2[i], cdata.qdom2d_only_weights, qp2[i]);
 
-        for (int i= 0; i < 10; ++i) {
+        for (int i= 0; i < 10; ++i)
+        {
             coup[i][i]= quad_2D (qp2[i]*qp2[i], cdata.qdom2d_only_weights);
             for(int j= 0; j < i; ++j)
                 coup[i][j]= coup[j][i]= quad_2D (qp2[j]*qp2[i], cdata.qdom2d_only_weights);
@@ -1347,7 +1554,7 @@ class LocalMassDeformP2CL
 
 class LocalLaplaceBeltramiDeformP2CL
 {
-  private:
+private:
     double D_; // diffusion coefficient
 
     GridFunctionCL<Point3DCL> qgradp2[10];
@@ -1355,24 +1562,28 @@ class LocalLaplaceBeltramiDeformP2CL
     GridFunctionCL<Point3DCL> nl;
     GridFunctionCL<SMatrixCL<3,3> > Ginv_wwT;
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P2IF_FE,
                                 col_fe_type= P2IF_FE;
 
     double coup[10][10];
 
-    void setup (const TetraCL&, const InterfaceCommonDataDeformP2CL& cdata) {
+    void setup (const TetraCL&, const InterfaceCommonDataDeformP2CL& cdata)
+    {
         Ginv_wwT.resize( cdata.qdom2d_only_weights.vertex_size());
-        for (Uint i= 0; i < cdata.qdom2d_only_weights.vertex_size(); ++i) {
+        for (Uint i= 0; i < cdata.qdom2d_only_weights.vertex_size(); ++i)
+        {
             cdata.Phi.set_point (cdata.qdom2d_only_weights.vertex_begin()[i], true);
             Ginv_wwT[i]= cdata.Phi.Ginv_wwT;
         }
 
-        for (int i= 0; i < 10; ++i) {
+        for (int i= 0; i < 10; ++i)
+        {
             resize_and_evaluate_on_vertexes ( cdata.gradp2[i], cdata.qdom2d_only_weights, qgradp2[i]);
         }
 
-        for (int i= 0; i < 10; ++i) {
+        for (int i= 0; i < 10; ++i)
+        {
             coup[i][i]= D_*quad_2D( dot( qgradp2[i], Ginv_wwT, qgradp2[i]), cdata.qdom2d_only_weights);
             for(int j= 0; j < i; ++j)
                 coup[i][j]= coup[j][i]= D_*quad_2D( dot( qgradp2[j], Ginv_wwT, qgradp2[i]), cdata.qdom2d_only_weights);
@@ -1385,29 +1596,33 @@ class LocalLaplaceBeltramiDeformP2CL
 
 class LocalNormalLaplaceDeformP2CL
 {
-  private:
+private:
     double D_; // diffusion coefficient
 
     GridFunctionCL<Point3DCL> qgradp2[10];
     GridFunctionCL<> qngradp2[10];
 
-  public:
+public:
     static const FiniteElementT row_fe_type= P2IF_FE,
                                 col_fe_type= P2IF_FE;
 
     double coup[10][10];
 
-    void setup (const TetraCL&, const InterfaceCommonDataDeformP2CL& cdata) {
-        for (int i= 0; i < 10; ++i) {
+    void setup (const TetraCL&, const InterfaceCommonDataDeformP2CL& cdata)
+    {
+        for (int i= 0; i < 10; ++i)
+        {
             resize_and_evaluate_on_vertexes ( cdata.gradp2[i], cdata.qdom, qgradp2[i]);
             qngradp2[i].resize (cdata.qdom.vertex_size ());
-            for (Uint j= 0; j < qgradp2[i].size(); ++j) {
+            for (Uint j= 0; j < qgradp2[i].size(); ++j)
+            {
                 cdata.Phi.set_point (cdata.qdom.vertex_begin()[j], true);
                 qngradp2[i][j]= inner_prod( cdata.Phi.w, qgradp2[i][j]);
-             }
+            }
         }
 
-        for (int i= 0; i < 10; ++i) {
+        for (int i= 0; i < 10; ++i)
+        {
             coup[i][i]= D_*quad( qngradp2[i]*qngradp2[i], 1., cdata.qdom);
             for(int j= 0; j < i; ++j)
                 coup[i][j]= coup[j][i]= D_*quad( qngradp2[j]*qngradp2[i], 1., cdata.qdom);
@@ -1423,7 +1638,7 @@ class LocalNormalLaplaceDeformP2CL
 /// \brief The routine sets up the load-vector in v on the interface defined by ls.
 ///        It belongs to the FE induced by standard P1-elements.
 void SetupInterfaceRhsP1 (const MultiGridCL& mg, VecDescCL* v,
-    const VecDescCL& ls, const BndDataCL<>& lsbnd, instat_scalar_fun_ptr f, double t = 0.);
+                          const VecDescCL& ls, const BndDataCL<>& lsbnd, instat_scalar_fun_ptr f, double t = 0.);
 
 
 ///\brief Initialize the QuadDomain2DCL-object qdom for quadrature with Quad5_2DCL on the lattice lat of t, given the level set in ls and bnd.
@@ -1433,7 +1648,8 @@ make_CompositeQuad5Domain2D (QuadDomain2DCL& qdom, const TetraCL& t, const Princ
     LocalP2CL<> locp2_ls( t, ls, bnd);
     std::valarray<double> ls_loc( lat.vertex_size());
     evaluate_on_vertexes( locp2_ls, lat, Addr( ls_loc));
-    if (equal_signs( ls_loc)) {
+    if (equal_signs( ls_loc))
+    {
         qdom.clear();
         return qdom;
     }
@@ -1445,7 +1661,7 @@ make_CompositeQuad5Domain2D (QuadDomain2DCL& qdom, const TetraCL& t, const Princ
 /// \brief Short-hand for integral on the interface.
 template <typename DiscP1FunT>
 double Integral_Gamma (const DROPS::MultiGridCL& mg, const DROPS::VecDescCL& ls, const DROPS::BndDataCL<>& bnd,
-    const DiscP1FunT& discsol, Uint lattice_num_intervals= 2)
+                       const DiscP1FunT& discsol, Uint lattice_num_intervals= 2)
 {
     const DROPS::Uint lvl = ls.GetLevel();
     const PrincipalLatticeCL& lat= PrincipalLatticeCL::instance( lattice_num_intervals);
@@ -1453,7 +1669,8 @@ double Integral_Gamma (const DROPS::MultiGridCL& mg, const DROPS::VecDescCL& ls,
     std::valarray<double> q;
     QuadDomain2DCL qdom;
     double d( 0.);
-    DROPS_FOR_TRIANG_CONST_TETRA( mg, lvl, it) {
+    DROPS_FOR_TRIANG_CONST_TETRA( mg, lvl, it)
+    {
         make_CompositeQuad5Domain2D( qdom, *it, lat, ls, bnd);
         resize_and_evaluate_on_vertexes( discsol, *it, qdom, q);
         d+= quad_2D( q, qdom);
@@ -1464,7 +1681,7 @@ double Integral_Gamma (const DROPS::MultiGridCL& mg, const DROPS::VecDescCL& ls,
 /// \brief Short-hand for integral on the interface, h^3-version through interpolation.
 template <typename DiscP1FunT>
 double Integral_Gamma_Extrapolate (const DROPS::MultiGridCL& mg, const DROPS::VecDescCL& ls, const DROPS::BndDataCL<>& bnd,
-    const DiscP1FunT& discsol)
+                                   const DiscP1FunT& discsol)
 {
     return (4.*Integral_Gamma( mg, ls, bnd, discsol, 2) - Integral_Gamma_Coarse( mg, ls, bnd, discsol, 1))/3.;
 }
@@ -1474,7 +1691,7 @@ double Integral_Gamma_Extrapolate (const DROPS::MultiGridCL& mg, const DROPS::Ve
 /// This is only correct for 1 OpenMP-Thread due to update races.
 class InterfaceDebugP2CL : public TetraAccumulatorCL
 {
-  private:
+private:
     const InterfaceCommonDataP2CL& cdata_;
 
     VecDescCL* to_iface; // For all P2-dofs x at the interface: p_h(x) - x. Computed if to_iface != 0.
@@ -1489,11 +1706,23 @@ class InterfaceDebugP2CL : public TetraAccumulatorCL
            max_dph2_err;
     double true_area;
 
-  public:
-    void store_offsets( VecDescCL& to_ifacearg) { to_iface= &to_ifacearg; }
-    void set_true_area( double a) { true_area= a; }
-    void set_ref_dp   ( instat_matrix_fun_ptr rdp) { ref_dp= rdp; }
-    void set_ref_abs_det   ( double (*rad) (const TetraCL& t, const BaryCoordCL& b, const SurfacePatchCL& surf)) { ref_abs_det= rad; }
+public:
+    void store_offsets( VecDescCL& to_ifacearg)
+    {
+        to_iface= &to_ifacearg;
+    }
+    void set_true_area( double a)
+    {
+        true_area= a;
+    }
+    void set_ref_dp   ( instat_matrix_fun_ptr rdp)
+    {
+        ref_dp= rdp;
+    }
+    void set_ref_abs_det   ( double (*rad) (const TetraCL& t, const BaryCoordCL& b, const SurfacePatchCL& surf))
+    {
+        ref_abs_det= rad;
+    }
 
     InterfaceDebugP2CL (const InterfaceCommonDataP2CL& cdata);
     virtual ~InterfaceDebugP2CL () {}
@@ -1503,616 +1732,659 @@ class InterfaceDebugP2CL : public TetraAccumulatorCL
 
     virtual void visit (const TetraCL& t);
 
-    virtual InterfaceDebugP2CL* clone (int /*clone_id*/) { return new InterfaceDebugP2CL( *this); }
+    virtual InterfaceDebugP2CL* clone (int /*clone_id*/)
+    {
+        return new InterfaceDebugP2CL( *this);
+    }
 };
 
 /// \brief P1-discretization and solution of an equation on the interface
 class SurfacePDEP1BaseCL
-        {
-    public:
-        typedef BndDataCL<Point3DCL>  VelBndDataT;
-        typedef NoBndDataCL<>         BndDataT;
+{
+public:
+    typedef BndDataCL<Point3DCL>  VelBndDataT;
+    typedef NoBndDataCL<>         BndDataT;
 
-    protected:
-        MultiGridCL&  MG_;
-        //SolverBaseCL& solver_;
+protected:
+    MultiGridCL&  MG_;
+    //SolverBaseCL& solver_;
 
-        double  theta_, ///< time scheme parameter
-                dt_;    ///< time step size
+    double  theta_, ///< time scheme parameter
+            dt_;    ///< time step size
 
-        BndDataT            Bnd_;    ///< Dummy boundary data for interface solution
+    BndDataT            Bnd_;    ///< Dummy boundary data for interface solution
 
-        const VelBndDataT&  Bnd_v_;  ///< Boundary condition for the velocity
-        VecDescCL*          v_;      ///< velocity at current time step
-        VecDescCL*          nd_;      ///< normal at current time step
-        VecDescCL&          lset_vd_;///< levelset at current time step
-        const BndDataCL<>&  lsetbnd_;///< level set boundary
+    const VelBndDataT&  Bnd_v_;  ///< Boundary condition for the velocity
+    VecDescCL*          v_;      ///< velocity at current time step
+    VecDescCL*          nd_;      ///< normal at current time step
+    VecDescCL&          lset_vd_;///< levelset at current time step
+    const BndDataCL<>&  lsetbnd_;///< level set boundary
 
-        VecDescCL           oldls_;  ///< levelset at old time
-        VecDescCL           oldv_;   ///< velocity at old time
-        double              oldt_;   ///< old time
+    VecDescCL           oldls_;  ///< levelset at old time
+    VecDescCL           oldv_;   ///< velocity at old time
+    double              oldt_;   ///< old time
 
-    public:
-        SurfacePDEP1BaseCL(MultiGridCL& mg,
-                         double theta, VecDescCL* v, VecDescCL* nd, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                         int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
-                : MG_( mg), theta_( theta), dt_( 0.), Bnd_v_( Bnd_v), v_( v), nd_(nd),lset_vd_( lset_vd), lsetbnd_( lsetbnd)
-        {}
-        SurfacePDEP1BaseCL(MultiGridCL& mg,
-                         double theta, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                         int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
-                : MG_( mg), theta_( theta), dt_( 0.), Bnd_v_( Bnd_v), v_( v),lset_vd_( lset_vd), lsetbnd_( lsetbnd)
-        {}
-        virtual ~SurfacePDEP1BaseCL () {}
+public:
+    SurfacePDEP1BaseCL(MultiGridCL& mg,
+                       double theta, VecDescCL* v, VecDescCL* nd, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                       int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+        : MG_( mg), theta_( theta), dt_( 0.), Bnd_v_( Bnd_v), v_( v), nd_(nd),lset_vd_( lset_vd), lsetbnd_( lsetbnd)
+    {}
+    SurfacePDEP1BaseCL(MultiGridCL& mg,
+                       double theta, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                       int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+        : MG_( mg), theta_( theta), dt_( 0.), Bnd_v_( Bnd_v), v_( v),lset_vd_( lset_vd), lsetbnd_( lsetbnd)
+    {}
+    virtual ~SurfacePDEP1BaseCL () {}
 
-        const MultiGridCL& GetMG() const { return MG_; }
+    const MultiGridCL& GetMG() const
+    {
+        return MG_;
+    }
 
-        //SolverBaseCL& GetSolver() { return solver_; }
+    //SolverBaseCL& GetSolver() { return solver_; }
 
-        /// set the parameter of the theta-scheme for time stepping
-        void SetTheta (double theta);
+    /// set the parameter of the theta-scheme for time stepping
+    void SetTheta (double theta);
 
-        /// perform one time step to new_t.
-        virtual void DoStep (double /*new_t*/) {}
-    };
+    /// perform one time step to new_t.
+    virtual void DoStep (double /*new_t*/) {}
+};
 
 
 
 /// \brief P1-discretization and solution of the transport equation on the interface
-    class SurfactantP1BaseCL: public SurfacePDEP1BaseCL
-    {
-    public:
-        typedef P1EvalCL<double, const BndDataT, VecDescCL>       DiscSolCL;
-        typedef P1EvalCL<double, const BndDataT, const VecDescCL> const_DiscSolCL;
+class SurfactantP1BaseCL: public SurfacePDEP1BaseCL
+{
+public:
+    typedef P1EvalCL<double, const BndDataT, VecDescCL>       DiscSolCL;
+    typedef P1EvalCL<double, const BndDataT, const VecDescCL> const_DiscSolCL;
 
-        IdxDescCL idx; ///< index desctription for concentration at current time
-        VecDescCL ic;  ///< concentration on the interface at current time
-        VecDescCL icw;  ///< concentration on the interface at current time w.r.t w
+    IdxDescCL idx; ///< index desctription for concentration at current time
+    VecDescCL ic;  ///< concentration on the interface at current time
+    VecDescCL icw;  ///< concentration on the interface at current time w.r.t w
 
-        VecDescCL iface;  ///< interface mesh at current time
-        VecDescCL iface_old;  ///< interface mesh at current time
+    VecDescCL iface;  ///< interface mesh at current time
+    VecDescCL iface_old;  ///< interface mesh at current time
+    double d1,d2,gamma,a,b,delta,epsilon; ///< some parameters for tumor growth problem
 
-    protected:
-        double        D_;     ///< diffusion coefficient
+protected:
+    double        D_;     ///< diffusion coefficient
 
-        instat_scalar_fun_ptr rhs_fun_; ///< function for a right-hand side
+    instat_scalar_fun_ptr rhs_fun_; ///< function for a right-hand side
 
-        IdxDescCL           oldidx_; ///< idx that corresponds to old time (and oldls_)
-        VectorCL            oldic_;  ///< interface concentration at old time
-        VectorCL            oldicw_;  ///< interface concentration at old time w.r.t w
+    IdxDescCL           oldidx_; ///< idx that corresponds to old time (and oldls_)
+    VectorCL            oldic_;  ///< interface concentration at old time
+    VectorCL            oldicw_;  ///< interface concentration at old time w.r.t w
 
-        GSPcCL                  pc_;
-        GMResSolverCL<GSPcCL>   gm_;
+    GSPcCL                  pc_;
+    GMResSolverCL<GSPcCL>   gm_;
 
 //    //block solver`
 //    DiagBlockPcT block_pc_;
 //    GMResSolverCL<DiagBlockPcT> GMRes_;
 //    BlockMatrixSolverCL<GMResBlockT> block_gm_;
 
-        double omit_bound_; ///< not used atm
+    double omit_bound_; ///< not used atm
 
-    public:
-        SurfactantP1BaseCL (MultiGridCL& mg,
-                            double theta, double D, VecDescCL* v, VecDescCL* nd,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                            int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
-                : SurfacePDEP1BaseCL(mg, theta, v, nd, Bnd_v, lset_vd, lsetbnd),
-                  idx( P1IF_FE), D_( D),  rhs_fun_( 0), oldidx_( P1IF_FE), gm_( pc_, 100, iter, tol, true),
-                  omit_bound_( omit_bound)
-        { idx.GetXidx().SetBound( omit_bound);}
+public:
+    SurfactantP1BaseCL (MultiGridCL& mg,
+                        double theta, double D, VecDescCL* v, VecDescCL* nd,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                        int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+        : SurfacePDEP1BaseCL(mg, theta, v, nd, Bnd_v, lset_vd, lsetbnd),
+          idx( P1IF_FE), D_( D),  rhs_fun_( 0), oldidx_( P1IF_FE), gm_( pc_, 100, iter, tol, true),
+          omit_bound_( omit_bound)
+    {
+        idx.GetXidx().SetBound( omit_bound);
+    }
 
-        SurfactantP1BaseCL (MultiGridCL& mg,
-                            double theta, double D, VecDescCL* v,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                            int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
-                : SurfacePDEP1BaseCL(mg, theta, v, Bnd_v, lset_vd, lsetbnd),
-                  idx( P1IF_FE), D_( D),  rhs_fun_( 0), oldidx_( P1IF_FE), gm_( pc_, 100, iter, tol, true),
-                  omit_bound_( omit_bound)
-        { idx.GetXidx().SetBound( omit_bound);}
+    SurfactantP1BaseCL (MultiGridCL& mg,
+                        double theta, double D, VecDescCL* v,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                        int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+        : SurfacePDEP1BaseCL(mg, theta, v, Bnd_v, lset_vd, lsetbnd),
+          idx( P1IF_FE), D_( D),  rhs_fun_( 0), oldidx_( P1IF_FE), gm_( pc_, 100, iter, tol, true),
+          omit_bound_( omit_bound)
+    {
+        idx.GetXidx().SetBound( omit_bound);
+    }
 
-        /*SurfactantP1BaseCL (MultiGridCL& mg,
-                            double theta, double D, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,double width,
-                            int iter= 1000, double tol= 1e-10, double omit_bound= -1.)//This is to implement a method in a trip near the interface
-        // width is the distance between the interface and the boundary of the strip.
-        // omit_bound is not used any more
-                : SurfacePDEP1BaseCL(mg, theta, v, Bnd_v, lset_vd, lsetbnd),
-                idx( P1IF_FE), D_( D), rhs_fun_( 0), oldidx_( P1IF_FE), gm_( pc_, 1000, iter, tol, true),
-                  omit_bound_( omit_bound)
-        { idx.GetXidx().SetBound( omit_bound); }//we use the idx.extIdx_.omit_bound_ to transfer the information of the width of the strip
-        //This will be used in IndexDescCL::CreatNumbering()*/
-        virtual ~SurfactantP1BaseCL () {}
+    /*SurfactantP1BaseCL (MultiGridCL& mg,
+                        double theta, double D, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,double width,
+                        int iter= 1000, double tol= 1e-10, double omit_bound= -1.)//This is to implement a method in a trip near the interface
+    // width is the distance between the interface and the boundary of the strip.
+    // omit_bound is not used any more
+            : SurfacePDEP1BaseCL(mg, theta, v, Bnd_v, lset_vd, lsetbnd),
+            idx( P1IF_FE), D_( D), rhs_fun_( 0), oldidx_( P1IF_FE), gm_( pc_, 1000, iter, tol, true),
+              omit_bound_( omit_bound)
+    { idx.GetXidx().SetBound( omit_bound); }//we use the idx.extIdx_.omit_bound_ to transfer the information of the width of the strip
+    //This will be used in IndexDescCL::CreatNumbering()*/
+    virtual ~SurfactantP1BaseCL () {}
 
-        GMResSolverCL<GSPcCL>& GetSolver() { return gm_; }
+    GMResSolverCL<GSPcCL>& GetSolver()
+    {
+        return gm_;
+    }
 
-        const_DiscSolCL GetSolution() const
-        { return const_DiscSolCL( &ic, &Bnd_, &MG_); }
-        const_DiscSolCL GetSolution( const VecDescCL& Myic) const
-        { return const_DiscSolCL( &Myic, &Bnd_, &MG_); }
+    const_DiscSolCL GetSolution() const
+    {
+        return const_DiscSolCL( &ic, &Bnd_, &MG_);
+    }
+    const_DiscSolCL GetSolution( const VecDescCL& Myic) const
+    {
+        return const_DiscSolCL( &Myic, &Bnd_, &MG_);
+    }
 
-        /// initialize the interface concentration
-        void SetInitialValue (instat_scalar_fun_ptr, double t= 0.);
+    /// initialize the interface concentration
+    void SetInitialValue (instat_scalar_fun_ptr, double t= 0.);
 
-        /// set the parameter of the theta-scheme for time stepping
-        void SetRhs (instat_scalar_fun_ptr);
+    /// set the parameter of the theta-scheme for time stepping
+    void SetRhs (instat_scalar_fun_ptr);
 
-        /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
-        virtual void InitTimeStep ();
+    /// set the parameter of tumor growth
+    void SetPars(double d1=1,double d2=10,double gamma=30,double a=0.1,double b=0.9,double delta=0.1,double epsilon=0.01)
+    {
+        d1 = d1;d2 = d2;gamma = gamma;a = a;b = b;delta = delta; epsilon = epsilon;
+    }
 
-        virtual void DoStep0 (double /*new_t*/) {}  //used only in Class: SurfactantExtensionP1CL
-        virtual void DoStep0PatternFM (double /*new_t*/) {}  //
+    /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
+    virtual void InitTimeStep ();
 
-        /// perform one time step to new_t.
-        virtual void DoStep (double /*new_t*/) {}
-    };
+    virtual void DoStep0 (double /*new_t*/) {}  //used only in Class: SurfactantExtensionP1CL
+    virtual void DoStep0PatternFM (double /*new_t*/) {}  //
 
-    class TransportP2FunctionCL;//???
+    /// perform one time step to new_t.
+    virtual void DoStep (double /*new_t*/) {}
+};
+
+class TransportP2FunctionCL;//???
 
 ///The class is based on a stablized term in a narrow band near the interface
-    class SurfactantNarrowBandStblP1CL: public SurfactantP1BaseCL
+class SurfactantNarrowBandStblP1CL: public SurfactantP1BaseCL
+{
+public:
+    IdxDescCL full_idx;
+    MatDescCL Laplace,  ///< diffusion matrix,
+              Volume_stab, ///< stabilization matrix,
+              Mass,  ///< mass matrix
+              Conv,  ///< convection matrix
+              Massd, ///< mass matrix with interface-divergence of velocity
+              MassH,///<mass matrix with curvature>
+              MassU;///<mass matrix with (u_n)^2+\delta u_n>
+
+    VecDescCL rhsext1;
+    VecDescCL rhsextw1;
+    VectorCL load, ///< for a load-function
+             rhs1_, ///< for the extension initial data
+             rhsw1_,
+             rhs2_; ///< for the extension initial data
+    const double width_;
+    const double rho_;///<stabilization parameter for Volume_stab
+
+
+private:
+    MatrixCL      L_; ///< sum of matrices
+    //  instat_scalar_fun_ptr lvlset_; ///< must be the signed distance function
+    instat_vector_fun_ptr normal_; ///< the level-set function
+    TransportP2FunctionCL* fulltransport_;
+
+public:
+    SurfactantNarrowBandStblP1CL (MultiGridCL& mg,
+                                  double theta, double D, VecDescCL* v, VecDescCL* nd,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                                  instat_vector_fun_ptr normal,const double width, double rho,
+                                  int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+        :  SurfactantP1BaseCL( mg, theta, D, v,nd, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound),
+           //: SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, width, iter, tol, omit_bound),
+           full_idx( P2_FE), rhsext1(), normal_(normal), width_(width), rho_(rho)
+    {}
+
+
+    SurfactantNarrowBandStblP1CL (MultiGridCL& mg,
+                                  double theta, double D, VecDescCL* v,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                                  instat_vector_fun_ptr normal,const double width, double rho,
+                                  int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+        :  SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound),
+           //: SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, width, iter, tol, omit_bound),
+           full_idx( P2_FE), rhsext1(), normal_(normal), width_(width), rho_(rho)
+    {}
+
+    /// \remarks call SetupSystem \em before calling SetTimeStep!
+    //void SetTimeStep( double dt, double theta=-1);
+
+    /// perform one time step
+
+    void DoStep0 (double new_t); //Backward Euler
+    void DoStep0PatternFM (double new_t); //Backward Euler for tumor growth problem
+    void DoStep (double new_t);  //BDF2 method
+
+    const_DiscSolCL GetSolution() const
     {
-    public:
-        IdxDescCL full_idx;
-        MatDescCL Laplace,  ///< diffusion matrix,
-                Volume_stab, ///< stabilization matrix,
-                Mass,  ///< mass matrix
-                Conv,  ///< convection matrix
-                Massd, ///< mass matrix with interface-divergence of velocity
-                MassH,///<mass matrix with curvature>
-                MassU;///<mass matrix with (u_n)^2+\delta u_n>
+        return const_DiscSolCL( &ic, &Bnd_, &MG_);
+    }
+    const_DiscSolCL GetSolution( const VecDescCL& Myic) const
+    {
+        return const_DiscSolCL( &Myic, &Bnd_, &MG_);
+    }
+    ///@}
 
-        VecDescCL rhsext1;
-        VecDescCL rhsextw1;
-        VectorCL load, ///< for a load-function
-                rhs1_, ///< for the extension initial data
-                rhsw1_,
-                rhs2_; ///< for the extension initial data
-        const double width_;
-        const double rho_;///<stabilization parameter for Volume_stab
-
-
-    private:
-        MatrixCL      L_; ///< sum of matrices
-        //  instat_scalar_fun_ptr lvlset_; ///< must be the signed distance function
-        instat_vector_fun_ptr normal_; ///< the level-set function
-        TransportP2FunctionCL* fulltransport_;
-
-    public:
-        SurfactantNarrowBandStblP1CL (MultiGridCL& mg,
-                                      double theta, double D, VecDescCL* v, VecDescCL* nd,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                                      instat_vector_fun_ptr normal,const double width, double rho,
-                                      int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
-                :  SurfactantP1BaseCL( mg, theta, D, v,nd, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound),
-                //: SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, width, iter, tol, omit_bound),
-        full_idx( P2_FE), rhsext1(), normal_(normal), width_(width), rho_(rho)
-                   {}
-
-
-        SurfactantNarrowBandStblP1CL (MultiGridCL& mg,
-                                      double theta, double D, VecDescCL* v,const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                                      instat_vector_fun_ptr normal,const double width, double rho,
-                                      int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
-                :  SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound),
-                //: SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, width, iter, tol, omit_bound),
-        full_idx( P2_FE), rhsext1(), normal_(normal), width_(width), rho_(rho)
-                   {}
-
-        /// \remarks call SetupSystem \em before calling SetTimeStep!
-        //void SetTimeStep( double dt, double theta=-1);
-
-        /// perform one time step
-
-        void DoStep0 (double new_t); //Backward Euler
-        void DoStep0PatternFM (double new_t); //Backward Euler for tumor growth problem
-        void DoStep (double new_t);  //BDF2 method
-
-        const_DiscSolCL GetSolution() const
-        { return const_DiscSolCL( &ic, &Bnd_, &MG_); }
-        const_DiscSolCL GetSolution( const VecDescCL& Myic) const
-        { return const_DiscSolCL( &Myic, &Bnd_, &MG_); }
-        ///@}
-
-        /// \name For internal use only
-        /// The following member functions are added to enable an easier implementation
-        /// of the coupling navstokes-levelset. They should not be called by a common user.
-        /// Use DoStep() instead.
-        ///@{
-        void InitStep1 (double new_t);// one-step--Implicit Euler
-        void InitStep2 (double new_t);// two-step--BDF2 Euler, Use Backward Euler in the first time step
-        void InitStep3 (double new_t);// two-step--BDF2 Euler, In the first time step, solve the equation with smaller time step
-        void DoStep1 (); //one step-- Implicit Euler
-        void DoStep2 (); //two step-- BDF2 method
-        void CommitStep ();
-        void Update ();
-        ///@}
-    };
+    /// \name For internal use only
+    /// The following member functions are added to enable an easier implementation
+    /// of the coupling navstokes-levelset. They should not be called by a common user.
+    /// Use DoStep() instead.
+    ///@{
+    void InitStep1 (double new_t);// one-step--Implicit Euler
+    void InitStep2 (double new_t);// two-step--BDF2 Euler, Use Backward Euler in the first time step
+    void InitStep3 (double new_t);// two-step--BDF2 Euler, In the first time step, solve the equation with smaller time step
+    void DoStep1 (); //one step-- Implicit Euler
+    void DoStep2 (); //two step-- BDF2 method
+    void CommitStep ();
+    void Update ();
+    ///@}
+};
 
 /// \brief P1-discretization and solution of the CahnHilliard equation on the interface
 class CahnHilliardP1BaseCL: public SurfacePDEP1BaseCL
-    {
-    public:
-        typedef P1EvalCL<double, const BndDataT, VecDescCL>       DiscSolCL;
-        typedef P1EvalCL<double, const BndDataT, const VecDescCL> const_DiscSolCL;
+{
+public:
+    typedef P1EvalCL<double, const BndDataT, VecDescCL>       DiscSolCL;
+    typedef P1EvalCL<double, const BndDataT, const VecDescCL> const_DiscSolCL;
 
-        typedef PCGSolverCL<SSORPcCL> PCGSolverT;
-        typedef BlockPreCL<SchurPreBaseCL, SchurPreBaseCL, DiagBlockPreCL>  DiagBlockPcT; //block preconditioner
-        typedef GMResSolverCL<DiagBlockPcT> GMResBlockT; //block GMRES solver
-        typedef BlockMatrixSolverCL<GMResBlockT> GMResBlockSolver;
+    typedef PCGSolverCL<SSORPcCL> PCGSolverT;
+    typedef BlockPreCL<SchurPreBaseCL, SchurPreBaseCL, DiagBlockPreCL>  DiagBlockPcT; //block preconditioner
+    typedef GMResSolverCL<DiagBlockPcT> GMResBlockT; //block GMRES solver
+    typedef BlockMatrixSolverCL<GMResBlockT> GMResBlockSolver;
 
-        IdxDescCL idx_c; ///< index desctription for concentration at current time
-        VecDescCL ic;  ///< concentration on the interface at current time
+    IdxDescCL idx_c; ///< index desctription for concentration at current time
+    VecDescCL ic;  ///< concentration on the interface at current time
 
-        /*IdxDescCL idx_mu; ///< index desctription for chemical potential at current time*/
-        VecDescCL imu;  ///< chemical potential on the interface at current time
+    /*IdxDescCL idx_mu; ///< index desctription for chemical potential at current time*/
+    VecDescCL imu;  ///< chemical potential on the interface at current time
 
-        VecDescCL iface;  ///< interface mesh at current time
-        VecDescCL iface_old;  ///< interface mesh at current time
+    VecDescCL iface;  ///< interface mesh at current time
+    VecDescCL iface_old;  ///< interface mesh at current time
 
 
 protected:
-        double        sigma_;     ///< mobility coefficient
-        double        epsilon_;  ///< epsilon coefficient
+    double        sigma_;     ///< mobility coefficient
+    double        epsilon_;  ///< epsilon coefficient
 
-        instat_scalar_fun_ptr rhs_fun3_; ///< function for a right-hand side to concentration equation
-        instat_scalar_fun_ptr rhs_fun4_; ///< function for a right-hand side chemical potential equation
+    instat_scalar_fun_ptr rhs_fun3_; ///< function for a right-hand side to concentration equation
+    instat_scalar_fun_ptr rhs_fun4_; ///< function for a right-hand side chemical potential equation
 
 
     IdxDescCL           oldidx_c_; ///< idx_c that corresponds to old time (and oldls_)
-        VectorCL            oldic_;  ///< interface concentration at old time
+    VectorCL            oldic_;  ///< interface concentration at old time
 
-        //IdxDescCL           oldidx_mu_; ///< idx_mu that corresponds to old time (and oldls_)
-        VectorCL            oldimu_;  ///< interface chemical potential at old time
-
-
-
-        GSPcCL                  pc_;
-        GMResSolverCL<GSPcCL>   gm_;
-        MatrixCL dummy_matrix_;
-
-        SSORPcCL symmPcPc_;
-        PCGSolverT PCGSolver3_, PCGSolver4_;
-        SurfaceLaplacePreCL<PCGSolverT> spc3_, spc4_;
-        DiagBlockPcT block_pc_;
-        GMResBlockT GMRes_;
-        GMResBlockSolver block_gm_;
-
-        double omit_bound_; ///< not used atm
-
-    public:
-        CahnHilliardP1BaseCL (MultiGridCL& mg,
-                              double theta, double sigma, double epsilon, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                              //MatrixCL Precond3 , MatrixCL Precond4,
-                              int iter= 1000, double tol= 1e-7, double iterA=500, double tolA=1e-3, double iterB=500, double tolB=1e-3, double omit_bound= -1.)
-                : SurfacePDEP1BaseCL(mg, theta, v, Bnd_v, lset_vd, lsetbnd), idx_c( P1IF_FE), /*idx_mu( P1IF_FE),*/ omit_bound_( omit_bound),
-                sigma_( sigma), epsilon_( epsilon),  rhs_fun3_( 0), rhs_fun4_( 0), oldidx_c_( P1IF_FE), /*oldidx_mu_( P1IF_FE),*/
-                PCGSolver3_(symmPcPc_, iterA, tolA, true),
-                PCGSolver4_(symmPcPc_, iterB, tolB, true),
-                spc3_( dummy_matrix_, PCGSolver3_), spc4_( dummy_matrix_, PCGSolver4_),
-                block_pc_(spc3_,spc4_),
-                GMRes_(block_pc_, 50, iter, tol, false, false, LeftPreconditioning, true, false),
-                gm_(pc_, 50, iter, tol, true),
-                block_gm_(GMRes_)
-        {
-            idx_c.GetXidx().SetBound( omit_bound);
-            //idx_mu.GetXidx().SetBound( omit_bound);
-        }
-
-        virtual ~CahnHilliardP1BaseCL () {}
-
-        BlockMatrixSolverCL<GMResBlockT>& GetSolver() { return block_gm_; }
-
-        const_DiscSolCL GetConcentr() const
-        { return const_DiscSolCL( &ic, &Bnd_, &MG_); }
-        const_DiscSolCL GetConcentr( const VecDescCL& Myic) const
-        { return const_DiscSolCL( &Myic, &Bnd_, &MG_); }
+    //IdxDescCL           oldidx_mu_; ///< idx_mu that corresponds to old time (and oldls_)
+    VectorCL            oldimu_;  ///< interface chemical potential at old time
 
 
-        const_DiscSolCL GetPotential() const
-        { return const_DiscSolCL( &imu, &Bnd_, &MG_); }
-        const_DiscSolCL GetPotential( const VecDescCL& Myimu) const
-        { return const_DiscSolCL( &Myimu, &Bnd_, &MG_); }
 
-        /// initialize the interface concentration
-        void SetInitialValue (instat_scalar_fun_ptr,instat_scalar_fun_ptr, double t= 0.);
+    GSPcCL                  pc_;
+    GMResSolverCL<GSPcCL>   gm_;
+    MatrixCL dummy_matrix_;
 
-        /// set the parameter of the theta-scheme for time stepping
-        void SetRhs (instat_scalar_fun_ptr,instat_scalar_fun_ptr);
+    SSORPcCL symmPcPc_;
+    PCGSolverT PCGSolver3_, PCGSolver4_;
+    SurfaceLaplacePreCL<PCGSolverT> spc3_, spc4_;
+    DiagBlockPcT block_pc_;
+    GMResBlockT GMRes_;
+    GMResBlockSolver block_gm_;
 
-        /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
-        virtual void InitTimeStep ();
+    double omit_bound_; ///< not used atm
 
-        /// perform one time step to new_t.
-        virtual void DoStep (double /*new_t*/) {}
-        virtual void DoStep0 (double /*new_t*/) {}
+public:
+    CahnHilliardP1BaseCL (MultiGridCL& mg,
+                          double theta, double sigma, double epsilon, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                          //MatrixCL Precond3 , MatrixCL Precond4,
+                          int iter= 1000, double tol= 1e-7, double iterA=500, double tolA=1e-3, double iterB=500, double tolB=1e-3, double omit_bound= -1.)
+        : SurfacePDEP1BaseCL(mg, theta, v, Bnd_v, lset_vd, lsetbnd), idx_c( P1IF_FE), /*idx_mu( P1IF_FE),*/ omit_bound_( omit_bound),
+          sigma_( sigma), epsilon_( epsilon),  rhs_fun3_( 0), rhs_fun4_( 0), oldidx_c_( P1IF_FE), /*oldidx_mu_( P1IF_FE),*/
+          PCGSolver3_(symmPcPc_, iterA, tolA, true),
+          PCGSolver4_(symmPcPc_, iterB, tolB, true),
+          spc3_( dummy_matrix_, PCGSolver3_), spc4_( dummy_matrix_, PCGSolver4_),
+          block_pc_(spc3_,spc4_),
+          GMRes_(block_pc_, 50, iter, tol, false, false, LeftPreconditioning, true, false),
+          gm_(pc_, 50, iter, tol, true),
+          block_gm_(GMRes_)
+    {
+        idx_c.GetXidx().SetBound( omit_bound);
+        //idx_mu.GetXidx().SetBound( omit_bound);
+    }
+
+    virtual ~CahnHilliardP1BaseCL () {}
+
+    BlockMatrixSolverCL<GMResBlockT>& GetSolver()
+    {
+        return block_gm_;
+    }
+
+    const_DiscSolCL GetConcentr() const
+    {
+        return const_DiscSolCL( &ic, &Bnd_, &MG_);
+    }
+    const_DiscSolCL GetConcentr( const VecDescCL& Myic) const
+    {
+        return const_DiscSolCL( &Myic, &Bnd_, &MG_);
+    }
+
+
+    const_DiscSolCL GetPotential() const
+    {
+        return const_DiscSolCL( &imu, &Bnd_, &MG_);
+    }
+    const_DiscSolCL GetPotential( const VecDescCL& Myimu) const
+    {
+        return const_DiscSolCL( &Myimu, &Bnd_, &MG_);
+    }
+
+    /// initialize the interface concentration
+    void SetInitialValue (instat_scalar_fun_ptr,instat_scalar_fun_ptr, double t= 0.);
+
+    /// set the parameter of the theta-scheme for time stepping
+    void SetRhs (instat_scalar_fun_ptr,instat_scalar_fun_ptr);
+
+    /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
+    virtual void InitTimeStep ();
+
+    /// perform one time step to new_t.
+    virtual void DoStep (double /*new_t*/) {}
+    virtual void DoStep0 (double /*new_t*/) {}
 
 
 };
 
 class CahnHilliardcGP1CL : public CahnHilliardP1BaseCL
-    {
-    public:
-        MatDescCL Laplace,  ///< diffusion matrix div_Gamma( grad_Gamma)
-                  LaplaceM,  ///< diffusion matrix with mobility div_Gamma(M grad_Gamma)
+{
+public:
+    MatDescCL Laplace,  ///< diffusion matrix div_Gamma( grad_Gamma)
+              LaplaceM,  ///< diffusion matrix with mobility div_Gamma(M grad_Gamma)
 
-                Volume_stab, ///< stabilization matrix, tetra integral over normal gradients
+              Volume_stab, ///< stabilization matrix, tetra integral over normal gradients
 
-                Ident,
-                Mass,  ///< mass matrix
-                Conv,  ///< convection matrix
-                Massd, ///< mass matrix with interface-divergence of velocity
-                Mass2; ///< mass matrix: new trial- and test- functions on old interface
+              Ident,
+              Mass,  ///< mass matrix
+              Conv,  ///< convection matrix
+              Massd, ///< mass matrix with interface-divergence of velocity
+              Mass2; ///< mass matrix: new trial- and test- functions on old interface
 
     const double& width_;///< we extend only a band near the zero leve set with a width
     const double rho_;///<stabilization parameter for Volume_stab
     const double S_;//stabilization parameter for time derivative;
-    private:
-        MatrixCL      A_, B_, C_, D_; ///< blocks of the matrix
-        instat_vector_fun_ptr normal_; ///< the normal vector function
+private:
+    MatrixCL      A_, B_, C_, D_; ///< blocks of the matrix
+    instat_vector_fun_ptr normal_; ///< the normal vector function
 
 
-    public:
-        CahnHilliardcGP1CL (MultiGridCL& mg, double theta, double sigma, double epsilon,
-                            VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                            instat_vector_fun_ptr normal,const double & width, double rho, double S,
-                            int iter= 999, double tol= 1.1e-7, double iterA=499, double tolA=1.1e-3, double iterB=499, double tolB=1.1e-3,double omit_bound= -1.)
-                : CahnHilliardP1BaseCL( mg, theta, sigma, epsilon, v, Bnd_v, lset_vd, lsetbnd,
-                        iter, tol, iterA, tolA, iterB, tolB, omit_bound),
-                  normal_(normal),width_(width), rho_(rho), S_(S)
-        {}
+public:
+    CahnHilliardcGP1CL (MultiGridCL& mg, double theta, double sigma, double epsilon,
+                        VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                        instat_vector_fun_ptr normal,const double & width, double rho, double S,
+                        int iter= 999, double tol= 1.1e-7, double iterA=499, double tolA=1.1e-3, double iterB=499, double tolB=1.1e-3,double omit_bound= -1.)
+        : CahnHilliardP1BaseCL( mg, theta, sigma, epsilon, v, Bnd_v, lset_vd, lsetbnd,
+                                iter, tol, iterA, tolA, iterB, tolB, omit_bound),
+          normal_(normal),width_(width), rho_(rho), S_(S)
+    {}
 
-        /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
-        // void InitTimeStep (); // as in the base
+    /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
+    // void InitTimeStep (); // as in the base
 
-        /// perform one time step
-        virtual void DoStep (double new_t);
+    /// perform one time step
+    virtual void DoStep (double new_t);
 
-        /// \name For internal use only
-        /// The following member functions are added to enable an easier implementation
-        /// of the coupling navstokes-levelset. They should not be called by a common user.
-        /// Use DoStep() instead.
-        ///@{
-        VectorCL InitStep3 (double new_t);
-        VectorCL InitStep4 (double new_t);
-        void InitStep(VectorCL&, VectorCL&, double new_t);
+    /// \name For internal use only
+    /// The following member functions are added to enable an easier implementation
+    /// of the coupling navstokes-levelset. They should not be called by a common user.
+    /// Use DoStep() instead.
+    ///@{
+    VectorCL InitStep3 (double new_t);
+    VectorCL InitStep4 (double new_t);
+    void InitStep(VectorCL&, VectorCL&, double new_t);
 
     void DoStep (const VectorCL&, const VectorCL&);
-        void CommitStep ();
-        void Update ();
-        ///@}
-    };
+    void CommitStep ();
+    void Update ();
+    ///@}
+};
 
 ///The class is based on a stablized term in a narrow band near the interface
-    class CahnHilliardNarrowBandStblP1CL: public CahnHilliardP1BaseCL
-    {
-    public:
-        IdxDescCL full_idx;
-        MatDescCL Laplace,  ///< diffusion matrix,
-                LaplaceM,  ///< diffusion matrix with mobility div_Gamma(M grad_Gamma)
-                Volume_stab, ///< stabilization matrix,
-                Mass,  ///< mass matrix
-                Conv,  ///< convection matrix
-                Massd, ///< mass matrix with interface-divergence of velocity
-                Mass2; ///< mass matrix: new trial- and test- functions on old interface
+class CahnHilliardNarrowBandStblP1CL: public CahnHilliardP1BaseCL
+{
+public:
+    IdxDescCL full_idx;
+    MatDescCL Laplace,  ///< diffusion matrix,
+              LaplaceM,  ///< diffusion matrix with mobility div_Gamma(M grad_Gamma)
+              Volume_stab, ///< stabilization matrix,
+              Mass,  ///< mass matrix
+              Conv,  ///< convection matrix
+              Massd, ///< mass matrix with interface-divergence of velocity
+              Mass2; ///< mass matrix: new trial- and test- functions on old interface
 
-        const double S_;//stabilization parameter for time derivative;
+    const double S_;//stabilization parameter for time derivative;
 
-        VecDescCL rhsext1;
-        VectorCL load, ///< for a load-function
-                rhs1_, ///< for the extension initial data
-                rhs2_; ///< for the extension initial data
+    VecDescCL rhsext1;
+    VectorCL load, ///< for a load-function
+             rhs1_, ///< for the extension initial data
+             rhs2_; ///< for the extension initial data
 
-        const double width_;
-        const double rho_;///<stabilization parameter for Volume_stab
+    const double width_;
+    const double rho_;///<stabilization parameter for Volume_stab
 
 
-    private:
-        MatrixCL      A_, B_, C_, D_; ///< blocks of the matrix
-        ///< //  instat_scalar_fun_ptr lvlset_; ///< must be the signed distance function
-        instat_vector_fun_ptr normal_; ///< the level-set function
-        //TransportP2FunctionCL* fulltransport_;
+private:
+    MatrixCL      A_, B_, C_, D_; ///< blocks of the matrix
+    ///< //  instat_scalar_fun_ptr lvlset_; ///< must be the signed distance function
+    instat_vector_fun_ptr normal_; ///< the level-set function
+    //TransportP2FunctionCL* fulltransport_;
 
-    public:
-        CahnHilliardNarrowBandStblP1CL (MultiGridCL& mg, double theta, double sigma, double epsilon,
-                VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                instat_vector_fun_ptr normal,const double  width, double rho, double S,
-        int iter= 999, double tol= 1.1e-7, double iterA=499, double tolA=1.1e-3, double iterB=499, double tolB=1.1e-3,double omit_bound= -1.)
+public:
+    CahnHilliardNarrowBandStblP1CL (MultiGridCL& mg, double theta, double sigma, double epsilon,
+                                    VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                                    instat_vector_fun_ptr normal,const double  width, double rho, double S,
+                                    int iter= 999, double tol= 1.1e-7, double iterA=499, double tolA=1.1e-3, double iterB=499, double tolB=1.1e-3,double omit_bound= -1.)
         : CahnHilliardP1BaseCL( mg, theta, sigma, epsilon, v, Bnd_v, lset_vd, lsetbnd,
-                iter, tol, iterA, tolA, iterB, tolB, omit_bound),
+                                iter, tol, iterA, tolA, iterB, tolB, omit_bound),
           full_idx( P2_FE), rhsext1(), normal_(normal),width_(width), rho_(rho), S_(S)
-        {}
+    {}
 
-        /// \remarks call SetupSystem \em before calling SetTimeStep!
-        //void SetTimeStep( double dt, double theta=-1);
+    /// \remarks call SetupSystem \em before calling SetTimeStep!
+    //void SetTimeStep( double dt, double theta=-1);
 
-        /// perform one time step
+    /// perform one time step
 
-        void DoStep0 (double new_t); //Backward Euler
-        void DoStep (double new_t);  //BDF2 method
+    void DoStep0 (double new_t); //Backward Euler
+    void DoStep (double new_t);  //BDF2 method
 
-       /* const_DiscSolCL GetSolution() const
-        { return const_DiscSolCL( &ic, &Bnd_, &MG_); }
-        const_DiscSolCL GetSolution( const VecDescCL& Myic) const
-        { return const_DiscSolCL( &Myic, &Bnd_, &MG_); }
-        ///@}*/
+    /* const_DiscSolCL GetSolution() const
+     { return const_DiscSolCL( &ic, &Bnd_, &MG_); }
+     const_DiscSolCL GetSolution( const VecDescCL& Myic) const
+     { return const_DiscSolCL( &Myic, &Bnd_, &MG_); }
+     ///@}*/
 
-        /// \name For internal use only
-        /// The following member functions are added to enable an easier implementation
-        /// of the coupling navstokes-levelset. They should not be called by a common user.
-        /// Use DoStep() instead.
-        ///@{
-        void InitStep1 (VectorCL&, VectorCL&, double new_t);// one-step--Implicit Euler
-        void InitStep2 (double new_t);// two-step--BDF2 Euler, Use Backward Euler in the first time step
-        void InitStep3 (double new_t);// two-step--BDF2 Euler, In the first time step, solve the equation with smaller time step
-        void DoStep1 (VectorCL&, VectorCL&); //one step-- Implicit Euler
-        void DoStep2 (VectorCL& ,VectorCL& ); //two step-- BDF2 method
-        void CommitStep ();
-        void Update ();
-        ///@}
-    };
-
-
-    /// \brief P1-discretization and solution of the CahnHilliard equation on the interface
-    class AllenCahnP1BaseCL: public SurfacePDEP1BaseCL
-        {
-        public:
-            typedef P1EvalCL<double, const BndDataT, VecDescCL>       DiscSolCL;
-            typedef P1EvalCL<double, const BndDataT, const VecDescCL> const_DiscSolCL;
-
-            typedef PCGSolverCL<SSORPcCL> PCGSolverT;
-            typedef BlockPreCL<SchurPreBaseCL, SchurPreBaseCL, DiagBlockPreCL>  DiagBlockPcT; //block preconditioner
-            typedef GMResSolverCL<DiagBlockPcT> GMResBlockT; //block GMRES solver
-            typedef BlockMatrixSolverCL<GMResBlockT> GMResBlockSolver;
-
-            IdxDescCL idx_c; ///< index desctription for concentration at current time
-            VecDescCL ic;  ///< concentration on the interface at current time
+    /// \name For internal use only
+    /// The following member functions are added to enable an easier implementation
+    /// of the coupling navstokes-levelset. They should not be called by a common user.
+    /// Use DoStep() instead.
+    ///@{
+    void InitStep1 (VectorCL&, VectorCL&, double new_t);// one-step--Implicit Euler
+    void InitStep2 (double new_t);// two-step--BDF2 Euler, Use Backward Euler in the first time step
+    void InitStep3 (double new_t);// two-step--BDF2 Euler, In the first time step, solve the equation with smaller time step
+    void DoStep1 (VectorCL&, VectorCL&); //one step-- Implicit Euler
+    void DoStep2 (VectorCL&,VectorCL& );  //two step-- BDF2 method
+    void CommitStep ();
+    void Update ();
+    ///@}
+};
 
 
-            VecDescCL iface;  ///< interface mesh at current time
-            VecDescCL iface_old;  ///< interface mesh at current time
+/// \brief P1-discretization and solution of the CahnHilliard equation on the interface
+class AllenCahnP1BaseCL: public SurfacePDEP1BaseCL
+{
+public:
+    typedef P1EvalCL<double, const BndDataT, VecDescCL>       DiscSolCL;
+    typedef P1EvalCL<double, const BndDataT, const VecDescCL> const_DiscSolCL;
+
+    typedef PCGSolverCL<SSORPcCL> PCGSolverT;
+    typedef BlockPreCL<SchurPreBaseCL, SchurPreBaseCL, DiagBlockPreCL>  DiagBlockPcT; //block preconditioner
+    typedef GMResSolverCL<DiagBlockPcT> GMResBlockT; //block GMRES solver
+    typedef BlockMatrixSolverCL<GMResBlockT> GMResBlockSolver;
+
+    IdxDescCL idx_c; ///< index desctription for concentration at current time
+    VecDescCL ic;  ///< concentration on the interface at current time
 
 
-    protected:
-            double        epsilon_;  ///< epsilon coefficient
-
-            instat_scalar_fun_ptr rhs_fun3_; ///< function for a right-hand side to concentration equation
+    VecDescCL iface;  ///< interface mesh at current time
+    VecDescCL iface_old;  ///< interface mesh at current time
 
 
-        IdxDescCL           oldidx_c_; ///< idx_c that corresponds to old time (and oldls_)
-            VectorCL            oldic_;  ///< interface concentration at old time
+protected:
+    double        epsilon_;  ///< epsilon coefficient
+
+    instat_scalar_fun_ptr rhs_fun3_; ///< function for a right-hand side to concentration equation
 
 
-            GSPcCL                  pc_;
-            GMResSolverCL<GSPcCL>   gm_;
-          /*  MatrixCL dummy_matrix_;
-
-            SSORPcCL symmPcPc_;
-            PCGSolverT PCGSolver3_, PCGSolver4_;
-            SurfaceLaplacePreCL<PCGSolverT> spc3_, spc4_;
-            DiagBlockPcT block_pc_;
-            GMResBlockT GMRes_;
-            GMResBlockSolver block_gm_;//*/
-
-            double omit_bound_; ///< not used atm
-
-        public:
-            AllenCahnP1BaseCL (MultiGridCL& mg,
-                                  double theta,  double epsilon, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                                  //MatrixCL Precond3 , MatrixCL Precond4,
-                                  int iter= 1000, double tol= 1e-7,  double omit_bound= -1.)
-                    : SurfacePDEP1BaseCL(mg, theta, v, Bnd_v, lset_vd, lsetbnd), idx_c( P1IF_FE), /*idx_mu( P1IF_FE),*/ omit_bound_( omit_bound),
-                    epsilon_( epsilon),  rhs_fun3_( 0), oldidx_c_( P1IF_FE), gm_(pc_, 50, iter, tol, true)//,
-                    /*PCGSolver3_(symmPcPc_, iterA, tolA, true),
-                    PCGSolver4_(symmPcPc_, iterB, tolB, true),
-                    spc3_( dummy_matrix_, PCGSolver3_), spc4_( dummy_matrix_, PCGSolver4_),
-                    block_pc_(spc3_,spc4_),
-                    GMRes_(block_pc_, 50, iter, tol, false, false, LeftPreconditioning, true, false),
-                   block_gm_(GMRes_)//*/
-            {
-                idx_c.GetXidx().SetBound( omit_bound);
-                //idx_mu.GetXidx().SetBound( omit_bound);
-            }
-
-            virtual ~AllenCahnP1BaseCL () {}
+    IdxDescCL           oldidx_c_; ///< idx_c that corresponds to old time (and oldls_)
+    VectorCL            oldic_;  ///< interface concentration at old time
 
 
-            const_DiscSolCL GetConcentr() const
-            { return const_DiscSolCL( &ic, &Bnd_, &MG_); }
-            const_DiscSolCL GetConcentr( const VecDescCL& Myic) const
-            { return const_DiscSolCL( &Myic, &Bnd_, &MG_); }
+    GSPcCL                  pc_;
+    GMResSolverCL<GSPcCL>   gm_;
+    /*  MatrixCL dummy_matrix_;
+
+      SSORPcCL symmPcPc_;
+      PCGSolverT PCGSolver3_, PCGSolver4_;
+      SurfaceLaplacePreCL<PCGSolverT> spc3_, spc4_;
+      DiagBlockPcT block_pc_;
+      GMResBlockT GMRes_;
+      GMResBlockSolver block_gm_;//*/
+
+    double omit_bound_; ///< not used atm
+
+public:
+    AllenCahnP1BaseCL (MultiGridCL& mg,
+                       double theta,  double epsilon, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                       //MatrixCL Precond3 , MatrixCL Precond4,
+                       int iter= 1000, double tol= 1e-7,  double omit_bound= -1.)
+        : SurfacePDEP1BaseCL(mg, theta, v, Bnd_v, lset_vd, lsetbnd), idx_c( P1IF_FE), /*idx_mu( P1IF_FE),*/ omit_bound_( omit_bound),
+          epsilon_( epsilon),  rhs_fun3_( 0), oldidx_c_( P1IF_FE), gm_(pc_, 50, iter, tol, true)//,
+          /*PCGSolver3_(symmPcPc_, iterA, tolA, true),
+          PCGSolver4_(symmPcPc_, iterB, tolB, true),
+          spc3_( dummy_matrix_, PCGSolver3_), spc4_( dummy_matrix_, PCGSolver4_),
+          block_pc_(spc3_,spc4_),
+          GMRes_(block_pc_, 50, iter, tol, false, false, LeftPreconditioning, true, false),
+          block_gm_(GMRes_)//*/
+    {
+        idx_c.GetXidx().SetBound( omit_bound);
+        //idx_mu.GetXidx().SetBound( omit_bound);
+    }
+
+    virtual ~AllenCahnP1BaseCL () {}
 
 
-            /// initialize the interface concentration
-            void SetInitialValue (instat_scalar_fun_ptr, double t= 0.);
-
-            /// set the parameter of the theta-scheme for time stepping
-            void SetRhs (instat_scalar_fun_ptr);
-
-            /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
-            virtual void InitTimeStep ();
-
-            /// perform one time step to new_t.
-            virtual void DoStep (double /*new_t*/) {}
-            virtual void DoStep0 (double /*new_t*/) {}
+    const_DiscSolCL GetConcentr() const
+    {
+        return const_DiscSolCL( &ic, &Bnd_, &MG_);
+    }
+    const_DiscSolCL GetConcentr( const VecDescCL& Myic) const
+    {
+        return const_DiscSolCL( &Myic, &Bnd_, &MG_);
+    }
 
 
-    };
-    ///The class is based on a stablized term in a narrow band near the interface
-   class AllenCahnNarrowBandStblP1CL: public AllenCahnP1BaseCL
-        {
-        public:
-            IdxDescCL full_idx;
-            MatDescCL Laplace,  ///< diffusion matrix,
-                    Volume_stab, ///< stabilization matrix,
-                    Mass,  ///< mass matrix
-                    Conv,  ///< convection matrix
-                    Massd, ///< mass matrix with interface-divergence of velocity
-                    Mass2; ///< mass matrix: new trial- and test- functions on old interface
+    /// initialize the interface concentration
+    void SetInitialValue (instat_scalar_fun_ptr, double t= 0.);
 
-            const double S_;//stabilization parameter for time derivative;
+    /// set the parameter of the theta-scheme for time stepping
+    void SetRhs (instat_scalar_fun_ptr);
 
-            VecDescCL rhsext1;
-            VectorCL load, ///< for a load-function
-                    rhs1_; ///< for the extension initial data
+    /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
+    virtual void InitTimeStep ();
 
-            const double width_;
-            const double rho_;///<stabilization parameter for Volume_stab
+    /// perform one time step to new_t.
+    virtual void DoStep (double /*new_t*/) {}
+    virtual void DoStep0 (double /*new_t*/) {}
 
 
-        private:
-            MatrixCL      A_; ///< blocks of the matrix
-            ///< //  instat_scalar_fun_ptr lvlset_; ///< must be the signed distance function
-            instat_vector_fun_ptr normal_; ///< the level-set function
-            //TransportP2FunctionCL* fulltransport_;
+};
+///The class is based on a stablized term in a narrow band near the interface
+class AllenCahnNarrowBandStblP1CL: public AllenCahnP1BaseCL
+{
+public:
+    IdxDescCL full_idx;
+    MatDescCL Laplace,  ///< diffusion matrix,
+              Volume_stab, ///< stabilization matrix,
+              Mass,  ///< mass matrix
+              Conv,  ///< convection matrix
+              Massd, ///< mass matrix with interface-divergence of velocity
+              Mass2; ///< mass matrix: new trial- and test- functions on old interface
 
-        public:
-            AllenCahnNarrowBandStblP1CL (MultiGridCL& mg, double theta, double epsilon,
-                    VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-                    instat_vector_fun_ptr normal,const double  width, double rho, double S,
-            int iter= 999, double tol= 1.1e-7,double omit_bound= -1.)
-            : AllenCahnP1BaseCL( mg, theta, epsilon, v, Bnd_v, lset_vd, lsetbnd,
-                    iter, tol,omit_bound),
-              full_idx( P2_FE), rhsext1(), normal_(normal),width_(width), rho_(rho), S_(S)
-            {}
+    const double S_;//stabilization parameter for time derivative;
 
-            /// \remarks call SetupSystem \em before calling SetTimeStep!
-            //void SetTimeStep( double dt, double theta=-1);
+    VecDescCL rhsext1;
+    VectorCL load, ///< for a load-function
+             rhs1_; ///< for the extension initial data
 
-            /// perform one time step
-
-            void DoStep0 (double new_t); //Backward Euler
-            void DoStep (double new_t);  //BDF2 method
+    const double width_;
+    const double rho_;///<stabilization parameter for Volume_stab
 
 
-            /// \name For internal use only
-            /// The following member functions are added to enable an easier implementation
-            /// of the coupling navstokes-levelset. They should not be called by a common user.
-            /// Use DoStep() instead.
-            ///@{
-            void InitStep1 (VectorCL&,  double new_t);// one-step--Implicit Euler
-            void InitStep2 (double new_t);// two-step--BDF2 Euler, Use Backward Euler in the first time step
-            void InitStep3 (double new_t);// two-step--BDF2 Euler, In the first time step, solve the equation with smaller time step
-            void DoStep1 (VectorCL&); //one step-- Implicit Euler
-            void DoStep2 (VectorCL& ); //two step-- BDF2 method
-            void CommitStep ();
-            void Update ();
-            ///@}
-        };
+private:
+    MatrixCL      A_; ///< blocks of the matrix
+    ///< //  instat_scalar_fun_ptr lvlset_; ///< must be the signed distance function
+    instat_vector_fun_ptr normal_; ///< the level-set function
+    //TransportP2FunctionCL* fulltransport_;
+
+public:
+    AllenCahnNarrowBandStblP1CL (MultiGridCL& mg, double theta, double epsilon,
+                                 VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                                 instat_vector_fun_ptr normal,const double  width, double rho, double S,
+                                 int iter= 999, double tol= 1.1e-7,double omit_bound= -1.)
+        : AllenCahnP1BaseCL( mg, theta, epsilon, v, Bnd_v, lset_vd, lsetbnd,
+                             iter, tol,omit_bound),
+          full_idx( P2_FE), rhsext1(), normal_(normal),width_(width), rho_(rho), S_(S)
+    {}
+
+    /// \remarks call SetupSystem \em before calling SetTimeStep!
+    //void SetTimeStep( double dt, double theta=-1);
+
+    /// perform one time step
+
+    void DoStep0 (double new_t); //Backward Euler
+    void DoStep (double new_t);  //BDF2 method
+
+
+    /// \name For internal use only
+    /// The following member functions are added to enable an easier implementation
+    /// of the coupling navstokes-levelset. They should not be called by a common user.
+    /// Use DoStep() instead.
+    ///@{
+    void InitStep1 (VectorCL&,  double new_t);// one-step--Implicit Euler
+    void InitStep2 (double new_t);// two-step--BDF2 Euler, Use Backward Euler in the first time step
+    void InitStep3 (double new_t);// two-step--BDF2 Euler, In the first time step, solve the equation with smaller time step
+    void DoStep1 (VectorCL&); //one step-- Implicit Euler
+    void DoStep2 (VectorCL& ); //two step-- BDF2 method
+    void CommitStep ();
+    void Update ();
+    ///@}
+};
 
 /// \brief P1-discretization and solution of the transport equation on the interface
 class SurfactantcGP1CL : public SurfactantP1BaseCL
 {
-  public:
+public:
     MatDescCL A,  ///< diffusion matrix
               M,  ///< mass matrix
               C,  ///< convection matrix
               Md, ///< mass matrix with interface-divergence of velocity
               M2; ///< mass matrix: new trial- and test- functions on old interface
 
-  private:
+private:
     MatrixCL      L_; ///< sum of matrices
 
-  public:
+public:
     SurfactantcGP1CL (MultiGridCL& mg,
-        double theta, double D, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-        int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
-    : SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound)
+                      double theta, double D, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                      int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+        : SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound)
     {}
 
     /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
@@ -2140,7 +2412,7 @@ class SurfactantcGP1CL : public SurfactantP1BaseCL
 /// to it.
 class InterfaceP1RepairCL : public MGObserverCL
 {
-  private:
+private:
     MultiGridCL& mg_;
     const VecDescCL&   lset_vd_;
     const BndDataCL<>& lset_bnd_;
@@ -2150,7 +2422,7 @@ class InterfaceP1RepairCL : public MGObserverCL
     VecDescCL          fullu_;
     std::unique_ptr<RepairP1CL<double, NoBndDataCL>::type > p1repair_;
 
-  public:
+public:
     InterfaceP1RepairCL (MultiGridCL& mg, const VecDescCL& lset_vd, const BndDataCL<>& lset_bnd, VecDescCL& u)
         : mg_( mg), lset_vd_( lset_vd), lset_bnd_( lset_bnd), u_( u), fullp1idx_( P1_FE), fullu_( &fullp1idx_) {}
 
@@ -2159,10 +2431,20 @@ class InterfaceP1RepairCL : public MGObserverCL
 
     void pre_refine_sequence  ();
     void post_refine_sequence ();
-    const IdxDescCL* GetIdxDesc() const { return u_.RowIdx; }
+    const IdxDescCL* GetIdxDesc() const
+    {
+        return u_.RowIdx;
+    }
 #ifdef _PAR
-    const VectorCL*  GetVector()  const { return &fullu_.Data; }
-    void swap( IdxDescCL& idx, VectorCL& v) { fullu_.RowIdx->swap(idx); fullu_.Data.swap(v); }
+    const VectorCL*  GetVector()  const
+    {
+        return &fullu_.Data;
+    }
+    void swap( IdxDescCL& idx, VectorCL& v)
+    {
+        fullu_.RowIdx->swap(idx);
+        fullu_.Data.swap(v);
+    }
 #endif
 };
 
@@ -2171,15 +2453,18 @@ class InterfaceP1RepairCL : public MGObserverCL
 ///       whole domain.
 class Ensight6IfaceScalarCL : public Ensight6VariableCL
 {
-  private:
+private:
     const VecDescCL&   u_;
     MultiGridCL&       mg_;
 
-  public:
+public:
     Ensight6IfaceScalarCL (MultiGridCL& mg, const VecDescCL& u, std::string varName, std::string fileName, bool timedep= false)
         : Ensight6VariableCL( varName, fileName, timedep), u_( u), mg_( mg) {}
 
-    void Describe (Ensight6OutCL& cf) const { cf.DescribeVariable( this->varName(), true); }
+    void Describe (Ensight6OutCL& cf) const
+    {
+        cf.DescribeVariable( this->varName(), true);
+    }
     void put      (Ensight6OutCL& cf) const;
 };
 
@@ -2189,7 +2474,7 @@ class Ensight6IfaceScalarCL : public Ensight6VariableCL
 /// because they help to avoid template parameters in user code.
 inline Ensight6IfaceScalarCL&
 make_Ensight6IfaceScalar (MultiGridCL& mg, const VecDescCL& u,
-    std::string varName, std::string fileName, bool timedep= false)
+                          std::string varName, std::string fileName, bool timedep= false)
 {
     return *new Ensight6IfaceScalarCL( mg, u, varName, fileName, timedep);
 }
@@ -2199,17 +2484,20 @@ make_Ensight6IfaceScalar (MultiGridCL& mg, const VecDescCL& u,
 ///       whole domain.
 class VTKIfaceScalarCL : public VTKVariableCL
 {
-  private:
+private:
     const VecDescCL&   u_;
     MultiGridCL&       mg_;
     const BndDataCL<double> BndData_;
 
-  public:
+public:
     VTKIfaceScalarCL (MultiGridCL& mg, const VecDescCL& u, std::string varName, const BndDataCL<double>& BndData = BndDataCL<double>(0))
         : VTKVariableCL( varName), u_( u), mg_( mg), BndData_(BndData) {}
 
     void put      (VTKOutCL& cf) const;
-    Uint GetDim() const { return 1; }
+    Uint GetDim() const
+    {
+        return 1;
+    }
 };
 
 ///\brief Create an VTKIfaceP1ScalarCL with operator new.
@@ -2218,36 +2506,39 @@ class VTKIfaceScalarCL : public VTKVariableCL
 /// because they help to avoid template parameters in user code.
 inline VTKIfaceScalarCL&
 make_VTKIfaceScalar (MultiGridCL& mg, const VecDescCL& u,
-    std::string varName, const BndDataCL<double>& BndData = BndDataCL<double>(0))
+                     std::string varName, const BndDataCL<double>& BndData = BndDataCL<double>(0))
 {
     return *new VTKIfaceScalarCL( mg, u, varName, BndData);
 }
 
 class VTKIfaceVectorCL : public VTKVariableCL
 {
-  private:
+private:
     const VecDescCL& u_;
     MultiGridCL& mg_;
     int P2_;
     const BndDataCL<Point3DCL>& BndData_;
 
-  public:
+public:
     VTKIfaceVectorCL (MultiGridCL& mg, const VecDescCL& u, std::string varName, int P2, const BndDataCL<Point3DCL>& BndData)
         : VTKVariableCL( varName), u_( u), mg_( mg), P2_(P2), BndData_(BndData) {}
 
-      void put      (VTKOutCL& cf) const;
-      Uint GetDim() const { return 1; }
+    void put      (VTKOutCL& cf) const;
+    Uint GetDim() const
+    {
+        return 1;
+    }
 };
 
 inline VTKIfaceVectorCL&
 make_VTKIfaceVector (MultiGridCL& mg, const VecDescCL& u,
                      std::string varName, std::string FEdegree, const BndDataCL<Point3DCL>& BndData)
 {
-  //std::cout<<"Element :"<< FEdegree <<std::endl;
-  if(!FEdegree.compare("P2"))
-    return *new VTKIfaceVectorCL( mg, u, varName, 1, BndData);
-  else
-    return *new VTKIfaceVectorCL( mg, u, varName, 0, BndData);
+    //std::cout<<"Element :"<< FEdegree <<std::endl;
+    if(!FEdegree.compare("P2"))
+        return *new VTKIfaceVectorCL( mg, u, varName, 1, BndData);
+    else
+        return *new VTKIfaceVectorCL( mg, u, varName, 0, BndData);
 }/// ==Space-Time-methods==
 /// \todo Maybe introduce a new header
 
@@ -2255,21 +2546,21 @@ make_VTKIfaceVector (MultiGridCL& mg, const VecDescCL& u,
 template <typename T= double>
 class LocalSTP1P1CL
 {
-  public:
+public:
     typedef T value_type;
     typedef T (*instat_fun_ptr) (const Point3DCL&, double);
     typedef LocalP1CL<T> spatial_localfe_type;
 
     enum { Dim= 8 }; ///< local number of unknowns
 
-  protected:
+protected:
     typedef LocalSTP1P1CL<T> self_;
 
-  private:
+private:
     LocalP1CL<T> v0_,
-                 v1_;
+              v1_;
 
-  public:
+public:
     LocalSTP1P1CL() : v0_(), v1_() {}
     LocalSTP1P1CL(const value_type& t) : v0_( t), v1_( t) {}
     // Initialize from a given function
@@ -2279,23 +2570,37 @@ class LocalSTP1P1CL
     // These "assignment-operators" correspond to the constructors
     // with multiple arguments
     inline self_&
-    assign(const TetraPrismCL& prism, instat_fun_ptr f) {
+    assign(const TetraPrismCL& prism, instat_fun_ptr f)
+    {
         v0_.assign( prism.t, f, prism.t0);
         v1_.assign( prism.t, f, prism.t1);
         return *this;
     }
 
     // pointwise evaluation in STCoordCL-coordinates
-    inline value_type operator() (const STCoordCL& p) const {
+    inline value_type operator() (const STCoordCL& p) const
+    {
         return (1. - p.t_ref)*v0_( p.x_bary) + p.t_ref*v1_( p.x_bary);
     }
 
     // The LocalP1-function at t0
-    spatial_localfe_type& at_t0 () { return v0_; }
-    const spatial_localfe_type& at_t0 () const { return v0_; }
+    spatial_localfe_type& at_t0 ()
+    {
+        return v0_;
+    }
+    const spatial_localfe_type& at_t0 () const
+    {
+        return v0_;
+    }
     // The LocalP1-function at t1
-    spatial_localfe_type& at_t1 () { return v1_; }
-    const spatial_localfe_type& at_t1 () const { return v1_; }
+    spatial_localfe_type& at_t1 ()
+    {
+        return v1_;
+    }
+    const spatial_localfe_type& at_t1 () const
+    {
+        return v1_;
+    }
 };
 
 ///\brief Finear space-time FE-function on a single TetraPrismCL.
@@ -2303,29 +2608,30 @@ class LocalSTP1P1CL
 template <typename T= double>
 class LocalSTP1CL : public GridFunctionCL<T>
 {
-  public:
+public:
     typedef GridFunctionCL<T> base_type;
     typedef typename base_type::value_type value_type;
     typedef typename base_type::instat_fun_ptr instat_fun_ptr;
 
     enum { Dim= 5 }; ///< local number of unknowns
 
-  protected:
+protected:
     typedef LocalSTP1CL<T> self_;
 
-  public:
+public:
     LocalSTP1CL() : base_type( value_type(), Dim) {}
     LocalSTP1CL(const value_type& t): base_type( t, Dim) {}
 
-DROPS_DEFINE_VALARRAY_DERIVATIVE(LocalSTP1CL, T, base_type)
+    DROPS_DEFINE_VALARRAY_DERIVATIVE(LocalSTP1CL, T, base_type)
 
     // pointwise evaluation in STCoords.
-    value_type operator() (const STCoordCL& p) const {
+    value_type operator() (const STCoordCL& p) const
+    {
         return LinearCombinationCL<self_, value_type>::do_it( *this, p.x_bary[0] - p.t_ref,
-                                                                     p.x_bary[1],
-                                                                     p.x_bary[2],
-                                                                     p.x_bary[3],
-                                                                     p.t_ref);
+                p.x_bary[1],
+                p.x_bary[2],
+                p.x_bary[3],
+                p.t_ref);
     }
 };
 
@@ -2334,61 +2640,77 @@ DROPS_DEFINE_VALARRAY_DERIVATIVE(LocalSTP1CL, T, base_type)
 template <typename T= double>
 class LocalSTP2P1CL
 {
-  public:
+public:
     typedef T value_type;
     typedef T (*instat_fun_ptr) (const Point3DCL&, double);
     typedef LocalP2CL<T> spatial_localfe_type;
 
-  protected:
+protected:
     typedef LocalSTP2P1CL<T> self_;
 
-  private:
+private:
     LocalP2CL<T> v0_,
-                 v1_;
+              v1_;
 
-  public:
+public:
     LocalSTP2P1CL() {}
     LocalSTP2P1CL(const spatial_localfe_type& v0, const spatial_localfe_type& v1)
         : v0_( v0), v1_( v1) {}
 
     template<class BndDataT>
-      self_&
-      assign (const TetraCL& t, const VecDescCL& v0, const VecDescCL& v1, const BndDataT& bnd) {
+    self_&
+    assign (const TetraCL& t, const VecDescCL& v0, const VecDescCL& v1, const BndDataT& bnd)
+    {
         v0_.assign( t, v0, bnd);
         v1_.assign( t, v1, bnd);
         return *this;
     }
     template <class STP2P1FunT>
-      self_&
-      assign(const TetraCL& t, const STP2P1FunT& f) {
+    self_&
+    assign(const TetraCL& t, const STP2P1FunT& f)
+    {
         v0_.assign( t, *f.GetSolution( 0), *f.GetBndData());
         v1_.assign( t, *f.GetSolution( 1), *f.GetBndData());
         return *this;
     }
 
     // pointwise evaluation in STCoordCL-coordinates
-    inline value_type operator() (const STCoordCL& p) const {
+    inline value_type operator() (const STCoordCL& p) const
+    {
         return (1. - p.t_ref)*v0_( p.x_bary) + p.t_ref*v1_( p.x_bary);
     }
 
     // The LocalP1-function at t0
-    const spatial_localfe_type& at_t0 () const { return v0_; }
-          spatial_localfe_type& at_t0 ()       { return v0_; }
+    const spatial_localfe_type& at_t0 () const
+    {
+        return v0_;
+    }
+    spatial_localfe_type& at_t0 ()
+    {
+        return v0_;
+    }
     // The LocalP1-function at t1
-    const spatial_localfe_type& at_t1 () const { return v1_; }
-          spatial_localfe_type& at_t1 ()       { return v1_; }
+    const spatial_localfe_type& at_t1 () const
+    {
+        return v1_;
+    }
+    spatial_localfe_type& at_t1 ()
+    {
+        return v1_;
+    }
 };
 
 class STWindProxyCL
 {
-  private:
+private:
     const LocalSTP2P1CL<Point3DCL>& w_;
 
-  public:
+public:
     STWindProxyCL (const LocalSTP2P1CL<Point3DCL>& w) : w_( w) {}
 
     // pointwise evaluation in STCoordCL-coordinates
-    inline Point4DCL operator() (const STCoordCL& p) const {
+    inline Point4DCL operator() (const STCoordCL& p) const
+    {
         const Point3DCL tmp( w_( p));
         return MakePoint4D( tmp[0], tmp[1], tmp[2], 1.);
     }
@@ -2396,7 +2718,7 @@ class STWindProxyCL
 
 class STP1P1DiscCL
 {
-  public:
+public:
     static LocalSTP1P1CL<>        ref_val[8];
     static LocalSTP1CL<Point4DCL> ref_grad[8];
     static LocalSTP1CL<Point3DCL> ref_gradx[8];
@@ -2404,16 +2726,19 @@ class STP1P1DiscCL
     static void StaticInit();
     static void StaticDestruct() {}
 
-    static void GetGradients (const TetraPrismCL& prism, LocalSTP1CL<Point4DCL> grad[8]) {
+    static void GetGradients (const TetraPrismCL& prism, LocalSTP1CL<Point4DCL> grad[8])
+    {
         SMatrixCL<3,3> M( Uninitialized);
         double det= 0.; // dummy
         GetTrafoTr( M, det, prism.t);
         const double dt_inv= 1./(prism.t1 - prism.t0);
-        for (Uint i= 0; i < 4; ++i) {
+        for (Uint i= 0; i < 4; ++i)
+        {
             const Point3DCL& p1grad= M*FE_P1CL::DHRef( i);
             const Point4DCL& p1grad4d= MakePoint4D( p1grad[0], p1grad[1], p1grad[2], 0.);
             // grad[i]= Point4DCL();
-            for (Uint j= 0; j < 4; ++j) {
+            for (Uint j= 0; j < 4; ++j)
+            {
                 grad[i][j]= p1grad4d;
                 grad[i][j][3]= j == i ? -dt_inv : 0.;
             }
@@ -2425,11 +2750,13 @@ class STP1P1DiscCL
 
         }
     }
-    static void GetSpatialGradients (const TetraPrismCL& prism, LocalSTP1CL<Point3DCL> grad[8]) {
+    static void GetSpatialGradients (const TetraPrismCL& prism, LocalSTP1CL<Point3DCL> grad[8])
+    {
         SMatrixCL<3,3> M( Uninitialized);
         double det= 0.; // dummy
         GetTrafoTr( M, det, prism.t);
-        for (Uint i= 0; i < 4; ++i) {
+        for (Uint i= 0; i < 4; ++i)
+        {
             const Point3DCL& p1grad= M*FE_P1CL::DHRef( i);
             for (Uint j= 0; j < 4; ++j)
                 grad[i][j]= p1grad;
@@ -2443,31 +2770,34 @@ class STP1P1DiscCL
 template <class T= double>
 class STCoordEvalCL
 {
-  public:
+public:
     typedef T (*fun_type)(const Point3DCL&, double);
     typedef T value_type;
 
-  private:
+private:
     STCoord2WorldCoordCL mapper_;
     fun_type f_;
 
-  public:
+public:
     STCoordEvalCL (const TetraPrismCL& prism, fun_type f)
         : mapper_( prism), f_(f) {}
 
-    value_type operator() (const STCoordCL& b) const { return f_( mapper_.space( b), mapper_.time( b)); }
+    value_type operator() (const STCoordCL& b) const
+    {
+        return f_( mapper_.space( b), mapper_.time( b));
+    }
 };
 
 template <class T, class DomainT, class ResultIterT>
-  inline ResultIterT
-  evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraPrismCL& prism, const DomainT& dom, ResultIterT result_iterator)
+inline ResultIterT
+evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraPrismCL& prism, const DomainT& dom, ResultIterT result_iterator)
 {
     return std::transform( dom.vertex_begin(), dom.vertex_end(), result_iterator, STCoordEvalCL<T>( prism, f));
 }
 
 template <class T, class DomainT, class ResultContT>
-  inline const ResultContT&
-  resize_and_evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraPrismCL& prism, const DomainT& dom, ResultContT& result_container)
+inline const ResultContT&
+resize_and_evaluate_on_vertexes (T (*f)(const Point3DCL&, double), const TetraPrismCL& prism, const DomainT& dom, ResultContT& result_container)
 {
     result_container.resize( dom.vertex_size());
     evaluate_on_vertexes( f, prism, dom, sequence_begin( result_container));
@@ -2479,7 +2809,7 @@ template <class T, class DomainT, class ResultContT>
 //idx0, idx1: ST-P1P1: 2x IFP1_FE: idxi for dof at ti; idx0 agrees with idx_ini, where the latter is defined (well-posed, see lemma 1)
 class STP1P1IdxDescCL
 {
-  private:
+private:
     IdxDescCL idx0_,
               idx1_;
 
@@ -2488,25 +2818,41 @@ class STP1P1IdxDescCL
     IdxT NumIniUnknowns_,
          NumFiniUnknowns_;
 
-  public:
+public:
     STP1P1IdxDescCL () : idx0_( P1IF_FE), idx1_( P1IF_FE) {}
 
     /// \brief Returns the number of the index. This can be used to access
     ///     the numbering on the simplices.
-    Uint GetIdx (Uint i) const { return i == 0 ? idx0_.GetIdx() : idx1_.GetIdx(); }
+    Uint GetIdx (Uint i) const
+    {
+        return i == 0 ? idx0_.GetIdx() : idx1_.GetIdx();
+    }
 
     /// \brief Triangulation of the index.
-    Uint TriangLevel () const { return TriangLevel_; }
+    Uint TriangLevel () const
+    {
+        return TriangLevel_;
+    }
     /// \brief total number of unknowns on the triangulation
-    IdxT NumUnknowns () const { return NumUnknowns_; }
+    IdxT NumUnknowns () const
+    {
+        return NumUnknowns_;
+    }
     /// \brief The first NumIniUnknowns shape-functions do not vanish on the old interface.
-    IdxT NumIniUnknowns () const { return NumIniUnknowns_; }
+    IdxT NumIniUnknowns () const
+    {
+        return NumIniUnknowns_;
+    }
     /// \brief The unknowns in [NumIniUnknowns, NumFiniUnknowns + NumIniUnknowns)  do not vanish on the new interface.
-    IdxT NumFiniUnknowns () const { return NumFiniUnknowns_; }
+    IdxT NumFiniUnknowns () const
+    {
+        return NumFiniUnknowns_;
+    }
 
     void CreateNumbering (Uint level, MultiGridCL& mg, const VecDescCL& oldls, const VecDescCL& newls, const BndDataCL<>& lsetbnd, double t0, double t1);
 
-    void DeleteNumbering (MultiGridCL& mg) {
+    void DeleteNumbering (MultiGridCL& mg)
+    {
         DeleteNumbOnSimplex( idx0_.GetIdx(), mg.GetAllVertexBegin( TriangLevel()), mg.GetAllVertexEnd( TriangLevel()));
         DeleteNumbOnSimplex( idx1_.GetIdx(), mg.GetAllVertexBegin( TriangLevel()), mg.GetAllVertexEnd( TriangLevel()));
         TriangLevel_= static_cast<Uint>( -1);
@@ -2520,11 +2866,11 @@ class STP1P1IdxDescCL
 /// This is convenient for discretisation of operators in the Setup-routines.
 class LocalNumbSTP1P1CL
 {
-  private:
+private:
     size_t NumIniUnknowns_,
            NumFiniUnknowns_;
 
-  public:
+public:
     enum { Dim= 8 }; ///< local number of unknowns (max.)
 
     /// \brief Field of unknown-indices; NoIdx, iff the degree of freedom lies
@@ -2537,14 +2883,18 @@ class LocalNumbSTP1P1CL
 
     /// \brief Read indices only from a tetrahedron.
     LocalNumbSTP1P1CL(const TetraCL& s, const STP1P1IdxDescCL& idx)
-        { assign_indices_only( s, idx); }
+    {
+        assign_indices_only( s, idx);
+    }
 
     /// \brief Compute the indices only.
     /// Only num is set up.
-    void assign_indices_only (const TetraCL& s, const STP1P1IdxDescCL& idx) {
+    void assign_indices_only (const TetraCL& s, const STP1P1IdxDescCL& idx)
+    {
         const Uint sys0= idx.GetIdx( 0),
                    sys1= idx.GetIdx( 1);
-        for (Uint i= 0; i < 4; ++i) {
+        for (Uint i= 0; i < 4; ++i)
+        {
             num[i]=   s.GetVertex( i)->Unknowns.Exist( sys0) ? s.GetVertex( i)->Unknowns( sys0) : NoIdx;
             num[i+4]= s.GetVertex( i)->Unknowns.Exist( sys1) ? s.GetVertex( i)->Unknowns( sys1) : NoIdx;
         }
@@ -2553,15 +2903,27 @@ class LocalNumbSTP1P1CL
     }
 
     /// \brief True, iff index i has a dof associated with it.
-    bool WithUnknowns (IdxT i) const { return num[i] != NoIdx; }
+    bool WithUnknowns (IdxT i) const
+    {
+        return num[i] != NoIdx;
+    }
 
     /// \brief True, iff the shape function exists on the old interface.
-    bool IsIni  (IdxT i) const { return num[i] < NumIniUnknowns_; }
+    bool IsIni  (IdxT i) const
+    {
+        return num[i] < NumIniUnknowns_;
+    }
     /// \brief True, iff the shape function exists on the new interface.
-    bool IsFini (IdxT i) const { return num[i] >= NumIniUnknowns_ && num[i] < NumIniUnknowns_ + NumFiniUnknowns_; }
+    bool IsFini (IdxT i) const
+    {
+        return num[i] >= NumIniUnknowns_ && num[i] < NumIniUnknowns_ + NumFiniUnknowns_;
+    }
 
     /// \brief The first NumIniUnknowns shape-functions do not vanish on the old interface.
-    IdxT NumIniUnknowns () const { return NumIniUnknowns_; }
+    IdxT NumIniUnknowns () const
+    {
+        return NumIniUnknowns_;
+    }
 };
 
 template<class Data, class BndData_, class VD_>
@@ -2592,30 +2954,57 @@ public:
     // as STP2P1EvalCL does not take possession of the pointed to.
 
     void // set / get the container of numerical data
-    SetSolution(Uint i, VecDescT* v) { (i== 0 ? v0_ : v1_)= v; }
+    SetSolution(Uint i, VecDescT* v)
+    {
+        (i== 0 ? v0_ : v1_)= v;
+    }
     const VecDescT*
-    GetSolution(Uint i) const { return i == 0 ? v0_: v1_; }
+    GetSolution(Uint i) const
+    {
+        return i == 0 ? v0_: v1_;
+    }
     VecDescT*
-    GetSolution(Uint i) { return i == 0 ? v0_: v1_; }
+    GetSolution(Uint i)
+    {
+        return i == 0 ? v0_: v1_;
+    }
     void // set / get the container of boundary-data
-    SetBndData(BndDataCL* bnd) { bnd_= bnd; }
+    SetBndData(BndDataCL* bnd)
+    {
+        bnd_= bnd;
+    }
     BndDataCL*
-    GetBndData() { return bnd_; }
+    GetBndData()
+    {
+        return bnd_;
+    }
     const BndDataCL*
-    GetBndData() const { return bnd_; }
+    GetBndData() const
+    {
+        return bnd_;
+    }
     const MultiGridCL& // the multigrid we refer to
-    GetMG() const { return *MG_; }
+    GetMG() const
+    {
+        return *MG_;
+    }
     Uint // Triangulation level of this function
-    GetLevel() const { return v0_->GetLevel(); }
+    GetLevel() const
+    {
+        return v0_->GetLevel();
+    }
     // The time at which data is evaluated.
-    double GetTime(Uint i) const { return i == 0 ? v0_->t : v1_->t; }
+    double GetTime(Uint i) const
+    {
+        return i == 0 ? v0_->t : v1_->t;
+    }
 
 };
 
 // Create a STP2P1EvalCL without the agonizing template-pain.
 template<class BndData_, class VD_>
-  STP2P1EvalCL<typename BndData_::bnd_type, BndData_, VD_>
-    make_STP2P1Eval (const MultiGridCL& mg, BndData_& bnd, VD_& vd0, VD_& vd1)
+STP2P1EvalCL<typename BndData_::bnd_type, BndData_, VD_>
+make_STP2P1Eval (const MultiGridCL& mg, BndData_& bnd, VD_& vd0, VD_& vd1)
 {
     return STP2P1EvalCL<typename BndData_::bnd_type, BndData_, VD_>( &vd0, &vd1, &bnd, &mg);
 }
@@ -2623,8 +3012,8 @@ template<class BndData_, class VD_>
 enum ZeroPolicyEnum { KeepLocalZeros, RemoveExactLocalZeros };
 
 template <ZeroPolicyEnum ZeroPolicy, typename LocalRowNumbT, typename LocalColNumbT>
-  inline void
-  update_global_matrix (MatrixBuilderCL& M, const double coup[LocalRowNumbT::Dim][LocalColNumbT::Dim], const LocalRowNumbT& r, const LocalColNumbT& c)
+inline void
+update_global_matrix (MatrixBuilderCL& M, const double coup[LocalRowNumbT::Dim][LocalColNumbT::Dim], const LocalRowNumbT& r, const LocalColNumbT& c)
 {
     for (Uint i= 0; i < LocalRowNumbT::Dim; ++i)
         if (r.num[i] != NoIdx)
@@ -2635,13 +3024,14 @@ template <ZeroPolicyEnum ZeroPolicy, typename LocalRowNumbT, typename LocalColNu
 }
 
 template <ZeroPolicyEnum ZeroPolicy, typename LocalRowNumbT, typename LocalColNumbT>
-  inline void
-  update_global_matrix_and_coupling (MatrixBuilderCL& M, const double coup[LocalRowNumbT::Dim][LocalColNumbT::Dim], const LocalRowNumbT& r, const LocalColNumbT& c, VectorCL* ini_cpl, const VectorCL* ini_data)
+inline void
+update_global_matrix_and_coupling (MatrixBuilderCL& M, const double coup[LocalRowNumbT::Dim][LocalColNumbT::Dim], const LocalRowNumbT& r, const LocalColNumbT& c, VectorCL* ini_cpl, const VectorCL* ini_data)
 {
     for (Uint i= 0; i < LocalRowNumbT::Dim; ++i)
         if (r.WithUnknowns( i) && !r.IsIni( i))
             for (Uint j= 0; j < LocalColNumbT::Dim; ++j)
-                if (c.WithUnknowns( j)) {
+                if (c.WithUnknowns( j))
+                {
                     if (c.IsIni( j)) // Put initial data into coupling vector on the rhs.
                         ini_cpl[0][r.num[i] - r.NumIniUnknowns()]-= coup[i][j]*ini_data[0][c.num[j]];
                     else  if (ZeroPolicy == KeepLocalZeros || (ZeroPolicy == RemoveExactLocalZeros && coup[i][j] != 0.))
@@ -2651,7 +3041,7 @@ template <ZeroPolicyEnum ZeroPolicy, typename LocalRowNumbT, typename LocalColNu
 
 class STInterfaceCommonDataCL : public TetraAccumulatorCL
 {
-  private:
+private:
     STInterfaceCommonDataCL** the_clones;
 
     LocalSTP2P1CL<> st_local_ls;
@@ -2660,7 +3050,7 @@ class STInterfaceCommonDataCL : public TetraAccumulatorCL
     const VecDescCL*   new_ls;  // P2-level-set at t1
     const BndDataCL<>* lsetbnd; // boundary data for the level set function
 
-  public:
+public:
     const TetraPrismLatticeCL& lat;
 
     std::valarray<double> ls_loc;
@@ -2668,13 +3058,17 @@ class STInterfaceCommonDataCL : public TetraAccumulatorCL
     QuadDomainCodim1CL<4> q5dom;
 
     const double t0,
-                 t1;
+          t1;
 
-    const STInterfaceCommonDataCL& get_clone () const {
+    const STInterfaceCommonDataCL& get_clone () const
+    {
         const int tid= omp_get_thread_num();
         return tid == 0 ? *this : the_clones[tid][0];
     }
-    bool empty () const { return surf.empty(); }
+    bool empty () const
+    {
+        return surf.empty();
+    }
 
     STInterfaceCommonDataCL (double t0arg, double t1arg, const VecDescCL& oldls_arg, const VecDescCL& newls_arg, const BndDataCL<>& lsetbnd_arg)
         : old_ls( &oldls_arg), new_ls( &newls_arg), lsetbnd( &lsetbnd_arg), lat( TetraPrismLatticeCL::instance( 2, 1)), ls_loc( lat.vertex_size()), t0( t0arg), t1( t1arg)
@@ -2682,14 +3076,17 @@ class STInterfaceCommonDataCL : public TetraAccumulatorCL
 
     virtual ~STInterfaceCommonDataCL () {}
 
-    virtual void begin_accumulation   () {
+    virtual void begin_accumulation   ()
+    {
         the_clones= new STInterfaceCommonDataCL*[omp_get_max_threads()];
         the_clones[0]= this;
     }
-    virtual void finalize_accumulation() {
+    virtual void finalize_accumulation()
+    {
         delete[] the_clones;
     }
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         surf.clear();
         q5dom.clear();
         st_local_ls.assign( t, *old_ls, *new_ls, *lsetbnd);
@@ -2700,7 +3097,8 @@ class STInterfaceCommonDataCL : public TetraAccumulatorCL
         surf.compute_normals( TetraPrismCL( t, t0, t1));
         make_CompositeQuad5DomainSTCodim1SpatialAbsdet( q5dom, surf, TetraPrismCL( t, t0, t1));
     }
-    virtual STInterfaceCommonDataCL* clone (int clone_id) {
+    virtual STInterfaceCommonDataCL* clone (int clone_id)
+    {
         return the_clones[clone_id]= new STInterfaceCommonDataCL( *this);
     }
 };
@@ -2708,7 +3106,7 @@ class STInterfaceCommonDataCL : public TetraAccumulatorCL
 template <class LocalMatrixT>
 class InterfaceMatrixSTP1AccuCL : public TetraAccumulatorCL
 {
-  private:
+private:
     const STInterfaceCommonDataCL& cdata_;
     std::string name_;
 
@@ -2722,20 +3120,24 @@ class InterfaceMatrixSTP1AccuCL : public TetraAccumulatorCL
     LocalMatrixT      local_mat;
     LocalNumbSTP1P1CL local_idx;
 
-  public:
+public:
     ///\brief For dG in time; does not use cpl_ and u_.
     InterfaceMatrixSTP1AccuCL (MatrixCL* mat, const STP1P1IdxDescCL* idx,
-                                 const LocalMatrixT& loc_mat, const STInterfaceCommonDataCL& cdata, std::string name= std::string())
+                               const LocalMatrixT& loc_mat, const STInterfaceCommonDataCL& cdata, std::string name= std::string())
         : cdata_( cdata), name_( name), mat_( mat), cpl_( 0), idx_( idx), u_( 0), M( 0), local_mat( loc_mat) {}
     ///\brief For cG in time; uses cpl_, u_ and changes the test-space.
     InterfaceMatrixSTP1AccuCL (MatrixCL* mat, VectorCL* cpl, const STP1P1IdxDescCL* idx,
-                                   const LocalMatrixT& loc_mat, const STInterfaceCommonDataCL& cdata, const VectorCL* u, std::string name= std::string())
+                               const LocalMatrixT& loc_mat, const STInterfaceCommonDataCL& cdata, const VectorCL* u, std::string name= std::string())
         : cdata_( cdata), name_( name), mat_( mat), cpl_( cpl), idx_( idx), u_( u), M( 0), local_mat( loc_mat) {}
     virtual ~InterfaceMatrixSTP1AccuCL () {}
 
-    void set_name (const std::string& n) { name_= n; }
+    void set_name (const std::string& n)
+    {
+        name_= n;
+    }
 
-    virtual void begin_accumulation () {
+    virtual void begin_accumulation ()
+    {
         const IdxT dim= idx_->NumUnknowns() - (cpl_ ? idx_->NumIniUnknowns() : 0);
         std::cout << "InterfaceMatrixSTP1AccuCL::begin_accumulation";
         if (name_ != std::string())
@@ -2744,7 +3146,8 @@ class InterfaceMatrixSTP1AccuCL : public TetraAccumulatorCL
         M= new MatrixBuilderCL( mat_, dim, dim);
     }
 
-    virtual void finalize_accumulation () {
+    virtual void finalize_accumulation ()
+    {
         M->Build();
         delete M;
         M= 0;
@@ -2754,13 +3157,15 @@ class InterfaceMatrixSTP1AccuCL : public TetraAccumulatorCL
         std::cout << ": " << mat_->num_nonzeros() << " nonzeros." << std::endl;
     }
 
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         const STInterfaceCommonDataCL& cdata= cdata_.get_clone();
         if (cdata.empty())
             return;
         local_mat.setup( TetraPrismCL( t, cdata.t0, cdata.t1), cdata);
         local_idx.assign_indices_only( t, *idx_);
-        if (cpl_) {
+        if (cpl_)
+        {
             for (Uint i= 0; i < 4; ++i) // The first four test-functions remain as they are, the last four are made constant in time.
                 for (Uint j= 0; j < 8; ++j)
                     local_mat.coup[i + 4][j]+= local_mat.coup[i][j];
@@ -2771,13 +3176,16 @@ class InterfaceMatrixSTP1AccuCL : public TetraAccumulatorCL
             update_global_matrix<LocalMatrixT::ZeroPolicy>( *M, local_mat.coup, local_idx, local_idx);
     }
 
-    virtual InterfaceMatrixSTP1AccuCL* clone (int /*clone_id*/) { return new InterfaceMatrixSTP1AccuCL( *this); }
+    virtual InterfaceMatrixSTP1AccuCL* clone (int /*clone_id*/)
+    {
+        return new InterfaceMatrixSTP1AccuCL( *this);
+    }
 };
 
 template <class LocalVectorT>
 class InterfaceVectorSTP1AccuCL : public TetraAccumulatorCL
 {
-  private:
+private:
     const STInterfaceCommonDataCL& cdata_;
     std::string name_;
 
@@ -2789,15 +3197,19 @@ class InterfaceVectorSTP1AccuCL : public TetraAccumulatorCL
     LocalVectorT local_vec;
     LocalNumbSTP1P1CL local_row;
 
-  public:
+public:
     InterfaceVectorSTP1AccuCL (VectorCL* vec, const STP1P1IdxDescCL* rowidx,
                                const LocalVectorT& loc_vec, const STInterfaceCommonDataCL& cdata, bool cG_in_t, std::string name= std::string())
         : cdata_( cdata), name_( name), cG_in_t_( cG_in_t), vec_( vec), rowidx_( rowidx), local_vec( loc_vec) {}
     virtual ~InterfaceVectorSTP1AccuCL () {}
 
-    void set_name (const std::string& n) { name_= n; }
+    void set_name (const std::string& n)
+    {
+        name_= n;
+    }
 
-    virtual void begin_accumulation () {
+    virtual void begin_accumulation ()
+    {
         const IdxT num_rows= rowidx_->NumUnknowns() - ( cG_in_t_ ? rowidx_->NumIniUnknowns() : 0);
         std::cout << "STInterfaceVectorSTP1AccuCL::begin_accumulation";
         if (name_ != std::string())
@@ -2807,13 +3219,15 @@ class InterfaceVectorSTP1AccuCL : public TetraAccumulatorCL
 
     virtual void finalize_accumulation () {}
 
-    virtual void visit (const TetraCL& t) {
+    virtual void visit (const TetraCL& t)
+    {
         const STInterfaceCommonDataCL& cdata= cdata_.get_clone();
         if (cdata.empty())
             return;
         local_row.assign_indices_only( t, *rowidx_);
         local_vec.setup( TetraPrismCL( t, cdata.t0, cdata.t1), cdata, local_row.num);
-        if (cG_in_t_) {
+        if (cG_in_t_)
+        {
             for (Uint i= 0; i < 4; ++i)
                 if (local_row.WithUnknowns( i) && local_row.WithUnknowns( i + 4)) // The last four components are made constant in time.
                     local_vec.vec[i + 4]+= local_vec.vec[i];
@@ -2827,51 +3241,59 @@ class InterfaceVectorSTP1AccuCL : public TetraAccumulatorCL
                     vec_[0][local_row.num[i]]+= local_vec.vec[i];
     }
 
-    virtual InterfaceVectorSTP1AccuCL* clone (int /*clone_id*/) { return new InterfaceVectorSTP1AccuCL( *this); }
+    virtual InterfaceVectorSTP1AccuCL* clone (int /*clone_id*/)
+    {
+        return new InterfaceVectorSTP1AccuCL( *this);
+    }
 };
 
 /// \brief Compute the load-vector corresponding to the function f on a single tetra-prism.
 class LocalVectorSTP1P1CL
 {
-  private:
+private:
     instat_scalar_fun_ptr f_;
 
     std::valarray<double> qp1,
-                          qf;
+        qf;
 
-  public:
+public:
     double vec[8];
 
     LocalVectorSTP1P1CL (instat_scalar_fun_ptr f) : f_( f) {}
 
-    void setup (const TetraPrismCL& prism, const STInterfaceCommonDataCL& cdata, const IdxT numr[8]) {
+    void setup (const TetraPrismCL& prism, const STInterfaceCommonDataCL& cdata, const IdxT numr[8])
+    {
         resize_and_evaluate_on_vertexes( f_, prism, cdata.q5dom, qf);
         qp1.resize( cdata.q5dom.vertex_size());
-        for (Uint i= 0; i < 8; ++i) {
-                if (numr[i] == NoIdx)
-                    continue;
-                evaluate_on_vertexes( STP1P1DiscCL::ref_val[i], cdata.q5dom, Addr( qp1));
-                vec[i]= quad_codim1( qf*qp1, cdata.q5dom);
+        for (Uint i= 0; i < 8; ++i)
+        {
+            if (numr[i] == NoIdx)
+                continue;
+            evaluate_on_vertexes( STP1P1DiscCL::ref_val[i], cdata.q5dom, Addr( qp1));
+            vec[i]= quad_codim1( qf*qp1, cdata.q5dom);
         }
     }
 };
 
 class LocalSpatialInterfaceMassSTP1P1CL
 {
-  private:
+private:
     const InterfaceCommonDataP1CL& spatialcdata_;
     LocalInterfaceMassP1CL spatial_mass_;
     const bool on_old_iface_;
 
-  public:
+public:
     double coup[8][8];
     static const ZeroPolicyEnum ZeroPolicy= RemoveExactLocalZeros;
 
     LocalSpatialInterfaceMassSTP1P1CL (const InterfaceCommonDataP1CL& spatialcdata, bool on_old_iface= true)
         : spatialcdata_( spatialcdata), on_old_iface_( on_old_iface)
-    { std::memset( coup, 0, 8*8*sizeof(double)); }
+    {
+        std::memset( coup, 0, 8*8*sizeof(double));
+    }
 
-    void setup (const TetraPrismCL& p, const STInterfaceCommonDataCL&) {
+    void setup (const TetraPrismCL& p, const STInterfaceCommonDataCL&)
+    {
         spatial_mass_.setup( p.t, spatialcdata_.get_clone());
         // on_old_iface_==true: The basis functions for t1 are all zero on the interface at t0
         //                      --> zero-init in the constructor.
@@ -2879,7 +3301,8 @@ class LocalSpatialInterfaceMassSTP1P1CL
         // For use_cG_in_time_ == true && use_massdiv_ == false: The rows [4..7) are modified, thus:
         std::memset( coup, 0, 8*8*sizeof(double));
         const Uint offset= on_old_iface_ ? 0 : 4;
-        for (Uint i= 0; i < 4 ; ++i) {
+        for (Uint i= 0; i < 4 ; ++i)
+        {
             coup[i + offset][i + offset]= spatial_mass_.coup[i][i];
             for(Uint j= 0; j < i; ++j)
                 coup[i + offset][j + offset]= coup[j + offset][i + offset]= spatial_mass_.coup[i][j];
@@ -2892,33 +3315,36 @@ resize_and_scatter_piecewise_spatial_normal (const SPatchCL<4>& surf, const Quad
 
 class LocalLaplaceBeltramiSTP1P1CL
 {
-  private:
+private:
     double D_; // diffusion coefficient
 
     LocalSTP1CL<Point3DCL> gradx[8];
     double dummy;
     GridFunctionCL<Point3DCL> qgradx,
-                              q[8],
-                              spatial_n;
+                   q[8],
+                   spatial_n;
     QuadDomainCodim1CL<4> qdom;
 
-  public:
+public:
     double coup[8][8];
     static const ZeroPolicyEnum ZeroPolicy= KeepLocalZeros;
 
-    void setup (const TetraPrismCL& prism, const STInterfaceCommonDataCL& cdata) {
+    void setup (const TetraPrismCL& prism, const STInterfaceCommonDataCL& cdata)
+    {
         make_CompositeQuad2DomainSTCodim1SpatialAbsdet( qdom, cdata.surf, prism);
         resize_and_scatter_piecewise_spatial_normal( cdata.surf, qdom, spatial_n);
 
         STP1P1DiscCL::GetSpatialGradients( prism, gradx);
         qgradx.resize( qdom.vertex_size());
-        for (int i= 0; i < 8; ++i) {
+        for (int i= 0; i < 8; ++i)
+        {
             evaluate_on_vertexes( gradx[i], qdom, Addr( qgradx));
             q[i].resize( qdom.vertex_size());
             q[i]= qgradx - dot( qgradx, spatial_n)*spatial_n;
         }
 
-        for (int i= 0; i < 8; ++i) {
+        for (int i= 0; i < 8; ++i)
+        {
             coup[i][i]= D_* quad_codim1( dot( q[i], q[i]), qdom);
             for(int j= 0; j < i; ++j)
                 coup[i][j]= coup[j][i]= D_* quad_codim1( dot( q[i], q[j]), qdom);
@@ -2932,7 +3358,7 @@ class LocalLaplaceBeltramiSTP1P1CL
 template <class DiscVelSolT>
 class LocalMaterialDerivativeSTP1P1CL
 {
-  private:
+private:
     const DiscVelSolT w_; // wind
     LocalSTP2P1CL<Point3DCL> loc_w_;
 
@@ -2941,27 +3367,30 @@ class LocalMaterialDerivativeSTP1P1CL
     LocalSTP1CL<Point4DCL> grad[8];
     double dummy;
     GridFunctionCL<Point4DCL> qw,
-                              qgrad;
+                   qgrad;
     std::valarray<double>     q[8],
-                              qwdotgrad[8];
+        qwdotgrad[8];
 
-  public:
+public:
     double coup[8][8];
     static const ZeroPolicyEnum ZeroPolicy= KeepLocalZeros;
 
-    void setup (const TetraPrismCL& prism, const STInterfaceCommonDataCL& cdata) {
+    void setup (const TetraPrismCL& prism, const STInterfaceCommonDataCL& cdata)
+    {
         loc_w_.assign( prism.t, w_);
         resize_and_evaluate_on_vertexes( STWindProxyCL( loc_w_), cdata.q5dom, qw);
         qgrad.resize( cdata.q5dom.vertex_size());
         STP1P1DiscCL::GetGradients( prism, grad);
-        for (int i= 0; i < 8; ++i) {
+        for (int i= 0; i < 8; ++i)
+        {
             evaluate_on_vertexes( grad[i], cdata.q5dom, Addr( qgrad));
             qwdotgrad[i].resize( cdata.q5dom.vertex_size());
             qwdotgrad[i]= dot( qw, qgrad);
             resize_and_evaluate_on_vertexes( STP1P1DiscCL::ref_val[i], cdata.q5dom, q[i]);
         }
 
-        for (int i= 0; i < 8; ++i) {
+        for (int i= 0; i < 8; ++i)
+        {
             for(int j= 0; j < 8; ++j)
                 (transpose_local_matrix_ ? coup[j][i] : coup[i][j])= quad_codim1( qwdotgrad[j]*q[i], cdata.q5dom);
         }
@@ -2974,7 +3403,7 @@ class LocalMaterialDerivativeSTP1P1CL
 template <class DiscVelSolT>
 class LocalMassdivSTP1P1CL
 {
-  private:
+private:
     const DiscVelSolT                w_; // wind
     LocalSTP2P1CL<Point3DCL>         loc_w_;
     LocalSTP1P1CL< SMatrixCL<3,3> >  dw;
@@ -2986,22 +3415,24 @@ class LocalMassdivSTP1P1CL
     double dummy;
     SMatrixCL<3,3> T;
     LocalP1CL<Point3DCL> gradrefp2[10],
-                         gradp2[10];
+              gradp2[10];
 
     std::valarray<double> q[8];
 
-  public:
+public:
     double coup[8][8];
     static const ZeroPolicyEnum ZeroPolicy= KeepLocalZeros;
 
-    void setup (const TetraPrismCL& prism, const STInterfaceCommonDataCL& cdata) {
+    void setup (const TetraPrismCL& prism, const STInterfaceCommonDataCL& cdata)
+    {
         resize_and_scatter_piecewise_spatial_normal( cdata.surf, cdata.q5dom, spatial_n);
         loc_w_.assign( prism.t, w_);
         GetTrafoTr( T, dummy, prism.t);
         P2DiscCL::GetGradients( gradp2, gradrefp2, T);
 
         dw= LocalSTP1P1CL< SMatrixCL<3,3> >();
-        for (int i= 0; i < 10; ++i) {
+        for (int i= 0; i < 10; ++i)
+        {
             dw.at_t0()+= outer_product(loc_w_.at_t0()[i], gradp2[i]);
             dw.at_t1()+= outer_product(loc_w_.at_t1()[i], gradp2[i]);
         }
@@ -3012,7 +3443,8 @@ class LocalMassdivSTP1P1CL
         for (int i= 0; i < 8; ++i)
             resize_and_evaluate_on_vertexes( STP1P1DiscCL::ref_val[i], cdata.q5dom, q[i]);
 
-        for (int i= 0; i < 8; ++i) {
+        for (int i= 0; i < 8; ++i)
+        {
             coup[i][i]= quad_codim1( qdivgamma_w*q[i]*q[i], cdata.q5dom);
             for(int j= 0; j < i; ++j)
                 coup[j][i]= coup[i][j]= quad_codim1( qdivgamma_w*q[i]*q[j], cdata.q5dom);
@@ -3020,47 +3452,50 @@ class LocalMassdivSTP1P1CL
     }
 
     LocalMassdivSTP1P1CL (const DiscVelSolT& w)
-        :w_( w) { P2DiscCL::GetGradientsOnRef( gradrefp2); }
+        :w_( w)
+    {
+        P2DiscCL::GetGradientsOnRef( gradrefp2);
+    }
 };
 
 /// \brief Convenience-function to reduce the number of explicit template-parameters for the spacetime-massdiv- and the -convection-matrix.
 template <template <class> class LocalMatrixT, class DiscVelSolT>
-  inline InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >*
-  make_wind_dependent_matrixSTP1P1_accu (MatrixCL* mat, const STP1P1IdxDescCL* idx,
-                                         const STInterfaceCommonDataCL& cdata, const DiscVelSolT& wind, std::string name= std::string())
+inline InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >*
+make_wind_dependent_matrixSTP1P1_accu (MatrixCL* mat, const STP1P1IdxDescCL* idx,
+                                       const STInterfaceCommonDataCL& cdata, const DiscVelSolT& wind, std::string name= std::string())
 {
     return new InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >( mat, idx,
-        LocalMatrixT<DiscVelSolT>( wind), cdata, name);
+            LocalMatrixT<DiscVelSolT>( wind), cdata, name);
 }
 
 /// \brief Convenience-function to reduce the number of explicit template-parameters for the spacetime-massdiv- and the -convection-matrix.
 template <template <class> class LocalMatrixT, class DiscVelSolT>
-  inline InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >*
-  make_wind_dependent_local_transpose_matrixSTP1P1_accu (MatrixCL* mat, const STP1P1IdxDescCL* idx,
-                                         const STInterfaceCommonDataCL& cdata, const DiscVelSolT& wind, std::string name= std::string())
+inline InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >*
+make_wind_dependent_local_transpose_matrixSTP1P1_accu (MatrixCL* mat, const STP1P1IdxDescCL* idx,
+        const STInterfaceCommonDataCL& cdata, const DiscVelSolT& wind, std::string name= std::string())
 {
     return new InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >( mat, idx,
-        LocalMatrixT<DiscVelSolT>( wind, true), cdata, name);
+            LocalMatrixT<DiscVelSolT>( wind, true), cdata, name);
 }
 
 /// \brief Convenience-function to reduce the number of explicit template-parameters for the spacetime-massdiv- and the -convection-matrix.
 template <template <class> class LocalMatrixT, class DiscVelSolT>
-  inline InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >*
-  make_wind_dependent_matrixSTP1P0_1_accu (MatrixCL* mat, VectorCL* cpl, const STP1P1IdxDescCL* idx,
-                                           const STInterfaceCommonDataCL& cdata, const VectorCL* u_ini, const DiscVelSolT& wind, std::string name= std::string())
+inline InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >*
+make_wind_dependent_matrixSTP1P0_1_accu (MatrixCL* mat, VectorCL* cpl, const STP1P1IdxDescCL* idx,
+        const STInterfaceCommonDataCL& cdata, const VectorCL* u_ini, const DiscVelSolT& wind, std::string name= std::string())
 {
     return new InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >( mat, cpl, idx,
-        LocalMatrixT<DiscVelSolT>( wind), cdata, u_ini, name);
+            LocalMatrixT<DiscVelSolT>( wind), cdata, u_ini, name);
 }
 
 /// \brief Convenience-function to reduce the number of explicit template-parameters for the spacetime-massdiv- and the -convection-matrix.
 template <template <class> class LocalMatrixT, class DiscVelSolT>
-  inline InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >*
-  make_wind_dependent_local_transpose_matrixSTP1P0_1_accu (MatrixCL* mat, VectorCL* cpl, const STP1P1IdxDescCL* idx,
-                                           const STInterfaceCommonDataCL& cdata, const VectorCL* u_ini, const DiscVelSolT& wind, std::string name= std::string())
+inline InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >*
+make_wind_dependent_local_transpose_matrixSTP1P0_1_accu (MatrixCL* mat, VectorCL* cpl, const STP1P1IdxDescCL* idx,
+        const STInterfaceCommonDataCL& cdata, const VectorCL* u_ini, const DiscVelSolT& wind, std::string name= std::string())
 {
     return new InterfaceMatrixSTP1AccuCL< LocalMatrixT<DiscVelSolT> >( mat, cpl, idx,
-        LocalMatrixT<DiscVelSolT>( wind, true), cdata, u_ini, name);
+            LocalMatrixT<DiscVelSolT>( wind, true), cdata, u_ini, name);
 }
 
 
@@ -3070,7 +3505,7 @@ template <template <class> class LocalMatrixT, class DiscVelSolT>
 ///     * cG_in_t_ == true: The initial values are eliminated; additionally, the test space is changed: for Ini-Unknowns, there remains only a test-function, which is constant in time.
 class SurfactantSTP1CL : public SurfactantP1BaseCL
 {
-  public:
+public:
     MatrixCL A,    ///< ST-diffusion matrix
              Mder, ///< ST-material-derivative matrix
              Mdiv, ///< ST-mass-matrix with interface-divergence of velocity
@@ -3085,7 +3520,7 @@ class SurfactantSTP1CL : public SurfactantP1BaseCL
 
     size_t dim; ///< Dimension of the linear system.
 
-  private:
+private:
     bool cG_in_t_,
          use_mass_div_;
 
@@ -3096,11 +3531,11 @@ class SurfactantSTP1CL : public SurfactantP1BaseCL
     void Update_cG();
     void Update_dG();
 
-  public:
+public:
     SurfactantSTP1CL (MultiGridCL& mg,
-        double theta, double D, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd, bool cG_in_t, bool use_mass_div,
-        int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
-    : SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound), cG_in_t_( cG_in_t), use_mass_div_( use_mass_div)
+                      double theta, double D, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd, bool cG_in_t, bool use_mass_div,
+                      int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+        : SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound), cG_in_t_( cG_in_t), use_mass_div_( use_mass_div)
     {}
 
     /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
@@ -3130,7 +3565,7 @@ class TransportP1FunctionCL; ///< forward declaration
 /// \brief P1-discretization and solution of the transport equation on the interface
 class SurfactantCharTransportP1CL: public SurfactantP1BaseCL
 {
-  public:
+public:
     IdxDescCL full_idx;
     MatDescCL A,  ///< diffusion matrix
               M,  ///< mass matrix
@@ -3140,14 +3575,14 @@ class SurfactantCharTransportP1CL: public SurfactantP1BaseCL
     VectorCL load, ///< for a load-function
              rhs_; ///< for the transported initial data
 
-  private:
+private:
     MatrixCL      L_; ///< sum of matrices
     TransportP1FunctionCL* fulltransport_;
 
-  public:
+public:
     SurfactantCharTransportP1CL (MultiGridCL& mg,
-        double theta, double D, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
-        int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
+                                 double theta, double D, VecDescCL* v, const VelBndDataT& Bnd_v, VecDescCL& lset_vd, const BndDataCL<>& lsetbnd,
+                                 int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
         : SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound),
           full_idx( P1_FE), fulltransport_( 0)
     {}
@@ -3159,9 +3594,13 @@ class SurfactantCharTransportP1CL: public SurfactantP1BaseCL
     void DoStep (double new_t);
 
     const_DiscSolCL GetSolution() const
-        { return const_DiscSolCL( &ic, &Bnd_, &MG_); }
+    {
+        return const_DiscSolCL( &ic, &Bnd_, &MG_);
+    }
     const_DiscSolCL GetSolution( const VecDescCL& Myic) const
-        { return const_DiscSolCL( &Myic, &Bnd_, &MG_); }
+    {
+        return const_DiscSolCL( &Myic, &Bnd_, &MG_);
+    }
     ///@}
 
     /// \name For internal use only
