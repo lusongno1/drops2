@@ -1152,8 +1152,8 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
     adap.push_back( &lsetrepair);
     InterfaceP1RepairCL ic_repair( mg, lset.Phi, lset.GetBndData(), timedisc.ic);
     adap.push_back( &ic_repair);
-    InterfaceP1RepairCL icw_repair( mg, lset.Phi, lset.GetBndData(), timedisc.icw);
-    adap.push_back( &icw_repair);
+    //InterfaceP1RepairCL icw_repair( mg, lset.Phi, lset.GetBndData(), timedisc.icw);
+    //adap.push_back( &icw_repair);
     //LevelsetRepairCL lset2repair( lset2);
     //adap.push_back( &lset2repair);
 
