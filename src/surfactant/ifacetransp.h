@@ -1057,6 +1057,42 @@ public:
 };
 
 
+class LocalInterfaceMassUP1CL//set up local mass matrix P1
+{
+private:
+    std::valarray<double> q[4],qu;
+    QuadDomain2DCL qdom;
+    double alpha_;
+    VecDescCL ic_,icw_;
+    double delta_;
+    MultiGridCL& MG_;
+
+public:
+    static const FiniteElementT row_fe_type= P1IF_FE,
+                                col_fe_type= P1IF_FE;
+
+    double coup[4][4];
+
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata)
+    {
+        make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
+        BndDataCL<> nobnd( 0);
+        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, ic_), t, qdom, qu);
+        for (int i= 0; i < 4; ++i)
+            resize_and_evaluate_on_vertexes ( cdata.p1[i], qdom, q[i]);
+        for (int i= 0; i < 4; ++i)
+        {
+            coup[i][i]= quad_2D( (qu*qu+delta_*qu)*q[i]*q[i], qdom);
+            for(int j= 0; j < i; ++j)
+                coup[i][j]= coup[j][i]= alpha_*quad_2D( (qu*qu+delta_*qu)*q[j]*q[i], qdom);
+        }
+    }
+
+    LocalInterfaceMassUP1CL (VecDescCL &ic, VecDescCL &icw, double delta,MultiGridCL &MG, double alpha= 1.):
+        alpha_( alpha), ic_(ic),icw_(icw),delta_(delta),MG_(MG){}
+};
+
+
 
 /// \brief The routine sets up the Laplace-Beltrami-matrix in mat on the interface defined by ls.
 ///        It belongs to the FE induced by standard P1-elements.

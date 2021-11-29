@@ -3548,6 +3548,12 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         //InterfaceMatrixAccuP1CL<LocalInterfaceMassP1CL> mass_accu( &M, LocalInterfaceMassP1CL(), cdata, "mass");
         accus.push_back( &mass_accu);
 
+        /**< push back mass-like term with u_n^2+delta u_n as its coefficient */
+        InterfaceMatrixAccuCL<LocalInterfaceMassUP1CL, InterfaceCommonDataP1CL> massU_accu( &MassU, LocalInterfaceMassUP1CL(ic,icw,delta,MG_,1), cdata, "massU");
+        //InterfaceMatrixAccuP1CL<LocalInterfaceMassP1CL> mass_accu( &M, LocalInterfaceMassP1CL(), cdata, "mass");
+        accus.push_back( &massU_accu);
+
+
         /**< push back stiffness term */
         //InterfaceMatrixAccuP1CL<LocalLaplaceBeltramiP1CL> lb_accu( &A, LocalLaplaceBeltramiP1CL( D_), cdata, "Laplace-Beltrami");/// To implement method 1 using surface gradient
         InterfaceMatrixAccuCL<LocalLaplaceBeltramiP1CL, InterfaceCommonDataP1CL> lb_accu( &Laplace, LocalLaplaceBeltramiP1CL( D_), cdata, "Laplace-Beltrami");
