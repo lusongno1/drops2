@@ -20,7 +20,7 @@
         "RestartFile": "",
 
         "AdaptRef": {
-            "Freq":          0,
+            "Freq":          1,
             "Width":         10,
             "CoarsestLevel": 0,
             "FinestLevel":   0,
@@ -54,7 +54,8 @@
             "Solution":		"HeatConductionSol",
             "SurfGradSol":  "HeatConductionSurfGradSol"
         },
-        "Method":      "characteristic-transport",
+        "Method":      "NarrowBandStabilization",
+	"Method2":     "characteristic-transport",
         "UseMassDiv": true,
         "Visc": 1.0,
         "Theta":      1,

@@ -13,29 +13,17 @@
         "InitialValue": "Example1_InitialValue", 
         "Solver": {
             "MG": {
-                "NumLvl": -1,       //for Multigird: number of used levels (-1 = all)
-                "SmoothingSteps": 1 //for Multigrid: number of Smoothing steps;
+                "NumLvl": -1,       
+                "SmoothingSteps": 1 
             }, 
-            "Solver": 303, // describes Solver (first digit) + Preconditioner (last two digits)
-            // First digit:
-            //           1XX : Multigrid
-            //           2XX : Prec. CG
-            //           3XX : GMRES
-            // last two digits: (Smoother + Coarse Solver[only for MG])
-            //           X02 : Jacobi     + SSOR
-            //           X03 : SSOR       + SSOR
-            //           X04 : GS         + SSOR
-            //           X05 : SGS        + SSOR
-            //           X06 : SOR        + SSOR
-            // BUT it exist only the following combinations:
-            // 102,103,104,105,106,203,302,303
+            "Solver": 303, 
             "Iter": 200,      
             "Tol": 1e-10, 
             "useRelTol": 0, 
-            "Restart": 100,   // used for GMRES
-            "Relax": 1,       // SSOR relaxation
-            "PcIter": 1,      // inactive (former: iterations of the preconditioner)
-            "PcTol": 0.1      // inactive (former: tolerance of the preconditioning solve)
+            "Restart": 100,   
+            "Relax": 1,      
+            "PcIter": 1,      
+            "PcTol": 0.1     
         }, 
         "Coeff": {
             "Diffusion": 1, 
@@ -54,13 +42,13 @@
     }, 
     "Mesh": {
         "Type": "BrickBuilder", 
-                "Origin": [0,0,0],      // Origin
-                "E1": [1,0,0],          // Basis to span the object,
-                "E2": [0,1,0],          // not necessary orthonormal 
-                "E3": [0,0,1],          // ... 
-                "N1": 4,                // Number of cells along the E1-direction,
-                "N2": 4,                //                       the E2-direction,
-                "N3": 4,                //                       the E3-direction.
+                "Origin": [0,0,0],     
+                "E1": [1,0,0],          
+                "E2": [0,1,0],          
+                "E3": [0,0,1],         
+                "N1": 4,                
+                "N2": 4,               
+                "N3": 4,    
         "AdaptRef": {
 	        "FinestLevel": 2
         }

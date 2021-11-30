@@ -1248,7 +1248,7 @@ void StrategyPatternFM (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS
         // Watch for large differences in numbers of old and new dof.
         timedisc.InitTimeStep();
         LSInit( mg, lset.Phi, the_lset_fun, cur_time);
-        InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
+        //InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
         //timedisc.DoStep( cur_time);
         timedisc.DoStep0PatternFM( cur_time);//only use back-forward Euler scheme
 
