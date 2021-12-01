@@ -311,7 +311,7 @@ void Strategy(PoissonCL& Poisson)
             //ALE.InitGrid();
         }
         Poisson.SetupInstatSystem( Poisson.A, Poisson.M, Poisson.x.t);
-        Poisson.Init( Poisson.x, Poisson.Coeff_.InitialCondition, 0.0);
+        Poisson.Init( Poisson.x, Poisson.Coeff_.InitialCondition, 0.0);//give the initial value of solution
         timer.Stop();
         std::cout << " o time " << timer.GetTime() << " s" << std::endl;
     }
@@ -428,7 +428,7 @@ int main (int argc, char** argv)
         DROPS::ParTimerCL timer;
 #endif
 
-        DROPS::read_parameter_file_from_cmdline( P, argc, argv, "../../param/poisson/cdrdrops/statpoissonEx.json");
+        DROPS::read_parameter_file_from_cmdline( P, argc, argv, "../../param/poisson/cdrdrops/instatpoissonEx.json");
         P.put_if_unset<std::string>("VTK.TimeFileName",P.get<std::string>("VTK.VTKName"));
         //output all the parameters
         std::cout << P << std::endl;
