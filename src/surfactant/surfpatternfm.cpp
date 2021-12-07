@@ -2279,7 +2279,7 @@ int main (int argc, char* argv[])
 {
     try
     {
-
+/*
         // time measurements
 #ifndef _PAR
         DROPS::TimerCL timer;
@@ -2387,13 +2387,13 @@ int main (int argc, char* argv[])
         delete probP2;
         std::cout << "cdrdrops finished regularly" << std::endl;
 
+*/
 
 
 
 
 
-
-//        ScopeTimerCL timer( "main");
+        ScopeTimerCL timer( "main");
 
         DROPS::read_parameter_file_from_cmdline( P, argc, argv, "../../param/surfactant/surfactant/surfpatternfm.json");
         std::cout << P << std::endl;
@@ -2418,7 +2418,7 @@ int main (int argc, char* argv[])
             bf_wind[i]= the_wind_fun;
 
         std::cout << "Setting up domain:\n";
-        //std::unique_ptr<MGBuilderCL> builder( make_MGBuilder( P));
+        std::unique_ptr<MGBuilderCL> builder( make_MGBuilder( P));
         DROPS::MultiGridCL mg( *builder);
         typedef DistMarkingStrategyCL MarkerT;
         MarkerT marker( the_lset_fun, P.get<double>( "Mesh.AdaptRef.Width"),
