@@ -61,13 +61,13 @@
 #include "poisson/integrTime.h"
 #include "num/prolongation.h"
 
- // include problem class
+// include problem class
 #include "misc/params.h"
 #include "poisson/poissonParam.h"      // poissonCoeffCL
 #include "poisson/poisson.h"           // setting up the Poisson problem
 #include "num/bndData.h"
 
- // include standards
+// include standards
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -2279,115 +2279,115 @@ int main (int argc, char* argv[])
 {
     try
     {
-/*
-        // time measurements
-#ifndef _PAR
-        DROPS::TimerCL timer;
-#else
-        DROPS::ParTimerCL timer;
-#endif
+        /*
+                // time measurements
+        #ifndef _PAR
+                DROPS::TimerCL timer;
+        #else
+                DROPS::ParTimerCL timer;
+        #endif
 
-        DROPS::read_parameter_file_from_cmdline( P, argc, argv, "../../param/poisson/cdrdrops/instatpoissonEx.json");
-        P.put_if_unset<std::string>("VTK.TimeFileName",P.get<std::string>("VTK.VTKName"));
-        //output all the parameters
-        std::cout << P << std::endl;
+                DROPS::read_parameter_file_from_cmdline( P, argc, argv, "../../param/poisson/cdrdrops/instatpoissonEx.json");
+                P.put_if_unset<std::string>("VTK.TimeFileName",P.get<std::string>("VTK.VTKName"));
+                //output all the parameters
+                std::cout << P << std::endl;
 
-        DROPS::dynamicLoad(P.get<std::string>("General.DynamicLibsPrefix"),
-                           P.get<std::vector<std::string> >("General.DynamicLibs") );
+                DROPS::dynamicLoad(P.get<std::string>("General.DynamicLibsPrefix"),
+                                   P.get<std::vector<std::string> >("General.DynamicLibs") );
 
-        if (P.get<int>("General.ProgressBar"))
-            DROPS::ProgressBarTetraAccumulatorCL::Activate();
-        // set up data structure to represent a poisson problem
-        // ---------------------------------------------------------------------
-     //   std::cout << line << "Set up data structure to represent a Poisson problem ...\n";
-        timer.Reset();
+                if (P.get<int>("General.ProgressBar"))
+                    DROPS::ProgressBarTetraAccumulatorCL::Activate();
+                // set up data structure to represent a poisson problem
+                // ---------------------------------------------------------------------
+             //   std::cout << line << "Set up data structure to represent a Poisson problem ...\n";
+                timer.Reset();
 
-        //create geometry
-        DROPS::MultiGridCL* mg0= 0;
-        DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
+                //create geometry
+                DROPS::MultiGridCL* mg0= 0;
+                DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
 
-        //build computational domain
-        std::unique_ptr<DROPS::MGBuilderCL> builder( DROPS::make_MGBuilder( P));
-        mg0 = new DROPS::MultiGridCL( *builder);
-        //Setup boundary conditions
-        read_BndData( *bdata, *mg0, P.get_child( "Poisson.BoundaryData"));
-        for (int i=0; i<mg0->GetBnd().GetNumBndSeg(); ++i)
-            std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
-        //Initialize SUPGCL class
-        DROPS::SUPGCL supg;
-        //SUPG stabilization, ALE method  and error estimation are not yet implemented for P2 case!
-        if(!P.get<int>("Poisson.P1"))
-        {
-            P.put<int>("Stabilization.SUPG",0);
-            P.put<int>("Error.DoErrorEstimate",0);
-        }
-        if(P.get<int>("Stabilization.SUPG"))
-        {
-            supg.init(P);
-//            std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
-        }
-        // Setup the problem
-        DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P);
+                //build computational domain
+                std::unique_ptr<DROPS::MGBuilderCL> builder( DROPS::make_MGBuilder( P));
+                mg0 = new DROPS::MultiGridCL( *builder);
+                //Setup boundary conditions
+                read_BndData( *bdata, *mg0, P.get_child( "Poisson.BoundaryData"));
+                for (int i=0; i<mg0->GetBnd().GetNumBndSeg(); ++i)
+                    std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
+                //Initialize SUPGCL class
+                DROPS::SUPGCL supg;
+                //SUPG stabilization, ALE method  and error estimation are not yet implemented for P2 case!
+                if(!P.get<int>("Poisson.P1"))
+                {
+                    P.put<int>("Stabilization.SUPG",0);
+                    P.put<int>("Error.DoErrorEstimate",0);
+                }
+                if(P.get<int>("Stabilization.SUPG"))
+                {
+                    supg.init(P);
+        //            std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
+                }
+                // Setup the problem
+                DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P);
 
-        DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
-        DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
-        if(P.get<int>("Poisson.P1"))
-            probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( *mg0, tmp, *bdata, supg, P.get<int>("ALE.wavy"));
-        else
-        {
-            probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( *mg0, tmp, *bdata, P.get<int>("ALE.wavy"));
-        }
+                DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
+                DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
+                if(P.get<int>("Poisson.P1"))
+                    probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( *mg0, tmp, *bdata, supg, P.get<int>("ALE.wavy"));
+                else
+                {
+                    probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( *mg0, tmp, *bdata, P.get<int>("ALE.wavy"));
+                }
 
-#ifdef _PAR
-        // Set parallel data structures
-        DROPS::LoadBalCL lb( *mg);                    // loadbalancing
-        lb.DoMigration();    // distribute initial grid
-#endif
+        #ifdef _PAR
+                // Set parallel data structures
+                DROPS::LoadBalCL lb( *mg);                    // loadbalancing
+                lb.DoMigration();    // distribute initial grid
+        #endif
 
-        timer.Stop();
-        std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+                timer.Stop();
+                std::cout << " o time " << timer.GetTime() << " s" << std::endl;
 
-        // Refine the grid
-        std::cout << "Refine the grid " << P.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
-        timer.Reset();
-        // Create new tetrahedra
-        for ( int ref=1; ref <= P.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
-        {
-            std::cout << " refine (" << ref << ")\n";
-            DROPS::MarkAll( *mg0);
-            mg0->Refine();
-            // do loadbalancing
-#ifdef _PAR
-            lb.DoMigration();
-#endif
-        }
+                // Refine the grid
+                std::cout << "Refine the grid " << P.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
+                timer.Reset();
+                // Create new tetrahedra
+                for ( int ref=1; ref <= P.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
+                {
+                    std::cout << " refine (" << ref << ")\n";
+                    DROPS::MarkAll( *mg0);
+                    mg0->Refine();
+                    // do loadbalancing
+        #ifdef _PAR
+                    lb.DoMigration();
+        #endif
+                }
 
-        timer.Stop();
-        std::cout << " o time " << timer.GetTime() << " s" << std::endl;
-        mg0->SizeInfo( std::cout);
+                timer.Stop();
+                std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+                mg0->SizeInfo( std::cout);
 
-        // Solve the problem
-        if(P.get<int>("Poisson.P1"))
-            DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
-        else
-            DROPS::Strategy<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2);
-        //Check if Multigrid is sane
-        std::cout << line << "Check if multigrid works properly...\n";
-        timer.Reset();
-        if(P.get<int>("ALE.wavy"))
-            std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
-        else
-            std::cout << DROPS::SanityMGOutCL(*mg0) << std::endl;
-        timer.Stop();
-        std::cout << " o time " << timer.GetTime() << " s" << std::endl;
-        // delete dynamically allocated objects
-        delete mg0;
-        delete bdata;
-        delete probP1;
-        delete probP2;
-        std::cout << "cdrdrops finished regularly" << std::endl;
+                // Solve the problem
+                if(P.get<int>("Poisson.P1"))
+                    DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
+                else
+                    DROPS::Strategy<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2);
+                //Check if Multigrid is sane
+                std::cout << line << "Check if multigrid works properly...\n";
+                timer.Reset();
+                if(P.get<int>("ALE.wavy"))
+                    std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
+                else
+                    std::cout << DROPS::SanityMGOutCL(*mg0) << std::endl;
+                timer.Stop();
+                std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+                // delete dynamically allocated objects
+                delete mg0;
+                delete bdata;
+                delete probP1;
+                delete probP2;
+                std::cout << "cdrdrops finished regularly" << std::endl;
 
-*/
+        */
 
 
 

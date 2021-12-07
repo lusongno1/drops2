@@ -188,6 +188,42 @@ void LocalInterfaceMassDivP1CL<DiscVelSolT>::setup (const TetraCL& t, const Inte
 }
 
 
+template <class DiscVelSolT>
+void LocalInterfaceMassHP1CL<DiscVelSolT>::setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata)
+{
+    //set up divmass matrix
+    make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
+    resize_and_scatter_piecewise_normal( cdata.surf, qdom, n);
+
+    GetTrafoTr( T, dummy, t);
+    P2DiscCL::GetGradients( gradp2, gradrefp2, T);
+    w_loc.assign( t, w_);
+    qgradp2i.resize( qdom.vertex_size());
+    qdivgamma_w.resize( qdom.vertex_size());
+    qdivgamma_w= 0.;
+    for (int i= 0; i < 10; ++i)
+    {
+        evaluate_on_vertexes( gradp2[i], qdom, Addr( qgradp2i));
+        qdivgamma_w+= dot(w_loc[i], qgradp2i) - dot( w_loc[i], n)*dot( n, qgradp2i);//w_loc is a coefficient of w written as a linear combination of P2 basis functions
+    }
+    /*
+        for(auto &it:qdivgamma_w)
+        {
+            std::cout<< "qdivgamma_w:"<<it<<std::endl;
+        }
+    */
+    for (int i= 0; i < 4; ++i)
+        resize_and_evaluate_on_vertexes (cdata.p1[i], qdom, q[i]);
+
+    for (int i= 0; i < 4; ++i)
+    {
+        coup[i][i]= quad_2D( qdivgamma_w*q[i]*q[i], qdom);
+        for(int j= 0; j < i; ++j)
+            coup[i][j]= coup[j][i]= quad_2D( qdivgamma_w*q[j]*q[i], qdom);
+    }
+}
+
+
 
 template <class DiscVelSolT>
 void SetupMassDivP1 (const MultiGridCL& mg, MatDescCL* mat, const VecDescCL& ls, const BndDataCL<>& lsetbnd, const DiscVelSolT& w)

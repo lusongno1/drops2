@@ -3517,6 +3517,8 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         MassH.SetIdx( cidx, cidx);
         MassU.Data.clear();
         MassU.SetIdx( cidx, cidx);
+        MassCurvU.Data.clear();
+        MassCurvU.SetIdx( cidx, cidx);
         //VecDescCL vd_load( &idx);
         VecDescCL vd_loadF1( &idx);
         VecDescCL vd_loadF2( &idx);
@@ -3531,20 +3533,40 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         NarrowBandCommonDataP1CL bdata( lset_vd_, lsetbnd_,width_);
         accus.push_back( &bdata);
 
-        /**< push back mass term */
+        /**< push back mass term: M*/
         InterfaceMatrixAccuCL<LocalInterfaceMassP1CL, InterfaceCommonDataP1CL> mass_accu( &Mass, LocalInterfaceMassP1CL(), cdata, "mass");
         accus.push_back( &mass_accu);
-        /**< push back stiffness term */
+        /**< push back stiffness term: S */
         InterfaceMatrixAccuCL<LocalLaplaceBeltramiP1CL, InterfaceCommonDataP1CL> lb_accu( &Laplace, LocalLaplaceBeltramiP1CL( D_), cdata, "Laplace-Beltrami");
         accus.push_back( &lb_accu);
-        /**< push back stabilization term */
+        /**< push back stabilization term: G */
         NarrowBandMatrixAccuP1CL<LocalNormalLaplaceBulkP1CL> sb_accu( &Volume_stab, LocalNormalLaplaceBulkP1CL(1.,dt_,normal_,ic.t), bdata, "NormalLaplaceBulk");  ///4* To implement the stabilization Normal gradient
         accus.push_back( &sb_accu);
 
 
 
-        /**< push back term like quasi-mass with curvature H as coefficient */
-        accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &MassH, cdata,  make_P2Eval( MG_, Bnd_v_, *nd_), "massH"));
+//        /**< push back term like quasi-mass with curvature H as coefficient */
+//        accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &MassH, cdata,  make_P2Eval( MG_, Bnd_v_, *nd_), "massH"));
+//        /**< push back right-hand side w.r.t first equation */
+//        accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF1P1CL, InterfaceCommonDataP1CL>( &vd_loadF1,
+//                                 LocalVectorF1P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF1"));
+//
+//
+//
+//        /**< push back mass-like term with u_n^2+delta u_n as its coefficient */
+//        InterfaceMatrixAccuCL<LocalInterfaceMassUP1CL, InterfaceCommonDataP1CL> massU_accu( &MassU, LocalInterfaceMassUP1CL(ic,icw,delta,MG_,1), cdata, "massU");
+//        accus.push_back( &massU_accu);
+//        /**< push back right-hand side w.r.t second equation */
+//        accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF2P1CL, InterfaceCommonDataP1CL>( &vd_loadF2,
+//                                 LocalVectorF2P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF2"));
+
+        /**< push back term like quasi-mass with curvature (\delta u^n -\epsilon H)H as coefficient: M1*/
+        P2Eval3dCL normalP2Eval = make_P2Eval( MG_, Bnd_v_, *nd_);
+        InterfaceMatrixAccuCL<LocalInterfaceMassCurvUP1CL<P2Eval3dCL>, InterfaceCommonDataP1CL> massCurvU_accu( &MassCurvU,
+                                                                                                   LocalInterfaceMassCurvUP1CL<P2Eval3dCL>(ic,icw,epsilon,delta,normalP2Eval,MG_,1),
+                                                                                                   cdata, "massCurvU");
+        accus.push_back( &massCurvU_accu);
+
         /**< push back right-hand side w.r.t first equation */
         accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF1P1CL, InterfaceCommonDataP1CL>( &vd_loadF1,
                                  LocalVectorF1P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF1"));
@@ -3552,11 +3574,12 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
 
 
         /**< push back mass-like term with u_n^2+delta u_n as its coefficient */
-        InterfaceMatrixAccuCL<LocalInterfaceMassUP1CL, InterfaceCommonDataP1CL> massU_accu( &MassU, LocalInterfaceMassUP1CL(ic,icw,delta,MG_,1), cdata, "massU");
-        accus.push_back( &massU_accu);
+        // InterfaceMatrixAccuCL<LocalInterfaceMassUP1CL, InterfaceCommonDataP1CL> massU_accu( &MassU, LocalInterfaceMassUP1CL(ic,icw,delta,MG_,1), cdata, "massU");
+        // accus.push_back( &massU_accu);
         /**< push back right-hand side w.r.t second equation */
         accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF2P1CL, InterfaceCommonDataP1CL>( &vd_loadF2,
                                  LocalVectorF2P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF2"));
+
 
 
 

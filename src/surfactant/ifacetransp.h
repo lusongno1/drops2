@@ -941,10 +941,10 @@ public:
     double vec[4];
 
     LocalVectorF1P1CL (instat_scalar_fun_ptr f, double time, double a,double b,
-                     double delta,double gamma,VecDescCL& ic,VecDescCL& icw,
-                     MultiGridCL& MG, const BndDataCL<Point3DCL>& Bnd_v)
-                      : f_( f), time_( time),a_(a),b_(b),delta_(delta),gamma_(gamma),
-                      ic_(ic),icw_(icw),MG_(MG),Bnd_v_(Bnd_v)
+                       double delta,double gamma,VecDescCL& ic,VecDescCL& icw,
+                       MultiGridCL& MG, const BndDataCL<Point3DCL>& Bnd_v)
+        : f_( f), time_( time),a_(a),b_(b),delta_(delta),gamma_(gamma),
+          ic_(ic),icw_(icw),MG_(MG),Bnd_v_(Bnd_v)
     {
         p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.;
     }
@@ -992,10 +992,10 @@ public:
     double vec[4];
 
     LocalVectorF2P1CL (instat_scalar_fun_ptr f, double time, double a,double b,
-                     double delta,double gamma,VecDescCL& ic,VecDescCL& icw,
-                     MultiGridCL& MG, const BndDataCL<Point3DCL>& Bnd_v)
-                      : f_( f), time_( time),a_(a),b_(b),delta_(delta),gamma_(gamma),
-                      ic_(ic),icw_(icw),MG_(MG),Bnd_v_(Bnd_v)
+                       double delta,double gamma,VecDescCL& ic,VecDescCL& icw,
+                       MultiGridCL& MG, const BndDataCL<Point3DCL>& Bnd_v)
+        : f_( f), time_( time),a_(a),b_(b),delta_(delta),gamma_(gamma),
+          ic_(ic),icw_(icw),MG_(MG),Bnd_v_(Bnd_v)
     {
         p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.;
     }
@@ -1102,7 +1102,7 @@ public:
     LocalInterfaceMassP1CL (double alpha= 1.) : alpha_( alpha) {}
 };
 
-
+typedef P2EvalCL<Point3DCL, const BndDataCL<Point3DCL>, VecDescCL> P2Eval3dCL;
 class LocalInterfaceMassUP1CL//set up local mass matrix P1
 {
 private:
@@ -1135,7 +1135,66 @@ public:
     }
 
     LocalInterfaceMassUP1CL (VecDescCL &ic, VecDescCL &icw, double delta,MultiGridCL &MG, double alpha= 1.):
-        alpha_( alpha), ic_(ic),icw_(icw),delta_(delta),MG_(MG){}
+        alpha_( alpha), ic_(ic),icw_(icw),delta_(delta),MG_(MG) {}
+};
+
+
+template <typename DiscVelSolT>
+class LocalInterfaceMassCurvUP1CL//set up local mass matrix P1
+{
+private:
+    std::valarray<double> q[4],qu;
+    QuadDomain2DCL qdom;
+    double alpha_;
+    VecDescCL ic_,icw_;
+    double epsilon_,delta_;
+    MultiGridCL& MG_;
+    const DiscVelSolT nd_;
+    LocalP2CL<Point3DCL> nd_loc;
+    std::valarray<double> H;//curvature
+    GridFunctionCL<Point3DCL> n,
+                   qgradp2i;
+    LocalP1CL<Point3DCL> gradrefp2[10],gradp2[10];
+    SMatrixCL<3,3> T;
+    double dummy;
+
+public:
+    static const FiniteElementT row_fe_type= P1IF_FE,
+                                col_fe_type= P1IF_FE;
+
+    double coup[4][4];
+
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata)
+    {
+        make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
+        resize_and_scatter_piecewise_normal( cdata.surf, qdom, n);
+        P2DiscCL::GetGradientsOnRef( gradrefp2);
+        GetTrafoTr( T, dummy, t);
+        P2DiscCL::GetGradients( gradp2, gradrefp2, T);
+        nd_loc.assign( t, nd_);
+        qgradp2i.resize( qdom.vertex_size());
+        H.resize( qdom.vertex_size());
+        H= 0.;
+        for (int i= 0; i < 10; ++i)
+        {
+            evaluate_on_vertexes( gradp2[i], qdom, Addr( qgradp2i));
+            H+= dot(nd_loc[i], qgradp2i) - dot( nd_loc[i], n)*dot( n, qgradp2i);
+        }
+        BndDataCL<> nobnd( 0);
+        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, ic_), t, qdom, qu);
+        for (int i= 0; i < 4; ++i)
+            resize_and_evaluate_on_vertexes ( cdata.p1[i], qdom, q[i]);
+        for (int i= 0; i < 4; ++i)
+        {
+            coup[i][i]= quad_2D( (delta_*qu-epsilon_*H)*H*q[i]*q[i], qdom);
+            for(int j= 0; j < i; ++j)
+                coup[i][j]= coup[j][i]= alpha_*quad_2D( (delta_*qu-epsilon_*H)*H*q[j]*q[i], qdom);
+        }
+    }
+
+    LocalInterfaceMassCurvUP1CL (VecDescCL &ic, VecDescCL &icw,double epsilon, double delta,
+                                 const DiscVelSolT& nd, MultiGridCL &MG, double alpha= 1.):
+        alpha_( alpha), ic_(ic),icw_(icw),epsilon_(epsilon),delta_(delta),nd_(nd),MG_(MG) {}
 };
 
 
@@ -1436,6 +1495,39 @@ public:
     void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata);
 
     LocalInterfaceMassDivP1CL (const DiscVelSolT& w)
+        : w_( w)
+    {
+        P2DiscCL::GetGradientsOnRef( gradrefp2);
+    }
+};
+
+template <typename DiscVelSolT>
+class LocalInterfaceMassHP1CL
+{
+private:
+    const DiscVelSolT w_;
+
+    QuadDomain2DCL qdom;
+    LocalP2CL<Point3DCL> w_loc;
+    std::valarray<double> q[4];
+    double dummy;
+    SMatrixCL<3,3> T;
+    GridFunctionCL<Point3DCL> n,
+                   qgradp2i;
+    std::valarray<double> qdivgamma_w;
+    LocalP1CL<Point3DCL> gradrefp2[10],
+              gradp2[10];
+
+
+public:
+    static const FiniteElementT row_fe_type= P1IF_FE,
+                                col_fe_type= P1IF_FE;
+
+    double coup[4][4];
+
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata);
+
+    LocalInterfaceMassHP1CL (const DiscVelSolT& w)
         : w_( w)
     {
         P2DiscCL::GetGradientsOnRef( gradrefp2);
@@ -1965,7 +2057,13 @@ public:
     /// set the parameter of tumor growth
     void SetPars(double d1=1,double d2=10,double gamma=30,double a=0.1,double b=0.9,double delta=0.1,double epsilon=0.01)
     {
-        d1 = d1;d2 = d2;gamma = gamma;a = a;b = b;delta = delta; epsilon = epsilon;
+        d1 = d1;
+        d2 = d2;
+        gamma = gamma;
+        a = a;
+        b = b;
+        delta = delta;
+        epsilon = epsilon;
     }
 
     /// save a copy of the old level-set and velocity; moves ic to oldic; must be called before DoStep.
@@ -1990,8 +2088,9 @@ public:
               Mass,  ///< mass matrix
               Conv,  ///< convection matrix
               Massd, ///< mass matrix with interface-divergence of velocity
-              MassH,///<mass matrix with curvature>
-              MassU;///<mass matrix with (u_n)^2+\delta u_n>
+              MassH,///< mass matrix with curvature>
+              MassU,///< mass matrix with (u_n)^2+\delta u_n>
+              MassCurvU;///< mass matrix with (\delta u^n-\epsilon H)H
 
     VecDescCL rhsext1;
     VecDescCL rhsextw1;
