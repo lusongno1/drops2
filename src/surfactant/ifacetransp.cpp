@@ -3515,11 +3515,13 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         Massd.SetIdx( cidx, cidx);
         MassH.Data.clear();
         MassH.SetIdx( cidx, cidx);
-        MassU.Data.clear();
-        MassU.SetIdx( cidx, cidx);
+        MassUW.Data.clear();
+        MassUW.SetIdx( cidx, cidx);
+        MassUU.Data.clear();
+        MassUU.SetIdx( cidx, cidx);
         MassCurvU.Data.clear();
         MassCurvU.SetIdx( cidx, cidx);
-        //VecDescCL vd_load( &idx);
+        VecDescCL vd_loadF( &idx);
         VecDescCL vd_loadF1( &idx);
         VecDescCL vd_loadF2( &idx);
 
@@ -3545,41 +3547,20 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
 
 
 
-//        /**< push back term like quasi-mass with curvature H as coefficient */
-//        accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceMassDivP1CL>( &MassH, cdata,  make_P2Eval( MG_, Bnd_v_, *nd_), "massH"));
-//        /**< push back right-hand side w.r.t first equation */
-//        accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF1P1CL, InterfaceCommonDataP1CL>( &vd_loadF1,
-//                                 LocalVectorF1P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF1"));
-//
-//
-//
-//        /**< push back mass-like term with u_n^2+delta u_n as its coefficient */
-//        InterfaceMatrixAccuCL<LocalInterfaceMassUP1CL, InterfaceCommonDataP1CL> massU_accu( &MassU, LocalInterfaceMassUP1CL(ic,icw,delta,MG_,1), cdata, "massU");
-//        accus.push_back( &massU_accu);
-//        /**< push back right-hand side w.r.t second equation */
-//        accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF2P1CL, InterfaceCommonDataP1CL>( &vd_loadF2,
-//                                 LocalVectorF2P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF2"));
 
         /**< push back term like quasi-mass with curvature (\delta u^n -\epsilon H)H as coefficient: M1*/
         P2Eval3dCL normalP2Eval = make_P2Eval( MG_, Bnd_v_, *nd_);
         InterfaceMatrixAccuCL<LocalInterfaceMassCurvUP1CL<P2Eval3dCL>, InterfaceCommonDataP1CL> massCurvU_accu( &MassCurvU,
                                                                                                    LocalInterfaceMassCurvUP1CL<P2Eval3dCL>(ic,icw,epsilon,delta,normalP2Eval,MG_,1),
-                                                                                                   cdata, "massCurvU");
+                                                                                                cdata, "massCurvU");
         accus.push_back( &massCurvU_accu);
-
-        /**< push back right-hand side w.r.t first equation */
-        accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF1P1CL, InterfaceCommonDataP1CL>( &vd_loadF1,
-                                 LocalVectorF1P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF1"));
-
-
-
-        /**< push back mass-like term with u_n^2+delta u_n as its coefficient */
-        // InterfaceMatrixAccuCL<LocalInterfaceMassUP1CL, InterfaceCommonDataP1CL> massU_accu( &MassU, LocalInterfaceMassUP1CL(ic,icw,delta,MG_,1), cdata, "massU");
-        // accus.push_back( &massU_accu);
-        /**< push back right-hand side w.r.t second equation */
-        accus.push_back_acquire( new InterfaceVectorAccuCL<LocalVectorF2P1CL, InterfaceCommonDataP1CL>( &vd_loadF2,
-                                 LocalVectorF2P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF2"));
-
+        /**< push back mass-like term with u_n*w_n as its coefficient: M20 */
+        InterfaceMatrixAccuCL<LocalInterfaceMassUWP1CL, InterfaceCommonDataP1CL> massUW_accu( &MassUW, LocalInterfaceMassUWP1CL(ic,icw,delta,MG_,1), cdata, "massUW");
+        accus.push_back( &massUW_accu);
+        /**< push back right-hand side w.r.t two equations: F */
+        InterfaceVectorAccuCL<LocalVectorF1P1CL, InterfaceCommonDataP1CL> loadF_accu( &vd_loadF,
+                                 LocalVectorF1P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF");
+        accus.push_back(&loadF_accu);
 
 
 
@@ -3588,32 +3569,37 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
             ScopeTimerCL timer( "SurfactantExtensionP1CL::setup-Matrix");
             accumulate( accus, MG_, cidx->TriangLevel(), cidx->GetBndInfo());
         }
-
         load.resize( idx.NumUnknowns());
         /**< solve the first equation */
-        L1_.LinComb( 1+1./dt_, Mass.Data, -epsilon,MassH.Data, d1, Laplace.Data, rho_, Volume_stab.Data);
-        load = vd_loadF1.Data;
+        L1_.LinComb( gamma+1./dt_, Mass.Data, 1,MassCurvU.Data, -gamma, MassUW.Data, d1, Laplace.Data, rho_, Volume_stab.Data);
+        load = vd_loadF.Data;
         const VectorCL therhs1(rhs1_ + load);//const VectorCL therhs(rhs1_ + load);
         std::cout  <<"  Before solve: res1 = " << norm(therhs1)<<" "<<norm(ic.Data)<<" "<< norm( L1_*ic.Data - therhs1) << std::endl;
         gm_.Solve( L1_, ic.Data, therhs1, ic.RowIdx->GetEx());
         std::cout << "SurfactantExtensionP1CL::DoStep: res1 = " << gm_.GetResid() << ", iter = " << gm_.GetIter() << std::endl;
+
+
+        TetraAccumulatorTupleCL accus2;
+        accus2.push_back( &cdata);
+        accus2.push_back( &bdata);
+        /**< push back mass-like term with u_n*u_n as its coefficient: M20 */
+        InterfaceMatrixAccuCL<LocalInterfaceMassUUP1CL, InterfaceCommonDataP1CL> massUU_accu( &MassUU, LocalInterfaceMassUUP1CL(ic,icw,delta,MG_,1), cdata, "massUU");
+        accus2.push_back( &massUU_accu);
+        accumulate( accus2, MG_, cidx->TriangLevel(), cidx->GetBndInfo());
         /**< solve the second equation */
-        L2_.LinComb( 1./dt_, Mass.Data, -epsilon,MassH.Data, 1.0,MassU.Data,d2, Laplace.Data, rho_, Volume_stab.Data);
-        load = vd_loadF2.Data;
+        L2_.LinComb( 1./dt_, Mass.Data, 1 ,MassCurvU.Data, gamma, MassUU.Data,d2, Laplace.Data, rho_, Volume_stab.Data);
         const VectorCL therhs2(rhsw1_ + load);
         std::cout  <<"  Before solve: res2 = " << norm(therhs2)<<" "<<norm(icw.Data)<<" "<< norm( L2_*ic.Data - therhs2) << std::endl;
         gm_.Solve( L2_, icw.Data, therhs2, ic.RowIdx->GetEx());
         std::cout << "SurfactantExtensionP1CL::DoStep: res2 = " << gm_.GetResid() << ", iter = " << gm_.GetIter() << std::endl;
 
-
-
-        {
+        //{
             //std::cout<<"test 1"<<std::endl;
             //ScopeTimerCL timer( "SurfactantExtensionP1CL::DoStep: Solve");
             //gm_.Solve( L_, ic.Data, therhs, ic.RowIdx->GetEx());
 
             //std::cout<<"test 2"<<std::endl;
-        }
+        //}
 
         /**< push back convection  w*nabla_Gamma u */
         //  accus.push_back_acquire( make_wind_dependent_matrixP1_accu<LocalInterfaceConvectionP1CL>( &C,  cdata,  make_P2Eval( MG_, Bnd_v_, *v_), "convection"));

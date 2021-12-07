@@ -968,6 +968,57 @@ public:
     }
 };
 
+
+class LocalVectorFP1CL
+{
+private:
+    instat_scalar_fun_ptr f_;
+    double time_;
+
+    LocalP1CL<> p1[4];
+    std::valarray<double> qp1,
+        qf,
+        qu,
+        qw;
+    QuadDomain2DCL qdom;
+    double a_,b_,delta_,gamma_;
+    VecDescCL ic_,icw_;
+    MultiGridCL& MG_;
+    const BndDataCL<Point3DCL>& Bnd_v_;
+
+public:
+    static const FiniteElementT row_fe_type= P1IF_FE;
+
+    double vec[4];
+
+    LocalVectorFP1CL (instat_scalar_fun_ptr f, double time, double a,double b,
+                       double delta,double gamma,VecDescCL& ic,VecDescCL& icw,
+                       MultiGridCL& MG, const BndDataCL<Point3DCL>& Bnd_v)
+        : f_( f), time_( time),a_(a),b_(b),delta_(delta),gamma_(gamma),
+          ic_(ic),icw_(icw),MG_(MG),Bnd_v_(Bnd_v)
+    {
+        p1[0][0]= p1[1][1]= p1[2][2]= p1[3][3]= 1.;
+    }
+
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata, const IdxT numr[4])
+    {
+        make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
+        BndDataCL<> nobnd( 0);
+        //resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, ic_), t, qdom, qu);
+        //resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, icw_), t, qdom, qw);
+        //resize_and_evaluate_on_vertexes( f_, t, qdom, time_, qf);
+        qp1.resize( qdom.vertex_size());
+        for (Uint i= 0; i < 4; ++i)
+        {
+            if (numr[i] == NoIdx)
+                continue;
+            evaluate_on_vertexes( p1[i], qdom, Addr( qp1));
+            //vec[i]= quad_2D( qf*qp1, qdom);
+            vec[i]= quad_2D(qp1, qdom);
+        }
+    }
+};
+
 /// \brief Compute the load-vector corresponding to the function f on a single tetra.
 class LocalVectorF2P1CL
 {
@@ -1135,6 +1186,80 @@ public:
     }
 
     LocalInterfaceMassUP1CL (VecDescCL &ic, VecDescCL &icw, double delta,MultiGridCL &MG, double alpha= 1.):
+        alpha_( alpha), ic_(ic),icw_(icw),delta_(delta),MG_(MG) {}
+};
+
+
+class LocalInterfaceMassUWP1CL//set up local mass matrix P1
+{
+private:
+    std::valarray<double> q[4],qu,qw;
+    QuadDomain2DCL qdom;
+    double alpha_;
+    VecDescCL ic_,icw_;
+    double delta_;
+    MultiGridCL& MG_;
+
+public:
+    static const FiniteElementT row_fe_type= P1IF_FE,
+                                col_fe_type= P1IF_FE;
+
+    double coup[4][4];
+
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata)
+    {
+        make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
+        BndDataCL<> nobnd( 0);
+        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, ic_), t, qdom, qu);
+        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, icw_), t, qdom, qw);
+        for (int i= 0; i < 4; ++i)
+            resize_and_evaluate_on_vertexes ( cdata.p1[i], qdom, q[i]);
+        for (int i= 0; i < 4; ++i)
+        {
+            coup[i][i]= quad_2D( (qu*qw)*q[i]*q[i], qdom);
+            for(int j= 0; j < i; ++j)
+                coup[i][j]= coup[j][i]= alpha_*quad_2D( (qu*qw)*q[j]*q[i], qdom);
+        }
+    }
+
+    LocalInterfaceMassUWP1CL (VecDescCL &ic, VecDescCL &icw, double delta,MultiGridCL &MG, double alpha= 1.):
+        alpha_( alpha), ic_(ic),icw_(icw),delta_(delta),MG_(MG) {}
+};
+
+
+class LocalInterfaceMassUUP1CL//set up local mass matrix P1
+{
+private:
+    std::valarray<double> q[4],qu,qw;
+    QuadDomain2DCL qdom;
+    double alpha_;
+    VecDescCL ic_,icw_;
+    double delta_;
+    MultiGridCL& MG_;
+
+public:
+    static const FiniteElementT row_fe_type= P1IF_FE,
+                                col_fe_type= P1IF_FE;
+
+    double coup[4][4];
+
+    void setup (const TetraCL& t, const InterfaceCommonDataP1CL& cdata)
+    {
+        make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
+        BndDataCL<> nobnd( 0);
+        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, ic_), t, qdom, qu);
+        //resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, icw_), t, qdom, qw);
+        for (int i= 0; i < 4; ++i)
+            resize_and_evaluate_on_vertexes ( cdata.p1[i], qdom, q[i]);
+        for (int i= 0; i < 4; ++i)
+        {
+            coup[i][i]= quad_2D( (qu*qu)*q[i]*q[i], qdom);
+            for(int j= 0; j < i; ++j)
+                coup[i][j]= coup[j][i]= alpha_*quad_2D( (qu*qu)*q[j]*q[i], qdom);
+        }
+    }
+
+    LocalInterfaceMassUUP1CL (VecDescCL &ic, VecDescCL &icw, double delta,MultiGridCL &MG, double alpha= 1.):
         alpha_( alpha), ic_(ic),icw_(icw),delta_(delta),MG_(MG) {}
 };
 
@@ -2090,7 +2215,9 @@ public:
               Massd, ///< mass matrix with interface-divergence of velocity
               MassH,///< mass matrix with curvature>
               MassU,///< mass matrix with (u_n)^2+\delta u_n>
-              MassCurvU;///< mass matrix with (\delta u^n-\epsilon H)H
+              MassCurvU,///< mass matrix with (\delta u^n-\epsilon H)H
+              MassUW,///< mass matrix with coefficient u^n*w^n
+              MassUU;///< mass matrix with coefficient u^n*w^n
 
     VecDescCL rhsext1;
     VecDescCL rhsextw1;
