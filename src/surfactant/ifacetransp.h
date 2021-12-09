@@ -2289,6 +2289,7 @@ public:
     ///@}
 };
 
+
 /// \brief P1-discretization and solution of the CahnHilliard equation on the interface
 class CahnHilliardP1BaseCL: public SurfacePDEP1BaseCL
 {

@@ -3036,7 +3036,7 @@ void SurfactantP1BaseCL::SetInitialValue (instat_scalar_fun_ptr icf, double t)
     P1Init ( icf, icw, MG_, t);//set initial value for w
 }
 
-void SurfactantP1BaseCL::SetRhs (instat_scalar_fun_ptr rhs)
+void SurfactantP1BaseCL::SetRhs (instat_scalar_fun_ptr rhs=0)
 {
     rhs_fun_= rhs;
 }

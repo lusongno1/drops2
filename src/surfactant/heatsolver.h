@@ -73,6 +73,10 @@
 #include "misc/progressaccu.h"
 #include "misc/dynamicload.h"
 
+
+#ifndef HEATSOLVER_H
+#define HEATSOLVER_H
+
 const char line[] ="----------------------------------------------------------------------------------\n";
 
 DROPS::ParamCL P;   //Parameter class, read in json file in main function
@@ -530,3 +534,4 @@ void Strategy(PoissonCL& Poisson)
 //    }
 //    catch (DROPS::DROPSErrCL& err) { err.handle(); }
 //}
+#endif // HEATSOLVER_H
