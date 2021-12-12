@@ -187,6 +187,7 @@ DROPS::SArrayCL<Uint, 3> ParamCL::get<DROPS::SArrayCL<Uint, 3> >(const std::stri
 
 /// \brief Read P from the file argv[1] or from default_file if argv[1] does not exist; else throw DROPSErrCL.
 void read_parameter_file_from_cmdline (ParamCL& P, int argc, char** argv, std::string default_file= std::string());
+void read_parameter_file_from_cmdline (ParamCL& P, std::string default_file= std::string());
 
 /// \brief Adds and/or overrides parameters of P directly from the command line
 void apply_parameter_modifications_from_cmdline (ParamCL& P, int argc, char **argv);

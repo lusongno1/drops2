@@ -413,6 +413,191 @@ void Strategy(PoissonCL& Poisson)
 
 } // end of namespace DROPS
 
+/// \brief Strategy to solve the Poisson problem on a given triangulation
+template< class PoissonCL>
+void StrategyHeat(PoissonCL& Poisson)
+{
+    // time measurements
+#ifndef _PAR
+    TimerCL timer;
+#else
+    ParTimerCL timer;
+#endif
+
+    // the triangulation
+    MultiGridCL& mg= Poisson.GetMG();
+
+    MeshDeformationCL& md = MeshDeformationCL::getInstance();
+    md.Initialize(&mg);
+
+    //ALECL ALE(P, mg);
+    // connection triangulation and vectors
+    // -------------------------------------------------------------------------
+    std::cout << line << "Connecting triangulation and matrices/vectors ...\n";
+    timer.Reset();
+
+    if(P.get<int>("Poisson.P1"))
+        Poisson.idx.SetFE( P1_FE);
+    else
+        Poisson.idx.SetFE( P2_FE);
+    // set quadratic finite elements
+    //see class for explanation: template didnt work
+    if ( PoissonSolverFactoryHelperCL().MGUsed(P))
+        Poisson.SetNumLvl ( mg.GetNumLevel());
+    Poisson.CreateNumbering( mg.GetLastLevel(), &Poisson.idx);  // number vertices and edges
+    Poisson.b.SetIdx( &Poisson.idx);                            // tell b about numbering
+    Poisson.x.SetIdx( &Poisson.idx);                            // tell x about numbering
+    Poisson.A.SetIdx( &Poisson.idx, &Poisson.idx);              // tell A about numbering
+    Poisson.M.SetIdx( &Poisson.idx, &Poisson.idx);              // tell M about numbering
+    Poisson.U.SetIdx( &Poisson.idx, &Poisson.idx);              // tell U about numbering
+
+    timer.Stop();
+    std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+
+    // display problem size
+    // -------------------------------------------------------------------------
+    std::cout << line << "Problem size\n";
+#ifdef _PAR
+    std::vector<size_t> UnkOnProc= ProcCL::Gather( Poisson.x.Data.size(), 0);
+    const IdxT numUnk   = Poisson.idx.GetGlobalNumUnknowns(),
+               numAccUnk= std::accumulate(UnkOnProc.begin(), UnkOnProc.end(), 0);
+#else
+    std::vector<size_t> UnkOnProc( 1);
+    UnkOnProc[0]  = Poisson.x.Data.size();
+    IdxT numUnk   = Poisson.x.Data.size(),
+         numAccUnk= Poisson.x.Data.size();
+#endif
+    std::cout << " o number of unknowns             " << numUnk    << '\n'
+              << " o number of accumulated unknowns " << numAccUnk << '\n'
+              << " o number of unknowns on proc\n";
+    for (size_t i=0; i<UnkOnProc.size(); ++i)
+        std::cout << " - Proc " << i << ": " << UnkOnProc[i]<< '\n';
+
+    std::cout << line << "Choose the poisson solver...\n";
+    timer.Reset();
+    // type of preconditioner and solver
+    PoissonSolverFactoryCL<> factory( P.get_child("Poisson.Solver"), Poisson.idx);
+    PoissonSolverBaseCL* solver = factory.CreatePoissonSolver();
+
+    if ( factory.GetProlongation() != 0)
+        SetupProlongationMatrix( mg, *(factory.GetProlongation()), &Poisson.idx, &Poisson.idx);
+
+    timer.Stop();
+    std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+
+    //If it is NOT a stationary problem, set up the system and the initial condition
+    if (P.get<int>("Time.NumSteps") != 0)
+    {
+        // discretize (setup linear equation system)
+        std::cout << line << "Discretize (setup linear equation system) for instationary problem...\n";
+        timer.Reset();
+        if (Poisson.usesALE())
+        {
+            md.SetMeshTransformation(PoissonCoeffCL::ALEDeform, -1, P.get<int>("ALE.OnlyBndCurved"), P.get<int>("ALE.P1")==0);
+            //ALE.InitGrid();
+        }
+        Poisson.SetupInstatSystem( Poisson.A, Poisson.M, Poisson.x.t);
+        Poisson.Init( Poisson.x, Poisson.Coeff_.InitialCondition, 0.0);//give the initial value of solution
+        timer.Stop();
+        std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+    }
+    else
+    {//if it is a stationary problem, call SolveStatProblem
+        std::cout << line << "Solve the linear equation system ...\n";
+        SolveStatProblem( Poisson, *solver, P);
+    }
+
+    // Output-Registrations:
+#ifndef _PAR
+    //Ensight format
+    Ensight6OutCL* ensight = NULL;
+    if (P.get<int>("Ensight.Freq",0)){
+        // Initialize Ensight6 output
+        const std::string filename= P.get<std::string>("Ensight.EnsDir") + "/" + P.get<std::string>("Ensight.EnsCase");
+        ensight = new Ensight6OutCL(P.get<std::string>("Ensight.EnsCase")+".case", P.get<int>("Time.NumSteps")+1,
+                                    P.get<int>("Ensight.Binary"));
+        ensight->Register( make_Ensight6Geom  ( mg, mg.GetLastLevel(),
+                                                P.get<std::string>("Ensight.GeomName"), filename + ".geo"));
+        ensight->Register( make_Ensight6Scalar( Poisson.GetSolution(), "Temperatur", filename + ".tp", true));
+        ensight->Write();
+    }
+#endif
+    //VTK format
+    VTKOutCL * vtkwriter = NULL;
+    if (P.get<int>("VTK.Freq",0)){
+        vtkwriter = new VTKOutCL(mg, "DROPS data",
+                                 P.get<int>("Time.NumSteps")+1,
+                                 P.get<std::string>("VTK.VTKDir"), P.get<std::string>("VTK.VTKName"),
+                                 P.get<std::string>("VTK.TimeFileName"),
+                                 P.get<int>("VTK.Binary"),
+                                 P.get<int>("VTK.UseOnlyP1"),
+                                 -1,  /* <- level */
+                                 P.get<int>("VTK.ReUseTimeFile"),
+                                 P.get<int>("VTK.UseDeformation"));
+        vtkwriter->Register( make_VTKScalar( Poisson.GetSolution(), "ConcenT"));
+        vtkwriter->Write( Poisson.x.t);
+    }
+    //Do we have an instationary problem?
+    if(P.get<int>("Time.NumSteps")!=0)
+    {
+        //Creat instationary ThetaschemeCL to handle time integration for instationary problem and set time steps
+        InstatPoissonThetaSchemeCL<PoissonCL, PoissonSolverBaseCL>
+        ThetaScheme( Poisson, *solver, P);
+        ThetaScheme.SetTimeStep(P.get<double>("Time.FinalTime")/P.get<int>("Time.NumSteps") );
+        //Solve linear systerm in each time step
+        for ( int step = 1; step <= P.get<int>("Time.NumSteps") ; ++step) {
+            timer.Reset();
+            std::cout << line << "Step: " << step << std::endl;
+            if (Poisson.usesALE())
+            {
+                md.SetMeshTransformation(PoissonCoeffCL::ALEDeform, Poisson.x.t, P.get<int>("ALE.OnlyBndCurved"), P.get<int>("ALE.P1")==0 );
+                //ALE.MovGrid(Poisson.x.t);
+            }
+            else
+                md.SetMeshIdentity();
+            ThetaScheme.DoStep( Poisson.x);
+
+            timer.Stop();
+            std::cout << " o Solved system with:\n"
+                      << "   - time          " << timer.GetTime()    << " s\n"
+                      << "   - iterations    " << solver->GetIter()  << '\n'
+                      << "   - residuum      " << solver->GetResid() << '\n';
+
+            if (P.get("Poisson.SolutionIsKnown", 0)) {
+                std::cout << " o Check result against known solution ...\n";
+                timer.Reset();
+                Poisson.CheckSolution( Poisson.x, Poisson.Coeff_.Solution, Poisson.x.t);
+                timer.Stop();
+                std::cout << " o -time " << timer.GetTime() << " s" << std::endl;
+            }
+
+#ifndef _PAR
+            if (ensight && step%P.get<int>("Ensight.Freq", 0)==0){
+                std::cout << " o Ensight output ...\n";
+                timer.Reset();
+                ensight->Write( Poisson.x.t);
+                timer.Stop();
+                std::cout << " o -time " << timer.GetTime() << " s" << std::endl;
+            }
+#endif
+            if (vtkwriter && step%P.get<int>("VTK.Freq", 0)==0){
+                std::cout << " o VTK output ...\n";
+                timer.Reset();
+                vtkwriter->Write( Poisson.x.t);
+                timer.Stop();
+                std::cout << " o -time " << timer.GetTime() << " s" << std::endl;
+            }
+        }
+    }
+
+    if (vtkwriter) delete vtkwriter;
+#ifndef _PAR
+    if (ensight) delete ensight;
+#endif
+    delete solver;
+}
+
+} // end of namespace DROPS
 
 int main (int argc, char** argv)
 {

@@ -136,20 +136,20 @@ class SUPGCL
       MultiGridCL& mg_;
     public:
       PoissonDeformationHelperCL(MultiGridCL& mg, bool ALE): mg_(mg), ALE_(ALE) {}
-      Point3DCL GetVertexCoord(const VertexCL& vert) 
-      {   
+      Point3DCL GetVertexCoord(const VertexCL& vert)
+      {
           if(ALE_)
             return mg_.GetMeshDeformation().GetTransformedVertexCoord(vert);
           else
             return vert.GetCoord();
       }
-      Point3DCL GetEdgeBaryCenter(const EdgeCL& edge) 
-      {   
+      Point3DCL GetEdgeBaryCenter(const EdgeCL& edge)
+      {
           if(ALE_)
             return mg_.GetMeshDeformation().GetTransformedEdgeBaryCenter(edge);
           else
             return GetBaryCenter(edge);
-      }    
+      }
 }*/
 
 template <class Coeff>
@@ -221,7 +221,7 @@ class PoissonP1CL : public ProblemCL<Coeff, PoissonBndDataCL>
     double CheckSolution( const VecDescCL&, instat_scalar_fun_ptr, double t=0.) const;
     double CheckSolution( instat_scalar_fun_ptr Lsg, double t=0.) const { return CheckSolution(x, Lsg, t); }
     double CheckSolution( const VecDescCL&, scalar_tetra_function, double t=0.) const;
-    
+
     void GetDiscError   ( const MLMatDescCL&, instat_scalar_fun_ptr, double =0.) const;
     void GetDiscError   ( instat_scalar_fun_ptr Lsg, double t=0.) const { GetDiscError(A, Lsg, t); }
 
@@ -293,6 +293,7 @@ class PoissonP2CL : public ProblemCL<Coeff, PoissonBndDataCL>
 
     //Set up initial value
     void Init( VecDescCL&, instat_scalar_fun_ptr, double t0= 0.) const;
+    void Init( VecDescCL&, VecDescCL& x0, double t0= 0.) const;
 
     // check computed solution, etc.
     double CheckSolution( const VecDescCL&, instat_scalar_fun_ptr, double t=0.) const;

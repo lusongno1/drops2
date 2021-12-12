@@ -166,7 +166,7 @@ void PoissonP1CL<Coeff>::Init( VecDescCL& vec, instat_scalar_fun_ptr func, doubl
             if(ALE_)
             {
                 vec.Data[sit->Unknowns(idx)]= func( md_.GetTransformedVertexCoord(*sit), t0);
-            }  
+            }
             else
                 vec.Data[sit->Unknowns(idx)]= func( sit->GetCoord(), t0);
         }
@@ -255,7 +255,7 @@ double PoissonP1CL<Coeff>::CheckSolution(const VecDescCL& lsg,
     {
         double absdet= 0., det= 0., sum = 0.;
         if(ALE_)
-        {   
+        {
            GetTrafoTrDet(det, MG_.GetMeshDeformation().GetLocalP1Deformation(*sit));
            absdet = std::fabs(det);
         }
@@ -326,15 +326,15 @@ double PoissonP1CL<Coeff>::CheckSolution(const VecDescCL& lsg, scalar_tetra_func
 {
     //double diff, maxdiff=0, norm2= 0, L2=0;
     double L2=0, det;
-    
+
     Quad2CL<double> Quaddiff;
-    
+
     Uint lvl=lsg.GetLevel();   //Uint Idx=lsg.RowIdx->GetIdx();
 
     const_DiscSolCL sol(&lsg, &GetBndData(), &GetMG());
 
     std::cout << "Difference to exact solution:" << std::endl;
-  
+
     for (MultiGridCL::const_TriangTetraIteratorCL
             sit=const_cast<const MultiGridCL&>(MG_).GetTriangTetraBegin(lvl),
             send=const_cast<const MultiGridCL&>(MG_).GetTriangTetraEnd(lvl);
@@ -342,7 +342,7 @@ double PoissonP1CL<Coeff>::CheckSolution(const VecDescCL& lsg, scalar_tetra_func
     {
         double absdet=0; //sum= 0;
         if(ALE_)
-        {   
+        {
            GetTrafoTrDet(det, md_.GetLocalP1Deformation(*sit));
            absdet = std::fabs(det);
         }
@@ -360,7 +360,7 @@ double PoissonP1CL<Coeff>::CheckSolution(const VecDescCL& lsg, scalar_tetra_func
         for(Uint i=0; i<5; i++)
             diffQuad[i]= (QuadLsg[i] - Quadlsg[i]) *  (QuadLsg[i] - Quadlsg[i]);
         L2+= diffQuad.quad(absdet);
-        
+
     }
     L2= std::sqrt(L2);
     std::cout << "\n L2-Norm= " << L2 << std::endl;
@@ -1002,8 +1002,8 @@ void SetupConvection_P2(const MultiGridCL& MG_, const Coeff& Coeff_, const BndDa
       {
           GetTrafoTr(T, det, *sit);
           absdet=std::fabs(det);
-          adet = Quad5CL<double> (absdet);  
-          Tq =   Quad5CL< SMatrixCL<3, 3> > (T);  
+          adet = Quad5CL<double> (absdet);
+          Tq =   Quad5CL< SMatrixCL<3, 3> > (T);
       }
 
       //P2DiscCL::GetGradients(Grad, GradRef, T);
@@ -1087,7 +1087,7 @@ void PoissonP2CL<Coeff>::Init( VecDescCL& vec, instat_scalar_fun_ptr func, doubl
             if(ALE_)
             {
                 vec.Data[sit->Unknowns(idx)]= func( md_.GetTransformedVertexCoord(*sit), t0);
-            }   
+            }
             else
                 vec.Data[sit->Unknowns(idx)]= func( sit->GetCoord(), t0);
         }
@@ -1096,17 +1096,57 @@ void PoissonP2CL<Coeff>::Init( VecDescCL& vec, instat_scalar_fun_ptr func, doubl
     for (MultiGridCL::const_TriangEdgeIteratorCL sit= const_cast<const MultiGridCL&>(MG_).GetTriangEdgeBegin(lvl),
         send= const_cast<const MultiGridCL&>(MG_).GetTriangEdgeEnd(lvl); sit!=send; ++sit)      //Edges
     {
-        
+
         if (sit->Unknowns.Exist(idx))
         {
            if(ALE_)
             {
                 vec.Data[sit->Unknowns(idx)]= func( md_.GetTransformedEdgeBaryCenter(*sit), t0);
-            }   
+            }
             else
                 vec.Data[sit->Unknowns(idx)]= func( GetBaryCenter( *sit), t0);
         }
     }
+
+}
+
+//Initialization of P2 problem
+template <class Coeff>
+void PoissonP2CL<Coeff>::Init( VecDescCL& vec, VecDescCL& x0, double t0) const
+{
+    vec = x0;
+//    Uint lvl= vec.GetLevel(),
+//         idx= vec.RowIdx->GetIdx();
+//
+//
+//    for (MultiGridCL::const_TriangVertexIteratorCL sit= const_cast<const MultiGridCL&>(MG_).GetTriangVertexBegin(lvl),
+//        send= const_cast<const MultiGridCL&>(MG_).GetTriangVertexEnd(lvl); sit != send; ++sit)  //Vertices
+//    {
+//        if (sit->Unknowns.Exist(idx))
+//        {
+//            if(ALE_)
+//            {
+//                vec.Data[sit->Unknowns(idx)]= func( md_.GetTransformedVertexCoord(*sit), t0);
+//            }
+//            else
+//                vec.Data[sit->Unknowns(idx)]= func( sit->GetCoord(), t0);
+//        }
+//    }
+//
+//    for (MultiGridCL::const_TriangEdgeIteratorCL sit= const_cast<const MultiGridCL&>(MG_).GetTriangEdgeBegin(lvl),
+//        send= const_cast<const MultiGridCL&>(MG_).GetTriangEdgeEnd(lvl); sit!=send; ++sit)      //Edges
+//    {
+//
+//        if (sit->Unknowns.Exist(idx))
+//        {
+//           if(ALE_)
+//            {
+//                vec.Data[sit->Unknowns(idx)]= func( md_.GetTransformedEdgeBaryCenter(*sit), t0);
+//            }
+//            else
+//                vec.Data[sit->Unknowns(idx)]= func( GetBaryCenter( *sit), t0);
+//        }
+//    }
 
 }
 
@@ -1153,8 +1193,8 @@ void PoissonP2CL<Coeff>::SetupInstatRhs(VecDescCL& vA, VecDescCL& vM, double tA,
         {
           GetTrafoTr(T, det, *sit);
           absdet=std::fabs(det);
-          adet = Quad5CL<double> (absdet);  
-          Tq   = Quad5CL< SMatrixCL<3, 3> > (T);  
+          adet = Quad5CL<double> (absdet);
+          Tq   = Quad5CL< SMatrixCL<3, 3> > (T);
         }
         //MakeGradients(Grad, GradRef, T);
 
@@ -1171,18 +1211,18 @@ void PoissonP2CL<Coeff>::SetupInstatRhs(VecDescCL& vA, VecDescCL& vM, double tA,
                 Numb[i+4]= sit->GetEdge(i)->Unknowns(idx);
         }
         //compute all couplings between HatFunctions on edges and verts
-        
+
         for(int i=0; i<10; ++i)
         {
             Grad[i] = Quad5CL<Point3DCL>(Tq * GradRef[i]) ;
         }
         Quad5CL<double> qquad;
-        qquad.assign(*sit, Coeff::q, 0.0);   
+        qquad.assign(*sit, Coeff::q, 0.0);
         for(int i=0; i<10; ++i)
         {
             for(int j=0; j<=i; ++j)
             {
-                Quad5CL<double> gradij(dot (Grad[i], Grad[j]) * adet); 
+                Quad5CL<double> gradij(dot (Grad[i], Grad[j]) * adet);
                 coup[i][j] = Coeff::alpha * gradij.quad(1.);              //coup[i][j] = Coeff::alpha * QuadGrad(Grad, i, j)* absdet;
                 Quad5CL<double> qij(qquad * phiQuad[i] * phiQuad[j] * adet);
                 coup[i][j]+= qij.quad(1.);
@@ -1200,7 +1240,7 @@ void PoissonP2CL<Coeff>::SetupInstatRhs(VecDescCL& vA, VecDescCL& vM, double tA,
                 {
                     if(!IsOnDirBnd[i]) //Vert/Edge j is not on a Dirichlet Boundary
                     {
-                       Quad5CL<double> mij(phiQuad[i] * phiQuad[j] * adet);                      
+                       Quad5CL<double> mij(phiQuad[i] * phiQuad[j] * adet);
                        vA.Data[Numb[i]]-=coup[j][i] * tmp;
                        vM.Data[Numb[i]]-=mij.quad(1.) * tmp;    //vM.Data[Numb[i]]-= P2DiscCL::GetMass(i, j) * absdet * tmp;
                     }
@@ -1212,7 +1252,7 @@ void PoissonP2CL<Coeff>::SetupInstatRhs(VecDescCL& vA, VecDescCL& vM, double tA,
         {
             if(!IsOnDirBnd[i])
             {
-                Quad5CL<double> fi( rhs * phiQuad[i]  * adet); 
+                Quad5CL<double> fi( rhs * phiQuad[i]  * adet);
                 double valf= fi.quad(1.);                             //valf=Quad(*sit, Coeff::f, i, tf)*absdet;
                 vf.Data[Numb[i]]+=valf;                              //rhs.quadP2(i, absdet);
             }
@@ -1246,7 +1286,7 @@ void SetupInstatSystem_P2( const MultiGridCL& MG, const Coeff&, const BndDataCL<
 
     IdxT Numb[10];
     bool IsOnDirBnd[10];
-    
+
     LocalP2CL<double> phi[10];
     Quad5CL<> phiQuad[10];
     for(int i=0; i<10; i++)
@@ -1283,8 +1323,8 @@ void SetupInstatSystem_P2( const MultiGridCL& MG, const Coeff&, const BndDataCL<
         {
           GetTrafoTr(T, det, *sit);
           absdet=std::fabs(det);
-          adet = Quad5CL<double> (absdet);  
-          Tq   = Quad5CL< SMatrixCL<3, 3> > (T);  
+          adet = Quad5CL<double> (absdet);
+          Tq   = Quad5CL< SMatrixCL<3, 3> > (T);
         }
         //collet some information about the edges and verts of the tetra and save it in the Numb and IsOnDirBnd
         for(int i=0; i<4; ++i)
@@ -1302,12 +1342,12 @@ void SetupInstatSystem_P2( const MultiGridCL& MG, const Coeff&, const BndDataCL<
             Grad[i] = Quad5CL<Point3DCL>(Tq * GradRef[i]);
         }
         Quad5CL<double> qquad;
-        qquad.assign(*sit, Coeff::q, 0.0); 
+        qquad.assign(*sit, Coeff::q, 0.0);
         //compute all couplings between HatFunctions on edges and verts
         for(int i=0; i<10; ++i)
             for(int j=0; j<=i; ++j)
             {
-                Quad5CL<double> gradij(dot (Grad[i], Grad[j]) * adet); 
+                Quad5CL<double> gradij(dot (Grad[i], Grad[j]) * adet);
                 coup[i][j] = Coeff::alpha * gradij.quad(1.);              //coup[i][j] = Coeff::alpha * QuadGrad(Grad, i, j)* absdet;
                 Quad5CL<double> qij(qquad * phiQuad[i] * phiQuad[j] * adet);
                 coup[i][j]+= qij.quad(1.);
@@ -1320,7 +1360,7 @@ void SetupInstatSystem_P2( const MultiGridCL& MG, const Coeff&, const BndDataCL<
                 {
                     if(!IsOnDirBnd[j]) //Vert/Edge j is not on a Dirichlet Boundary
                     {
-                        Quad5CL<double> mij(phiQuad[i] * phiQuad[j] * adet); 
+                        Quad5CL<double> mij(phiQuad[i] * phiQuad[j] * adet);
                         A(Numb[i], Numb[j])+=coup[j][i];
                         M(Numb[i], Numb[j])+=mij.quad(1.);
                     }
@@ -1353,18 +1393,18 @@ template <class Coeff>
 double PoissonP2CL<Coeff>::CheckSolution(const VecDescCL& lsg, instat_scalar_fun_ptr Lsg, double t) const
 {
     double diff, maxdiff=0, norm2= 0, L2=0;
-    
+
     Quad5CL<double> Quaddiff;
     Quad5CL<double> adet;
     Quad5CL< SMatrixCL<3, 3> > Tq;
-    
+
     Uint lvl=lsg.GetLevel(),
             Idx=lsg.RowIdx->GetIdx();
 
     const_DiscSolCL sol(&lsg, &GetBndData(), &GetMG());
 
     std::cout << "Difference to exact solution:" << std::endl;
-  
+
     for (MultiGridCL::const_TriangTetraIteratorCL
             sit=const_cast<const MultiGridCL&>(MG_).GetTriangTetraBegin(lvl),
             send=const_cast<const MultiGridCL&>(MG_).GetTriangTetraEnd(lvl);
@@ -1372,7 +1412,7 @@ double PoissonP2CL<Coeff>::CheckSolution(const VecDescCL& lsg, instat_scalar_fun
     {
         double absdet=0, sum= 0;
         if(ALE_)
-        {   
+        {
           GetTrafoAsQuad(MG_.GetMeshDeformation().GetLocalP2Deformation(*sit), adet, Tq);
         }
         else
@@ -1447,17 +1487,17 @@ double PoissonP2CL<Coeff>::CheckSolution(const VecDescCL& lsg, scalar_tetra_func
 {
     //double diff, maxdiff=0, norm2= 0, L2=0;
     double L2=0;
-    
+
     Quad5CL<double> Quaddiff;
     Quad5CL<double> adet;
     Quad5CL< SMatrixCL<3, 3> > Tq;
-    
+
     Uint lvl=lsg.GetLevel();   //Uint Idx=lsg.RowIdx->GetIdx();
 
     const_DiscSolCL sol(&lsg, &GetBndData(), &GetMG());
 
     std::cout << "Difference to exact solution:" << std::endl;
-  
+
     for (MultiGridCL::const_TriangTetraIteratorCL
             sit=const_cast<const MultiGridCL&>(MG_).GetTriangTetraBegin(lvl),
             send=const_cast<const MultiGridCL&>(MG_).GetTriangTetraEnd(lvl);
@@ -1465,7 +1505,7 @@ double PoissonP2CL<Coeff>::CheckSolution(const VecDescCL& lsg, scalar_tetra_func
     {
         double absdet=0; //sum= 0;
         if(ALE_)
-        {   
+        {
           GetTrafoAsQuad( md_.GetLocalP2Deformation(*sit), adet, Tq);
         }
         else
@@ -1483,7 +1523,7 @@ double PoissonP2CL<Coeff>::CheckSolution(const VecDescCL& lsg, scalar_tetra_func
         for(Uint i=0; i<15; i++)
             diffQuad[i]= (QuadLsg[i] - Quadlsg[i]) *  (QuadLsg[i] - Quadlsg[i]) * adet[i];
         L2+= diffQuad.quad(1.);
-        
+
     }
     L2= std::sqrt(L2);
     std::cout << "\n L2-Norm= " << L2 << std::endl;

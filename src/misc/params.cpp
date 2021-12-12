@@ -199,7 +199,7 @@ void read_parameter_file_from_cmdline (ParamCL& P, int argc, char **argv, std::s
     if (fail)
         throw DROPSErrCL("read_parameter_file_from_cmdline: Unable to read default parameters from './default.json' and '"
                 + default_params + "'\n");
-    
+
     // then read parameters from JSON file specified on command line (otherwise use default_file)
     boost::property_tree::ptree params;
     if ( (argc == 1) || (argv[1][0] == '-') ) { // no file specified on command line
@@ -220,6 +220,41 @@ void read_parameter_file_from_cmdline (ParamCL& P, int argc, char **argv, std::s
     apply_parameter_modifications_from_cmdline( P, argc, argv);
 }
 
+void read_parameter_file_from_cmdline (ParamCL& P, std::string default_file)
+{
+    // first read default parameters from default.json, searching in 1.) local directory or 2.) path from default_file
+    bool fail= true;
+    std::string default_params= default_file.substr( 0, default_file.rfind( "/", default_file.size() )) + "/default.json";
+    for (int i=0; i<2 && fail; ++i) {
+        std::string fil= i==0 ? "default.json" : default_params;
+        std::ifstream test_if_default_exists( fil.c_str());
+        if (test_if_default_exists) {
+            test_if_default_exists.close();
+            fail= false;
+            P.read_json( fil);
+        }
+    }
+    if (fail)
+        throw DROPSErrCL("read_parameter_file_from_cmdline: Unable to read default parameters from './default.json' and '"
+                + default_params + "'\n");
+    boost::property_tree::ptree params;
+
+    // then read parameters from JSON file specified on command line (otherwise use default_file)
+//    boost::property_tree::ptree params;
+    if (true/* (argc == 1) || (argv[1][0] == '-') */) { // no file specified on command line
+        std::cout << "Using fall-back parameter file '" << default_file << "'." << std::endl;
+        boost::property_tree::read_json( default_file, params);
+    }
+    else {
+      //  std::cout << "Using parameter file '" << argv[1] << "'." << std::endl;
+      //  boost::property_tree::read_json( argv[1], params);
+    }
+
+    P.update_from (params);
+
+    // finally, read parameters from command line specified by --add-param
+    //apply_parameter_modifications_from_cmdline( P, argc, argv);
+}
 
 void apply_parameter_modifications_from_cmdline (ParamCL& P, int argc, char **argv)
   /** Allows to apply changes to the property tree using the command line, without having to change the .json file.

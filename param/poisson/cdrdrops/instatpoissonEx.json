@@ -39,7 +39,7 @@
         "P1": 0
     }, 
     "DomainCond": {
-        "RefineSteps": 4
+        "RefineSteps": 0
     }, 
     "Mesh": {
           "Type": "BrickBuilder", 
@@ -51,7 +51,7 @@
         "N2": 1,
         "N3": 1,
         "AdaptRef":{
-            "FinestLevel": 4
+            "FinestLevel": 0
             }
     }, 
     "Restart": {
@@ -77,6 +77,8 @@
         "VTKDir": "vtk", 
         "Binary": 0, 
         "Freq": 1, 
-        "VTKName": "instatpoisson_ex_"
+        "VTKName": "instatpoisson_ex_",
+	"TimeFileName":"none"
+
     }
 }
