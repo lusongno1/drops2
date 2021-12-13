@@ -116,6 +116,8 @@ namespace DROPS
 //                template<class DiscP1FunType>
 //double H1_error (const DROPS::VecDescCL& ls, const BndDataCL<>& lsbnd,
 //                 const DiscP1FunType& discsol, DROPS::instat_scalar_fun_ptr extsol);
+
+void ContantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t);
 class PatternFormulationCL
 {
 public:
@@ -124,12 +126,14 @@ public:
     DROPS::MultiGridCL& mg;
     DROPS::LevelsetP2CL& lset;
     DROPS::AdapTriangCL& adap;
+    VecDescCL lsgradrec;//the recovered gradient of the level set function to calculate curvature
     instat_scalar_fun_ptr the_lset_fun;
     instat_vector_fun_ptr the_normal_fun;
     instat_scalar_fun_ptr the_rhs_fun;
     instat_scalar_fun_ptr the_sol_fun;
     double dt;
     double cur_time=0;
+    double dist;
 private:
 //    SurfactantP1BaseCL& timedisc;
 protected:
@@ -141,6 +145,8 @@ public:
     //virtual void DoStepRD (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::LevelsetP2CL& lset)
     virtual void DoStepRD ();
     virtual void DoStepHeat();
+    void ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t);
+    void GetGradientOfLevelSet();
 
 };
 

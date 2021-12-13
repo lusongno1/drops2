@@ -97,6 +97,7 @@
 
 
 #include "surfactant/patternformulation.h"
+#include "surfactant/ifacetransp.h"
 
 using namespace DROPS;
 
@@ -2278,27 +2279,64 @@ void StationaryStrategyDeformationP2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangC
         vtkwriter->Write( 0.);
     }
 }
+
+void PatternFormulationCL::ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t)
+{
+    const Uint lvl= ic.GetLevel(),
+               idx= ic.RowIdx->GetIdx();
+
+    DROPS_FOR_TRIANG_CONST_VERTEX( mg, lvl, it)
+    {
+        if (it->Unknowns.Exist( idx))
+            ic.Data[it->Unknowns( idx)]= uw0;
+    }
+    ic.t= t;
+}
+//construction function to initialize quantum
 PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTriangCL& adap,
         DROPS::LevelsetP2CL& lset,instat_scalar_fun_ptr the_lset_fun,instat_vector_fun_ptr the_normal_fun,
         instat_scalar_fun_ptr the_rhs_fun,instat_scalar_fun_ptr the_sol_fun):
     mg(mg), adap(adap),lset( lset),the_lset_fun(the_lset_fun),the_normal_fun(the_normal_fun),
     the_rhs_fun(the_rhs_fun),the_sol_fun(the_sol_fun)
 {
-
     using namespace DROPS;
-    //init initial value by constants
+    //init level set globally
+    lset.CreateNumbering( mg.GetLastLevel(), &lset.idx);//create global numbering
+    lset.Phi.SetIdx( &lset.idx);
+    LSInit( mg, lset.Phi, the_lset_fun, 0.);
+    //init ic icw globally
+    IdxDescCL idx( P2IF_FE);
+    idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData());
+    ic.SetIdx( &idx);
+    icw.SetIdx( &idx);
     ConstantInit (1.0,ic, mg, 0.);
     ConstantInit (0.9,icw, mg, 0.);
-
+    //initiate dist
+    dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
+                +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
 }
+
+void PatternFormulationCL::GetGradientOfLevelSet()
+{
+    IdxDescCL vecp2idx( vecP2_FE);
+    vecp2idx.CreateNumbering( mg.GetLastLevel(), mg);
+    lsgradrec.SetIdx( &vecp2idx);
+    averaging_P2_gradient_recovery( mg, lset.Phi, lset.GetBndData(), lsgradrec);
+}
+
+
+
+
 void  PatternFormulationCL::DoStepRD ()
 {
+    /*
     using namespace DROPS;
     {
         lset.CreateNumbering( mg.GetLastLevel(), &lset.idx);//create global numbering
         lset.Phi.SetIdx( &lset.idx);
         LSInit( mg, lset.Phi, the_lset_fun, 0.);
     }
+    */
     const double Vol= lset.GetVolume();
     lset.InitVolume( Vol);
     std::cout << "droplet volume: " << Vol << std::endl;
@@ -2309,18 +2347,23 @@ void  PatternFormulationCL::DoStepRD ()
     vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
     VecDescCL v( &vidx);
     InitVel( mg, &v, Bnd_v, the_wind_fun, 0.);//make vector-value fun to be vector-val vectors
-    VecDescCL nd( &vidx);
+    //VecDescCL nd( &vidx);
+    VecDescCL &nd = lsgradrec;//gradient of level set function
     //if(abs(cur_time)<1e-9)//first iteration, initiate level set values by the prescribed function
-    {
-    InitVel( mg, &nd, Bnd_v, the_normal_fun, 0.);//initial normal vector by prescribed vector function
-    }
+    //{
+    //InitVel( mg, &nd, Bnd_v, the_normal_fun, 0.);//initial normal vector by prescribed vector function
+    //}
 
-    double dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
-                +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+
     //make dist width to be 10*h
     std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, nd, Bnd_v, P,dist));
     //initial a surfactant_timedisc by assignments
     SurfactantP1BaseCL& timedisc= *timediscp;
+    //pass ic icw to SurfactantP1BaseCL
+    timedisc.ic = ic;
+    timedisc.icw = icw;
+
+
 
     timedisc.SetRhs( the_rhs_fun);//zero right hand side
 
@@ -2598,8 +2641,9 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
     for (int stepCount= 1; stepCount <= P.get<int>("Time.NumSteps"); ++stepCount)
     {
         std::cout<<"--------LOOP: STEP = "<<stepCount<<"----------"<<std::endl;
-        patternFMSolver.DoStepRD();
         patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
+        patternFMSolver.GetGradientOfLevelSet();
+        patternFMSolver.DoStepRD();
         patternFMSolver.DoStepHeat();//Solve Heat Equation w.r.t level set
         patternFMSolver.cur_time += patternFMSolver.dt;//step forward
     }

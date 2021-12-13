@@ -83,8 +83,8 @@ void update_global_matrix_P1 (MatrixBuilderCL& M, const double coup[4][4], const
 
 /// \todo This should be a generic function somewhere in num or misc.
 void P1Init (instat_scalar_fun_ptr icf, VecDescCL& ic, const MultiGridCL& mg, double t);
-
 void ContantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t);
+
 
 /// \brief Resize normal according to qdom and fill in surf.normal. The normal must be precomputed.
 template <Uint Dim>
