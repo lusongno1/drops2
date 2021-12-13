@@ -84,6 +84,8 @@ void update_global_matrix_P1 (MatrixBuilderCL& M, const double coup[4][4], const
 /// \todo This should be a generic function somewhere in num or misc.
 void P1Init (instat_scalar_fun_ptr icf, VecDescCL& ic, const MultiGridCL& mg, double t);
 
+void ContantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t);
+
 /// \brief Resize normal according to qdom and fill in surf.normal. The normal must be precomputed.
 template <Uint Dim>
 void
@@ -654,7 +656,7 @@ public:
 
     virtual void finalize_accumulation ()
     {
-        M->Build();
+        M->Build();//M -> mat_
         delete M;
         M= 0;
         /* std::cout << "InterfaceMatrixAccuCL::finalize_accumulation";
@@ -1271,7 +1273,8 @@ private:
     std::valarray<double> q[4],qu;
     QuadDomain2DCL qdom;
     double alpha_;
-    VecDescCL ic_,icw_;
+    VecDescCL& ic_;
+    VecDescCL& icw_;
     double epsilon_,delta_;
     MultiGridCL& MG_;
     const DiscVelSolT nd_;
@@ -2175,6 +2178,7 @@ public:
 
     /// initialize the interface concentration
     void SetInitialValue (instat_scalar_fun_ptr, double t= 0.);
+    void SetInitialValueConstant (double u0, double w0, double t=0.);
 
     /// set the parameter of the theta-scheme for time stepping
     void SetRhs (instat_scalar_fun_ptr);

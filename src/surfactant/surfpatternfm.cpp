@@ -885,7 +885,8 @@ SurfactantP1BaseCL* make_surfactant_timedisc( MultiGridCL& mg, LevelsetP2CL& lse
                                                 &v, &nd, Bnd_v, lset.Phi, lset.GetBndData(),the_normal_fun, dist,
                                                 1./(P.get<DROPS::Point3DCL>("Mesh.E1")[0]/(P.get<double>("Mesh.N1"))),
                                                 P.get<int>("SurfTransp.Solver.Iter"),P.get<double>("SurfTransp.Solver.Tol"),
-                                                P.get<double>("SurfTransp.XFEMReduced"));/**/
+                                                P.get<double>("SurfTransp.XFEMReduced"));/*initial SurfactantNarrowBandStblP1CL with
+                                                some values assignments*/
     }
     /* else if (method == std::string( "CahnHilliardNarrowBand"))
      {
@@ -2285,12 +2286,14 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
 {
 
     using namespace DROPS;
+    //init initial value by constants
+    ConstantInit (1.0,ic, mg, 0.);
+    ConstantInit (0.9,icw, mg, 0.);
 
 }
 void  PatternFormulationCL::DoStepRD ()
 {
     using namespace DROPS;
-    if(abs(cur_time)<1e-9)
     {
         lset.CreateNumbering( mg.GetLastLevel(), &lset.idx);//create global numbering
         lset.Phi.SetIdx( &lset.idx);
@@ -2301,19 +2304,25 @@ void  PatternFormulationCL::DoStepRD ()
     std::cout << "droplet volume: " << Vol << std::endl;
 
     BndDataCL<Point3DCL> Bnd_v( 6, bc_wind, bf_wind);
+    //BndDataCL<> Bnd_v( 0);
     IdxDescCL vidx( vecP2_FE);
     vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
     VecDescCL v( &vidx);
     InitVel( mg, &v, Bnd_v, the_wind_fun, 0.);//make vector-value fun to be vector-val vectors
     VecDescCL nd( &vidx);
-    InitVel( mg, &nd, Bnd_v, the_normal_fun, 0.);
+    //if(abs(cur_time)<1e-9)//first iteration, initiate level set values by the prescribed function
+    {
+    InitVel( mg, &nd, Bnd_v, the_normal_fun, 0.);//initial normal vector by prescribed vector function
+    }
 
     double dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
                 +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
-    std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, nd, Bnd_v, P,dist));//key step, narrow band in it
+    //make dist width to be 10*h
+    std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, nd, Bnd_v, P,dist));
+    //initial a surfactant_timedisc by assignments
     SurfactantP1BaseCL& timedisc= *timediscp;
 
-    timedisc.SetRhs( the_rhs_fun);
+    timedisc.SetRhs( the_rhs_fun);//zero right hand side
 
     LevelsetRepairCL lsetrepair( lset);
     adap.push_back( &lsetrepair);
@@ -2325,10 +2334,13 @@ void  PatternFormulationCL::DoStepRD ()
     std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
     timedisc.ic.SetIdx( &timedisc.idx);
     timedisc.icw.SetIdx( &timedisc.idx);
+    /*
     if(abs(cur_time)<1e-9)
     {
-        timedisc.SetInitialValue( the_sol_fun, 0.);
+        //timedisc.SetInitialValue( the_sol_fun, 0.);
+        timedisc.SetInitialValueConstant( 1.0, 0.9, 0.);
     }
+    */
 
     timedisc.iface.SetIdx( &timedisc.idx);
     timedisc.iface_old.SetIdx( &timedisc.idx);
@@ -2336,8 +2348,8 @@ void  PatternFormulationCL::DoStepRD ()
     BndDataCL<> nobnd( 0);
 
     VecDescCL the_sol_vd( &lset.idx);
-    LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);
-    if (abs(cur_time)<1e-9&&vtkwriter.get() != 0)
+    LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);//an api for true solution if we have
+    if (abs(cur_time)<1e-9&&vtkwriter.get() != 0)//data keeping structure for Paraview
     {
         //std::cout<<1<<std::endl;
         vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
@@ -2359,18 +2371,18 @@ void  PatternFormulationCL::DoStepRD ()
 
     }
 
-/*
-    //const double dt= P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps");//1/32
-    double L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-    std::cout << "L_2x-error: " << L_2x_err
-              << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
-              << std::endl;//initial value error
-    double L_inftL_2x_err= L_2x_err;
-    std::cout << "L_inftL_2x-error: " <<  L_inftL_2x_err << std::endl;
-    double H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
-    std::cout << "H_1x-error: " << H_1x_err << std::endl;
-    double L_2tH_1x_err_sq= 0.5*dt*std::pow( H_1x_err, 2);
-*/
+    /*
+        //const double dt= P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps");//1/32
+        double L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+        std::cout << "L_2x-error: " << L_2x_err
+                  << "\nnorm of true solution: " << L2_norm( mg, lset.Phi, lset.GetBndData(), the_sol_fun)
+                  << std::endl;//initial value error
+        double L_inftL_2x_err= L_2x_err;
+        std::cout << "L_inftL_2x-error: " <<  L_inftL_2x_err << std::endl;
+        double H_1x_err= H1_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
+        std::cout << "H_1x-error: " << H_1x_err << std::endl;
+        double L_2tH_1x_err_sq= 0.5*dt*std::pow( H_1x_err, 2);
+    */
     BndDataCL<> ifbnd( 0);
     std::cout << "initial surfactant on \\Gamma: " << Integral_Gamma( mg, lset.Phi, lset.GetBndData(), make_P1Eval(  mg, ifbnd, timedisc.ic)) << '\n';
     dynamic_cast<DistMarkingStrategyCL*>( adap.get_marking_strategy())->SetDistFct( lset);
@@ -2413,11 +2425,10 @@ void  PatternFormulationCL::DoStepRD ()
         //std::cout << "======================================================== step " << step << ":\n";
         ScopeTimerCL timer( "Strategy: Time-loop");
         //const double cur_time= step*dt;
-        cur_time= step*dt;
         // Assumes (as the rest of Drops), that the current triangulation is acceptable to perform the time-step.
         // If dt is large and AdapRef.Width is small, this may not be true.
         // Watch for large differences in numbers of old and new dof.
-        timedisc.InitTimeStep();
+        timedisc.InitTimeStep();//shift new value to old, backup ic,iw and level set
         if(abs(cur_time) < 1e-9)
         {
             LSInit( mg, lset.Phi, the_lset_fun, cur_time);
@@ -2481,7 +2492,7 @@ void  PatternFormulationCL::DoStepRD ()
             vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
             v.SetIdx( &vidx);
             InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
-            if(abs(cur_time)<1e-9)
+            //if(abs(cur_time)<1e-9)
             {
                 LSInit( mg, lset.Phi, the_lset_fun, cur_time);
             }
@@ -2501,79 +2512,80 @@ void  PatternFormulationCL::DoStepRD ()
 
 void PatternFormulationCL::DoStepHeat()
 {
-        //P1
-        DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx.json");//read_parameter_file
-        P.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
-        std::cout << P2 << std::endl;
-        DROPS::dynamicLoad(P2.get<std::string>("General.DynamicLibsPrefix"),
-                           P2.get<std::vector<std::string> >("General.DynamicLibs") );
-        if (P2.get<int>("General.ProgressBar"))
-            DROPS::ProgressBarTetraAccumulatorCL::Activate();
-        // set up data structure to represent a poisson problem
-        // ---------------------------------------------------------------------
-        std::cout << line << "Set up data structure to represent a Poisson problem ...\n";
+    //P1
+    DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx.json");//read_parameter_file
+    P.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
+    std::cout << P2 << std::endl;
+    DROPS::dynamicLoad(P2.get<std::string>("General.DynamicLibsPrefix"),
+                       P2.get<std::vector<std::string> >("General.DynamicLibs") );
+    if (P2.get<int>("General.ProgressBar"))
+        DROPS::ProgressBarTetraAccumulatorCL::Activate();
+    // set up data structure to represent a poisson problem
+    // ---------------------------------------------------------------------
+    std::cout << line << "Set up data structure to represent a Poisson problem ...\n";
 
-        //create geometry
-        //DROPS::MultiGridCL* mg= 0;
-        DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
+    //create geometry
+    //DROPS::MultiGridCL* mg= 0;
+    DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
 
-        //build computational domain
-        //std::unique_ptr<DROPS::MGBuilderCL> builder( DROPS::make_MGBuilder( P));
-        //mg = new DROPS::MultiGridCL( *builder);
-        //Setup boundary conditions
-        read_BndData( *bdata, mg, P2.get_child( "Poisson.BoundaryData"));
-        for (int i=0; i<mg.GetBnd().GetNumBndSeg(); ++i)
-            std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
-        //Initialize SUPGCL class
-        DROPS::SUPGCL supg;
-        //SUPG stabilization, ALE method  and error estimation are not yet implemented for P2 case!
-        if(!P2.get<int>("Poisson.P1"))
-        {
-              P2.put<int>("Stabilization.SUPG",0);
-              P2.put<int>("Error.DoErrorEstimate",0);
-        }
-        if(P2.get<int>("Stabilization.SUPG"))
-        {
-            supg.init(P2);
-            std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
-        }
-        // Setup the problem
-        DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2);
-        DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
-        DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
-        if(P2.get<int>("Poisson.P1"))
-            probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, supg, P2.get<int>("ALE.wavy"));
-        else
-        {
-            probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, P2.get<int>("ALE.wavy"));
-        }
-        // Refine the grid
-        std::cout << "Refine the grid " << P2.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
-        // Create new tetrahedra
-        for ( int ref=1; ref <= P2.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref){
-            std::cout << " refine (" << ref << ")\n";
-            DROPS::MarkAll( mg);
-            mg.Refine();
-        }
-        mg.SizeInfo( std::cout);
-        // Solve the problem
-        if(P2.get<int>("Poisson.P1"))
-           DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
-        else
-           DROPS::StrategyHeat<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time-dt);
+    //build computational domain
+    //std::unique_ptr<DROPS::MGBuilderCL> builder( DROPS::make_MGBuilder( P));
+    //mg = new DROPS::MultiGridCL( *builder);
+    //Setup boundary conditions
+    read_BndData( *bdata, mg, P2.get_child( "Poisson.BoundaryData"));
+    for (int i=0; i<mg.GetBnd().GetNumBndSeg(); ++i)
+        std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
+    //Initialize SUPGCL class
+    DROPS::SUPGCL supg;
+    //SUPG stabilization, ALE method  and error estimation are not yet implemented for P2 case!
+    if(!P2.get<int>("Poisson.P1"))
+    {
+        P2.put<int>("Stabilization.SUPG",0);
+        P2.put<int>("Error.DoErrorEstimate",0);
+    }
+    if(P2.get<int>("Stabilization.SUPG"))
+    {
+        supg.init(P2);
+        std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
+    }
+    // Setup the problem
+    DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2);
+    DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
+    DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
+    if(P2.get<int>("Poisson.P1"))
+        probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, supg, P2.get<int>("ALE.wavy"));
+    else
+    {
+        probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, P2.get<int>("ALE.wavy"));
+    }
+    // Refine the grid
+    std::cout << "Refine the grid " << P2.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
+    // Create new tetrahedra
+    for ( int ref=1; ref <= P2.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
+    {
+        std::cout << " refine (" << ref << ")\n";
+        DROPS::MarkAll( mg);
+        mg.Refine();
+    }
+    mg.SizeInfo( std::cout);
+    // Solve the problem
+    if(P2.get<int>("Poisson.P1"))
+        DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
+    else
+        DROPS::StrategyHeat<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time-dt);
 
-        lset.Phi = probP2->x;//update lset
-        //Check if Multigrid is sane
-        std::cout << line << "Check if multigrid works properly...\n";
-        if(P2.get<int>("ALE.wavy"))
-            std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
-        else
-            std::cout << DROPS::SanityMGOutCL(mg) << std::endl;
-        //delete &mg;
-        delete bdata;
-        delete probP1;
-        delete probP2;
-        std::cout << "cdrdrops finished regularly" << std::endl;
+    lset.Phi = probP2->x;//update lset
+    //Check if Multigrid is sane
+    std::cout << line << "Check if multigrid works properly...\n";
+    if(P2.get<int>("ALE.wavy"))
+        std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
+    else
+        std::cout << DROPS::SanityMGOutCL(mg) << std::endl;
+    //delete &mg;
+    delete bdata;
+    delete probP1;
+    delete probP2;
+    std::cout << "cdrdrops finished regularly" << std::endl;
 
 }
 
@@ -2587,8 +2599,9 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
     {
         std::cout<<"--------LOOP: STEP = "<<stepCount<<"----------"<<std::endl;
         patternFMSolver.DoStepRD();
-        patternFMSolver.lset.Reparam(03,false);//Redistance
+        patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
         patternFMSolver.DoStepHeat();//Solve Heat Equation w.r.t level set
+        patternFMSolver.cur_time += patternFMSolver.dt;//step forward
     }
 
 

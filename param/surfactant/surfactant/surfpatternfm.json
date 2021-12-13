@@ -14,13 +14,13 @@
         "E1":          [ 3.33333,  0,  0],
         "E2":          [ 0,  3.33333,  0],
         "E3":          [ 0,  0,  3.33333],
-        "N1":         8,
-        "N2":          8,
-        "N3":          8,
+        "N1":          16,
+        "N2":          16,
+        "N3":          16,
         "RestartFile": "",
 
         "AdaptRef": {
-            "Freq":          1,
+            "Freq":          -1,
             "Width":         10,
             "CoarsestLevel": 0,
             "FinestLevel":   0,
@@ -34,8 +34,8 @@
     {
         "Read" : 0,
         "Write": "yes",
-        "NumSteps":	2,
-        "FinalTime": 1
+        "NumSteps":	3,
+        "FinalTime": 5
     },
 
     "SurfTransp": {
@@ -48,7 +48,8 @@
 
             "StationaryPDE": false,
             "Wind":			"ConstantWind",
-            "Levelset":		"MovingEllipsoid",
+            "Levelset":		"SphereDist",
+            "Levelset0":		"MovingEllipsoid",
             "Normal":		"NormalMovingEllipsoid",
             "Rhs":			"HeatConductionRhs",
             "Solution":		"HeatConductionSol",

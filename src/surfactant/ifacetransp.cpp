@@ -145,11 +145,11 @@ void MassMultiply(const MultiGridCL& mg, const VecDescCL& xext, VecDescCL& x, co
                     for (int i= 0; i < 4; ++i)
                     {
                         //  if (num[i] == NoIdx) continue;
-                        if (it->GetVertex(i)->Unknowns.Exist( xidx))
+                        if (it->GetVertex(i)->Unknowns.Exist( xidx))//restricted to narrow band description
                         {
                             m= qf*q[i];
                             //  x.Data[num[i]]+=m.quad(det);
-                            x.Data[it->GetVertex(i)->Unknowns( xidx)]+=m.quad( det);
+                            x.Data[it->GetVertex(i)->Unknowns( xidx)]+=m.quad( det);//index means Vertex(i) ind in xidx
                         }
                         // if (it->GetVertex(0)->Unknowns.Exist( xidx))
                         // 	 x.Data[it->GetVertex(0)->Unknowns( xidx)]= xext.Data[it->Unknowns( xextidx)];
@@ -2710,6 +2710,19 @@ void P1Init (instat_scalar_fun_ptr icf, VecDescCL& ic, const MultiGridCL& mg, do
     ic.t= t;
 }
 
+void ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t)
+{
+    const Uint lvl= ic.GetLevel(),
+               idx= ic.RowIdx->GetIdx();
+
+    DROPS_FOR_TRIANG_CONST_VERTEX( mg, lvl, it)
+    {
+        if (it->Unknowns.Exist( idx))
+            ic.Data[it->Unknowns( idx)]= uw0;
+    }
+    ic.t= t;
+}
+
 InterfaceDebugP2CL::InterfaceDebugP2CL (const InterfaceCommonDataP2CL& cdata)
     : cdata_( cdata), to_iface( 0), ref_dp( 0), ref_abs_det( 0), true_area( -1.)
 {}
@@ -3034,6 +3047,12 @@ void SurfactantP1BaseCL::SetInitialValue (instat_scalar_fun_ptr icf, double t)
 {
     P1Init ( icf, ic, MG_, t);
     P1Init ( icf, icw, MG_, t);//set initial value for w
+}
+
+void SurfactantP1BaseCL::SetInitialValueConstant (double u0, double w0,double t)
+{
+    ConstantInit ( u0, ic, MG_, t);
+    ConstantInit ( w0, icw, MG_, t);//set initial value for w
 }
 
 void SurfactantP1BaseCL::SetRhs (instat_scalar_fun_ptr rhs=0)
@@ -3442,7 +3461,9 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         dt_= ic.t - oldt_;
         //idx.GetXidx().SetBound( width_); //transfer the width_ to CreatNumbering
         idx.CreateNumbering( oldidx_.TriangLevel(), MG_, &lset_vd_, &lsetbnd_,width_); // InitTimeStep deletes oldidx_ and swaps idx and oldidx_.
+        //update idx
         //idx_c.CreateNumbering( oldidx_c_.TriangLevel(), MG_, &lset_vd_, &lsetbnd_);
+        std::cout << "old NumUnknowns: " << oldidx_.NumUnknowns();
         std::cout << "new NumUnknowns: " << idx.NumUnknowns();
         full_idx.CreateNumbering( idx.TriangLevel(), MG_);
         std::cout << " full NumUnknowns: " << full_idx.NumUnknowns() << std::endl;
@@ -3459,7 +3480,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         rhs.Data= (1./dt_)*oldic_;
         VecDescCL rhsw( &oldidx_);
         rhsw.Data= (1./dt_)*oldicw_;
-        DROPS::ExtendP2( MG_, rhs, rhsext);
+        DROPS::ExtendP2( MG_, rhs, rhsext);//extend local narrow band idx to global idx
         DROPS::ExtendP2( MG_, rhsw, rhsextw);
 
         /*
@@ -3532,7 +3553,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         InterfaceCommonDataP1CL cdata( lset_vd_, lsetbnd_);//InterfaceCommonDataP2CL
         accus.push_back( &cdata);
         /**< push back information of each tetra w.r.t narrow band */
-        NarrowBandCommonDataP1CL bdata( lset_vd_, lsetbnd_,width_);
+        NarrowBandCommonDataP1CL bdata( lset_vd_, lsetbnd_,width_);//judge if inband_
         accus.push_back( &bdata);
 
         /**< push back mass term: M*/
@@ -3554,12 +3575,14 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
                                                                                                    LocalInterfaceMassCurvUP1CL<P2Eval3dCL>(ic,icw,epsilon,delta,normalP2Eval,MG_,1),
                                                                                                 cdata, "massCurvU");
         accus.push_back( &massCurvU_accu);
+
+
         /**< push back mass-like term with u_n*w_n as its coefficient: M20 */
         InterfaceMatrixAccuCL<LocalInterfaceMassUWP1CL, InterfaceCommonDataP1CL> massUW_accu( &MassUW, LocalInterfaceMassUWP1CL(ic,icw,delta,MG_,1), cdata, "massUW");
         accus.push_back( &massUW_accu);
         /**< push back right-hand side w.r.t two equations: F */
-        InterfaceVectorAccuCL<LocalVectorF1P1CL, InterfaceCommonDataP1CL> loadF_accu( &vd_loadF,
-                                 LocalVectorF1P1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF");
+        InterfaceVectorAccuCL<LocalVectorFP1CL, InterfaceCommonDataP1CL> loadF_accu( &vd_loadF,
+                                 LocalVectorFP1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF");
         accus.push_back(&loadF_accu);
 
 
@@ -3573,24 +3596,23 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         /**< solve the first equation */
         L1_.LinComb( gamma+1./dt_, Mass.Data, 1,MassCurvU.Data, -gamma, MassUW.Data, d1, Laplace.Data, rho_, Volume_stab.Data);
         load = vd_loadF.Data;
-        const VectorCL therhs1(rhs1_ + load);//const VectorCL therhs(rhs1_ + load);
+        const VectorCL therhs1(rhs1_ + a*gamma*load);//const VectorCL therhs(rhs1_ + load);
         std::cout  <<"  Before solve: res1 = " << norm(therhs1)<<" "<<norm(ic.Data)<<" "<< norm( L1_*ic.Data - therhs1) << std::endl;
         gm_.Solve( L1_, ic.Data, therhs1, ic.RowIdx->GetEx());
         std::cout << "SurfactantExtensionP1CL::DoStep: res1 = " << gm_.GetResid() << ", iter = " << gm_.GetIter() << std::endl;
-
-
         TetraAccumulatorTupleCL accus2;
         accus2.push_back( &cdata);
         accus2.push_back( &bdata);
-        /**< push back mass-like term with u_n*u_n as its coefficient: M20 */
+        //accus2.push_back( &massCurvU_accu);//update M1 with new u^n
+        /**< push back mass-like term with u_n*u_n as its coefficient: M21 */
         InterfaceMatrixAccuCL<LocalInterfaceMassUUP1CL, InterfaceCommonDataP1CL> massUU_accu( &MassUU, LocalInterfaceMassUUP1CL(ic,icw,delta,MG_,1), cdata, "massUU");
         accus2.push_back( &massUU_accu);
         accumulate( accus2, MG_, cidx->TriangLevel(), cidx->GetBndInfo());
         /**< solve the second equation */
         L2_.LinComb( 1./dt_, Mass.Data, 1 ,MassCurvU.Data, gamma, MassUU.Data,d2, Laplace.Data, rho_, Volume_stab.Data);
-        const VectorCL therhs2(rhsw1_ + load);
+        const VectorCL therhs2(rhsw1_ + b*gamma*load);
         std::cout  <<"  Before solve: res2 = " << norm(therhs2)<<" "<<norm(icw.Data)<<" "<< norm( L2_*ic.Data - therhs2) << std::endl;
-        gm_.Solve( L2_, icw.Data, therhs2, ic.RowIdx->GetEx());
+        gm_.Solve( L2_, icw.Data, therhs2, icw.RowIdx->GetEx());
         std::cout << "SurfactantExtensionP1CL::DoStep: res2 = " << gm_.GetResid() << ", iter = " << gm_.GetIter() << std::endl;
 
         //{
