@@ -3458,7 +3458,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         // ScopeTimerCL timer( "SurfactantNarrowBandStblP1CL::InitStep");
         std::cout << "SurfactantNarrowBandStblP1CL::InitStep:\n";
         ic.t= new_t;
-        dt_= ic.t - oldt_;
+        //dt_= ic.t - oldt_;
         //idx.GetXidx().SetBound( width_); //transfer the width_ to CreatNumbering
         idx.CreateNumbering( oldidx_.TriangLevel(), MG_, &lset_vd_, &lsetbnd_,width_); // InitTimeStep deletes oldidx_ and swaps idx and oldidx_.
         //update idx

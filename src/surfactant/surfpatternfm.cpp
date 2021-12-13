@@ -2297,7 +2297,7 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
         DROPS::LevelsetP2CL& lset,instat_scalar_fun_ptr the_lset_fun,instat_vector_fun_ptr the_normal_fun,
         instat_scalar_fun_ptr the_rhs_fun,instat_scalar_fun_ptr the_sol_fun):
     mg(mg), adap(adap),lset( lset),the_lset_fun(the_lset_fun),the_normal_fun(the_normal_fun),
-    the_rhs_fun(the_rhs_fun),the_sol_fun(the_sol_fun)
+    the_rhs_fun(the_rhs_fun),the_sol_fun(the_sol_fun),idx( P2IF_FE)
 {
     using namespace DROPS;
     //init level set globally
@@ -2305,7 +2305,7 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     lset.Phi.SetIdx( &lset.idx);
     LSInit( mg, lset.Phi, the_lset_fun, 0.);
     //init ic icw globally
-    IdxDescCL idx( P2IF_FE);
+    //IdxDescCL idx( P2IF_FE);
     idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData());
     ic.SetIdx( &idx);
     icw.SetIdx( &idx);
@@ -2313,7 +2313,7 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     ConstantInit (0.9,icw, mg, 0.);
     //initiate dist
     dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
-                +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+         +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
 }
 
 void PatternFormulationCL::GetGradientOfLevelSet()
@@ -2359,9 +2359,25 @@ void  PatternFormulationCL::DoStepRD ()
     std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, nd, Bnd_v, P,dist));
     //initial a surfactant_timedisc by assignments
     SurfactantP1BaseCL& timedisc= *timediscp;
-    //pass ic icw to SurfactantP1BaseCL
-    timedisc.ic = ic;
-    timedisc.icw = icw;
+
+//    {
+//        //pass ic icw to SurfactantP1BaseCL
+//        timedisc.ic = ic;
+//        timedisc.icw = icw;
+//        timedisc.idx.swap(idx);
+//    }
+    {
+        //backup ic iw idx
+        timedisc.SetDt(dt);
+        if (timedisc.idx.NumUnknowns() > 0)
+            timedisc.idx.DeleteNumbering( mg);
+        timedisc.idx.swap( idx);
+        timedisc.ic.Data.resize( ic.Data.size());
+        timedisc.ic.Data = ic.Data;
+        timedisc.icw.Data.resize( icw.Data.size());
+        timedisc.icw.Data = icw.Data;
+
+    }
 
 
 
@@ -2372,21 +2388,23 @@ void  PatternFormulationCL::DoStepRD ()
     InterfaceP1RepairCL ic_repair( mg, lset.Phi, lset.GetBndData(), timedisc.ic);
     adap.push_back( &ic_repair);
 
+    timedisc.InitTimeStep();
+
     // Init Interface-Sol
     timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);//set Unknowns near interface
     std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
     timedisc.ic.SetIdx( &timedisc.idx);
     timedisc.icw.SetIdx( &timedisc.idx);
-    /*
-    if(abs(cur_time)<1e-9)
-    {
-        //timedisc.SetInitialValue( the_sol_fun, 0.);
-        timedisc.SetInitialValueConstant( 1.0, 0.9, 0.);
-    }
-    */
+
+//        if(abs(cur_time)<1e-9)
+//        {
+//            //timedisc.SetInitialValue( the_sol_fun, 0.);
+//            timedisc.SetInitialValueConstant( 1.0, 0.9, 0.);
+//        }
 
     timedisc.iface.SetIdx( &timedisc.idx);
     timedisc.iface_old.SetIdx( &timedisc.idx);
+
 
     BndDataCL<> nobnd( 0);
 
@@ -2471,15 +2489,17 @@ void  PatternFormulationCL::DoStepRD ()
         // Assumes (as the rest of Drops), that the current triangulation is acceptable to perform the time-step.
         // If dt is large and AdapRef.Width is small, this may not be true.
         // Watch for large differences in numbers of old and new dof.
-        timedisc.InitTimeStep();//shift new value to old, backup ic,iw and level set
-        if(abs(cur_time) < 1e-9)
-        {
-            LSInit( mg, lset.Phi, the_lset_fun, cur_time);
-        }
+        //timedisc.InitTimeStep();//shift new value to old, backup ic,iw and level set
+//        if(abs(cur_time) < 1e-9)
+//        {
+//            LSInit( mg, lset.Phi, the_lset_fun, cur_time);
+//        }
 
         //InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
         //timedisc.DoStep( cur_time);
         timedisc.DoStep0PatternFM( cur_time);//only use back-forward Euler scheme
+
+        //timedisc.InitTimeStep();//shift new value to old, backup ic,iw and level set
 
         //  timedisc.DoStep0( cur_time);
         /*
@@ -2549,6 +2569,18 @@ void  PatternFormulationCL::DoStepRD ()
             lset.AdjustVolume();
             lset.GetVolumeAdjuster()->DebugOutput( std::cout);
         }
+    }
+    {
+        //backup ic iw idx
+        if (idx.NumUnknowns() > 0)
+            idx.DeleteNumbering( mg);
+        idx.swap( timedisc.idx);
+
+        ic.Data.resize( timedisc.ic.Data.size());
+        ic.Data = timedisc.ic.Data;
+        icw.Data.resize( timedisc.icw.Data.size());
+        icw.Data = timedisc.icw.Data;
+
     }
     std::cout << std::endl;
 }

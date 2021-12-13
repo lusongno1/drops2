@@ -994,8 +994,8 @@ public:
     double vec[4];
 
     LocalVectorFP1CL (instat_scalar_fun_ptr f, double time, double a,double b,
-                       double delta,double gamma,VecDescCL& ic,VecDescCL& icw,
-                       MultiGridCL& MG, const BndDataCL<Point3DCL>& Bnd_v)
+                      double delta,double gamma,VecDescCL& ic,VecDescCL& icw,
+                      MultiGridCL& MG, const BndDataCL<Point3DCL>& Bnd_v)
         : f_( f), time_( time),a_(a),b_(b),delta_(delta),gamma_(gamma),
           ic_(ic),icw_(icw),MG_(MG),Bnd_v_(Bnd_v)
     {
@@ -2090,7 +2090,12 @@ public:
     void SetTheta (double theta);
 
     /// perform one time step to new_t.
-    virtual void DoStep (double /*new_t*/) {}
+    virtual void DoStep (double /*new_t*/) {};
+
+    void SetDt(double dt)
+    {
+        dt_ = dt;
+    };
 };
 
 

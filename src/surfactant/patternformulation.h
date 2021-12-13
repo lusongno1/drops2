@@ -134,6 +134,7 @@ public:
     double dt;
     double cur_time=0;
     double dist;
+    IdxDescCL idx;
 private:
 //    SurfactantP1BaseCL& timedisc;
 protected:
