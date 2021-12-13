@@ -2297,7 +2297,7 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
         DROPS::LevelsetP2CL& lset,instat_scalar_fun_ptr the_lset_fun,instat_vector_fun_ptr the_normal_fun,
         instat_scalar_fun_ptr the_rhs_fun,instat_scalar_fun_ptr the_sol_fun):
     mg(mg), adap(adap),lset( lset),the_lset_fun(the_lset_fun),the_normal_fun(the_normal_fun),
-    the_rhs_fun(the_rhs_fun),the_sol_fun(the_sol_fun),idx( P2IF_FE)
+    the_rhs_fun(the_rhs_fun),the_sol_fun(the_sol_fun),idx( P2_FE)
 {
     using namespace DROPS;
     //init level set globally
@@ -2624,7 +2624,8 @@ void PatternFormulationCL::DoStepHeat()
         std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
     }
     // Setup the problem
-    DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2);
+    //NoBndDataCL<> nobnddata;
+    DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2,0.1,ic);
     DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
     DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
     if(P2.get<int>("Poisson.P1"))
@@ -2647,7 +2648,7 @@ void PatternFormulationCL::DoStepHeat()
     if(P2.get<int>("Poisson.P1"))
         DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
     else
-        DROPS::StrategyHeat<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time-dt);
+        DROPS::StrategyHeat<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
 
     lset.Phi = probP2->x;//update lset
     //Check if Multigrid is sane
@@ -2672,7 +2673,7 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
     patternFMSolver.dt= P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps");
     for (int stepCount= 1; stepCount <= P.get<int>("Time.NumSteps"); ++stepCount)
     {
-        std::cout<<"--------LOOP: STEP = "<<stepCount<<"----------"<<std::endl;
+        std::cout<<"***************--------LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
         patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
         patternFMSolver.GetGradientOfLevelSet();
         patternFMSolver.DoStepRD();
