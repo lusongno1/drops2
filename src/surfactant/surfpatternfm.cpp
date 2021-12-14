@@ -2314,6 +2314,18 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     //initiate dist
     dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
          +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+
+    {
+        d1      = P.get<double>("Parameters.d1");
+        d2      = P.get<double>("Parameters.d2");
+        gamma   = P.get<double>("Parameters.gamma");
+        a       = P.get<double>("Parameters.a");
+        b       = P.get<double>("Parameters.b");
+        tEnd    = P.get<double>("Parameters.EndTime");
+        delta   = P.get<double>("Parameters.delta");
+        epsilon = P.get<double>("Parameters.epsilon");
+        dT      = P.get<double>("Parameters.TimeStep");
+    }
 }
 
 void PatternFormulationCL::GetGradientOfLevelSet()
@@ -2337,6 +2349,7 @@ void  PatternFormulationCL::DoStepRD ()
         LSInit( mg, lset.Phi, the_lset_fun, 0.);
     }
     */
+
     const double Vol= lset.GetVolume();
     lset.InitVolume( Vol);
     std::cout << "droplet volume: " << Vol << std::endl;
@@ -2366,9 +2379,11 @@ void  PatternFormulationCL::DoStepRD ()
 //        timedisc.icw = icw;
 //        timedisc.idx.swap(idx);
 //    }
+
+    int numSteps =  P.get<int>("Time.NumSteps");
     {
         //backup ic iw idx
-        timedisc.SetDt(dt);
+        timedisc.SetDt(dT/numSteps);
         if (timedisc.idx.NumUnknowns() > 0)
             timedisc.idx.DeleteNumbering( mg);
         timedisc.idx.swap( idx);
@@ -2481,7 +2496,7 @@ void  PatternFormulationCL::DoStepRD ()
         }*/
     //  for (int step= 2; step <= P.get<int>("Time.NumSteps"); ++step) {
     //for (int step= 1; step <= P.get<int>("Time.NumSteps"); ++step)
-    for (int step= 1; step <= 1; ++step)
+    for (int step= 1; step <= numSteps; ++step)
     {
         //std::cout << "======================================================== step " << step << ":\n";
         ScopeTimerCL timer( "Strategy: Time-loop");
@@ -2575,7 +2590,6 @@ void  PatternFormulationCL::DoStepRD ()
         if (idx.NumUnknowns() > 0)
             idx.DeleteNumbering( mg);
         idx.swap( timedisc.idx);
-
         ic.Data.resize( timedisc.ic.Data.size());
         ic.Data = timedisc.ic.Data;
         icw.Data.resize( timedisc.icw.Data.size());
@@ -2625,7 +2639,7 @@ void PatternFormulationCL::DoStepHeat()
     }
     // Setup the problem
     //NoBndDataCL<> nobnddata;
-    DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2,0.1,ic);
+    DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P,P2,0.1,ic,dT);
     DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
     DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
     if(P2.get<int>("Poisson.P1"))
@@ -2670,15 +2684,15 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
 {
     using namespace DROPS;
     PatternFormulationCL patternFMSolver(mg,adap,lset,the_lset_fun,the_normal_fun,the_rhs_fun,the_sol_fun);
-    patternFMSolver.dt= P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps");
-    for (int stepCount= 1; stepCount <= P.get<int>("Time.NumSteps"); ++stepCount)
+    int stepNum = (int)(patternFMSolver.tEnd/patternFMSolver.dT);
+    for (int stepCount= 1; stepCount<=stepNum; ++stepCount)
     {
-        std::cout<<"***************--------LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
+        std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
         patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
         patternFMSolver.GetGradientOfLevelSet();
         patternFMSolver.DoStepRD();
         patternFMSolver.DoStepHeat();//Solve Heat Equation w.r.t level set
-        patternFMSolver.cur_time += patternFMSolver.dt;//step forward
+        patternFMSolver.cur_time += patternFMSolver.dT;//step forward
     }
 
 

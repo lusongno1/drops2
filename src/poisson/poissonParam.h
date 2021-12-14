@@ -98,29 +98,30 @@ public:
     }
 
 
-    PoissonCoeffCL( ParamCL& P,double delta,VecDescCL ic)
+    PoissonCoeffCL( ParamCL& P1,ParamCL& P2,double delta,VecDescCL ic,double dT)
     {
         delta_ = delta;
         ic_ = ic;
-        C_=P;
-        nx_= P.get<int>("Mesh.N1");
-        ny_= P.get<int>("Mesh.N2");
-        dx_= norm(P.get<DROPS::Point3DCL>("Mesh.E1"));
-        dy_= norm(P.get<DROPS::Point3DCL>("Mesh.E2"));
-        dt_= P.get<int>("Time.NumSteps")!=0 ? P.get<double>("Time.FinalTime")/P.get<int>("Time.NumSteps") : 0;  //step size used in ALEVelocity
+        C_=P2;
+        nx_= P1.get<int>("Mesh.N1");
+        ny_= P1.get<int>("Mesh.N2");
+        dx_= norm(P1.get<DROPS::Point3DCL>("Mesh.E1"));
+        dy_= norm(P1.get<DROPS::Point3DCL>("Mesh.E2"));
+        //dt_= P.get<int>("Time.NumSteps")!=0 ? P.get<double>("Time.FinalTime")/P.get<int>("Time.NumSteps") : 0;  //step size used in ALEVelocity
+        dt_= P2.get<int>("Time.NumSteps")!=0 ? dT/P2.get<int>("Time.NumSteps") : 0;  //step size used in ALEVelocity
         DROPS::InScaMap & scamap = DROPS::InScaMap::getInstance();
         DROPS::ScaTetMap & scatet = DROPS::ScaTetMap::getInstance();
-        q = scatet[P.get<std::string>("Poisson.Coeff.Reaction")];
-        alpha = P.get<double>("Poisson.Coeff.Diffusion");
+        q = scatet[P2.get<std::string>("Poisson.Coeff.Reaction")];
+        alpha = P2.get<double>("Poisson.Coeff.Diffusion");
         //f = scatet[P.get<std::string>("Poisson.Coeff.Source")];
         f = &ff;
-        Solution = scatet[P.get<std::string>("Poisson.Solution")];
+        Solution = scatet[P2.get<std::string>("Poisson.Solution")];
         //Solution = scamp[P.get<std::string>("Poisson.Solution")];
-        InitialCondition = scamap[P.get<std::string>("Poisson.InitialValue")];
+        InitialCondition = scamap[P2.get<std::string>("Poisson.InitialValue")];
         DROPS::VecTetMap & vectet = DROPS::VecTetMap::getInstance();
-        Vel = vectet[P.get<std::string>("Poisson.Coeff.Flowfield")];
+        Vel = vectet[P2.get<std::string>("Poisson.Coeff.Flowfield")];
 
-        interface = scamap[P.get<std::string>("ALE.Interface")];
+        interface = scamap[P2.get<std::string>("ALE.Interface")];
 
     }
 

@@ -131,7 +131,7 @@ public:
     instat_vector_fun_ptr the_normal_fun;
     instat_scalar_fun_ptr the_rhs_fun;
     instat_scalar_fun_ptr the_sol_fun;
-    double dt;
+    double d1,d2,gamma,a,b,tEnd,delta,epsilon,dT;
     double cur_time=0;
     double dist;
     IdxDescCL idx;

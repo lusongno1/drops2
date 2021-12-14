@@ -10,13 +10,13 @@
 
     "Mesh": {
         "Type":        "BrickBuilder",
-        "Origin":      [-5, -5, -5],
-        "E1":          [ 10,  0,  0],
-        "E2":          [ 0,  10,  0],
-        "E3":          [ 0,  0,  10],
-        "N1":          16,
-        "N2":          16,
-        "N3":          16,
+        "Origin":      [-3, -3, -3],
+        "E1":          [ 6,  0,  0],
+        "E2":          [ 0,  6,  0],
+        "E3":          [ 0,  0,  6],
+        "N1":          8,
+        "N2":          8,
+        "N3":          8,
         "RestartFile": "",
 
         "AdaptRef": {
@@ -34,8 +34,8 @@
     {
         "Read" : 0,
         "Write": "yes",
-        "NumSteps":	3,
-        "FinalTime": 5
+        "NumSteps":	1,
+        "FinalTime": 0.1
     },
 
     "SurfTransp": {
@@ -49,7 +49,7 @@
             "StationaryPDE": false,
             "Wind":			"ConstantWind",
             "Levelset":		"SphereDist",
-            "Levelset0":		"MovingEllipsoid",
+            "Levelset2":		"MovingEllipsoid",
             "Normal":		"NormalMovingEllipsoid",
             "Rhs":			"HeatConductionRhs",
             "Solution":		"HeatConductionSol",
@@ -69,7 +69,7 @@
             "Tol":  1e-9
         },
         "XFEMReduced":             -1,
-        "FEDegree":                1,
+        "FEDegree":                2,
         "NormalLaplaceCoefficient": 1.0,
         "SolutionOutput": {
             "Freq":   0,
@@ -111,5 +111,16 @@
         "UseDeformation": "0",
         "AddP1XPressure": "0",
         "AddDGOutput":    "0"
+    },    
+    "Parameters": {
+        "d1":           1,
+        "d2":           10,
+        "gamma":        30,
+        "a":            0.1,
+        "b":            0.9,
+        "EndTime":      5,
+        "delta":        0.1,
+        "epsilon":      0.01,
+        "TimeStep":     0.001
     }
 }
