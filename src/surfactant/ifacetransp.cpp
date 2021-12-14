@@ -3546,7 +3546,6 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         VecDescCL vd_loadF1( &idx);
         VecDescCL vd_loadF2( &idx);
 
-        SetPars();
         TetraAccumulatorTupleCL accus;
 
         /**< push back information of element */

@@ -2391,6 +2391,7 @@ void  PatternFormulationCL::DoStepRD ()
         timedisc.ic.Data = ic.Data;
         timedisc.icw.Data.resize( icw.Data.size());
         timedisc.icw.Data = icw.Data;
+        timedisc.SetPars(d1,d2,gamma,a,b,delta,epsilon);
 
     }
 
@@ -2639,7 +2640,7 @@ void PatternFormulationCL::DoStepHeat()
     }
     // Setup the problem
     //NoBndDataCL<> nobnddata;
-    DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P,P2,0.1,ic,dT);
+    DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P,P2,epsilon,delta,ic,dT);
     DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
     DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
     if(P2.get<int>("Poisson.P1"))

@@ -98,7 +98,7 @@ public:
     }
 
 
-    PoissonCoeffCL( ParamCL& P1,ParamCL& P2,double delta,VecDescCL ic,double dT)
+    PoissonCoeffCL( ParamCL& P1,ParamCL& P2,double epsilon,double delta,VecDescCL ic,double dT)
     {
         delta_ = delta;
         ic_ = ic;
@@ -112,7 +112,8 @@ public:
         DROPS::InScaMap & scamap = DROPS::InScaMap::getInstance();
         DROPS::ScaTetMap & scatet = DROPS::ScaTetMap::getInstance();
         q = scatet[P2.get<std::string>("Poisson.Coeff.Reaction")];
-        alpha = P2.get<double>("Poisson.Coeff.Diffusion");
+        //alpha = P2.get<double>("Poisson.Coeff.Diffusion");
+        alpha = epsilon;
         //f = scatet[P.get<std::string>("Poisson.Coeff.Source")];
         f = &ff;
         Solution = scatet[P2.get<std::string>("Poisson.Solution")];
