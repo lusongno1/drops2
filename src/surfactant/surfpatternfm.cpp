@@ -2429,17 +2429,32 @@ void  PatternFormulationCL::DoStepRD ()
     if (abs(cur_time)<1e-9&&vtkwriter.get() != 0)//data keeping structure for Paraview
     {
         //std::cout<<1<<std::endl;
+//        vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
+//        //std::cout<<2<<std::endl;
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol1"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.icw,                 "InterfaceSol2"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
+//        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
+//        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, nd),      "Normal"));
+//        //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
+//        vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
+//        vtkwriter->Write( 0.);
+
+
+                //std::cout<<1<<std::endl;
         vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
         //std::cout<<2<<std::endl;
-        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol1"));
-        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.icw,                 "InterfaceSol2"));
-        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
-        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
-        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
+        vtkwriter->Register( make_VTKIfaceScalar( mg, ic,                 "InterfaceSol1"));
+        vtkwriter->Register( make_VTKIfaceScalar( mg, icw,                 "InterfaceSol2"));
+        //vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
+        //vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
+        //vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
         vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, nd),      "Normal"));
         //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
-        vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
+        //vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
         vtkwriter->Write( 0.);
+
     }
     if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0)
     {
@@ -2532,6 +2547,18 @@ void  PatternFormulationCL::DoStepRD ()
         L_2tH_1x_err_sq+= 0.5*dt*std::pow( H_1x_err, 2);
         std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
         */
+        {
+            //backup ic iw idx
+            if (idx.NumUnknowns() > 0)
+                idx.DeleteNumbering( mg);
+            idx.swap( timedisc.idx);
+            ic.Data.resize( timedisc.ic.Data.size());
+            ic.Data = timedisc.ic.Data;
+            icw.Data.resize( timedisc.icw.Data.size());
+            icw.Data = timedisc.icw.Data;
+
+        }
+
         if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0)
         {
             LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
@@ -2586,17 +2613,7 @@ void  PatternFormulationCL::DoStepRD ()
             lset.GetVolumeAdjuster()->DebugOutput( std::cout);
         }
     }
-    {
-        //backup ic iw idx
-        if (idx.NumUnknowns() > 0)
-            idx.DeleteNumbering( mg);
-        idx.swap( timedisc.idx);
-        ic.Data.resize( timedisc.ic.Data.size());
-        ic.Data = timedisc.ic.Data;
-        icw.Data.resize( timedisc.icw.Data.size());
-        icw.Data = timedisc.icw.Data;
 
-    }
     std::cout << std::endl;
 }
 
