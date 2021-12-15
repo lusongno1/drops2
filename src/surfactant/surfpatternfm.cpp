@@ -2297,7 +2297,7 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
         DROPS::LevelsetP2CL& lset,instat_scalar_fun_ptr the_lset_fun,instat_vector_fun_ptr the_normal_fun,
         instat_scalar_fun_ptr the_rhs_fun,instat_scalar_fun_ptr the_sol_fun):
     mg(mg), adap(adap),lset( lset),the_lset_fun(the_lset_fun),the_normal_fun(the_normal_fun),
-    the_rhs_fun(the_rhs_fun),the_sol_fun(the_sol_fun),idx( P2_FE)
+    the_rhs_fun(the_rhs_fun),the_sol_fun(the_sol_fun),idx( P2IF_FE)
 {
     using namespace DROPS;
     //init level set globally
@@ -2326,6 +2326,7 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
         epsilon = P.get<double>("Parameters.epsilon");
         dT      = P.get<double>("Parameters.TimeStep");
     }
+
 }
 
 void PatternFormulationCL::GetGradientOfLevelSet()
@@ -2424,38 +2425,37 @@ void  PatternFormulationCL::DoStepRD ()
 
     BndDataCL<> nobnd( 0);
 
-    VecDescCL the_sol_vd( &lset.idx);
-    LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);//an api for true solution if we have
-    if (abs(cur_time)<1e-9&&vtkwriter.get() != 0)//data keeping structure for Paraview
-    {
-        //std::cout<<1<<std::endl;
+    //VecDescCL the_sol_vd( &lset.idx);
+    //LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);//an api for true solution if we have
+//    if (abs(cur_time)<1e-9&&vtkwriter.get() != 0)//data keeping structure for Paraview
+//    {
+//        //std::cout<<1<<std::endl;
+////        vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
+////        //std::cout<<2<<std::endl;
+////        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol1"));
+////        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.icw,                 "InterfaceSol2"));
+////        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
+////        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
+////        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
+////        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, nd),      "Normal"));
+////        //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
+////        vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
+////        vtkwriter->Write( 0.);
+//
+//
+//                //std::cout<<1<<std::endl;
 //        vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
 //        //std::cout<<2<<std::endl;
-//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol1"));
-//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.icw,                 "InterfaceSol2"));
-//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
-//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
-//        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, ic,                 "InterfaceSol1"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, icw,                 "InterfaceSol2"));
+//        //vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
+//        //vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
+//        //vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
 //        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, nd),      "Normal"));
 //        //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
-//        vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
+//        //vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
 //        vtkwriter->Write( 0.);
-
-
-                //std::cout<<1<<std::endl;
-        vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
-        //std::cout<<2<<std::endl;
-        vtkwriter->Register( make_VTKIfaceScalar( mg, ic,                 "InterfaceSol1"));
-        vtkwriter->Register( make_VTKIfaceScalar( mg, icw,                 "InterfaceSol2"));
-        //vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
-        //vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
-        //vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
-        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, nd),      "Normal"));
-        //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
-        //vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
-        vtkwriter->Write( 0.);
-
-    }
+//    }
     if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0)
     {
         DROPS::WriteFEToFile( timedisc.ic, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
@@ -2559,11 +2559,11 @@ void  PatternFormulationCL::DoStepRD ()
 
         }
 
-        if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0)
-        {
-            LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
-            vtkwriter->Write( cur_time);
-        }
+        //if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0)
+        //{
+        //LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
+        //    vtkwriter->Write( cur_time);
+        //}
         if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0 && step % P.get<int>( "SurfTransp.SolutionOutput.Freq") == 0)
         {
             std::ostringstream os1,
@@ -2602,8 +2602,8 @@ void  PatternFormulationCL::DoStepRD ()
             {
                 LSInit( mg, lset.Phi, the_lset_fun, cur_time);
             }
-            the_sol_vd.SetIdx( &lset.idx);
-            LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
+//            the_sol_vd.SetIdx( &lset.idx);
+//           LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
             // timedisc.Update(); // Called unconditionally in DoStep.
 
             //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), dt);
@@ -2702,15 +2702,34 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
 {
     using namespace DROPS;
     PatternFormulationCL patternFMSolver(mg,adap,lset,the_lset_fun,the_normal_fun,the_rhs_fun,the_sol_fun);
+    //   DROPS::NoBndDataCL<Point3DCL> nobnd_vec;
+    if (vtkwriter.get() != 0)
+    {
+        vtkwriter->Register( make_VTKScalar(      patternFMSolver.lset.GetSolution(),              "Levelset") );
+        vtkwriter->Register( make_VTKIfaceScalar( mg, patternFMSolver.ic,                 "InterfaceSol1"));
+        vtkwriter->Register( make_VTKIfaceScalar( mg, patternFMSolver.icw,                 "InterfaceSol2"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
+//        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
+//        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, nobnd_vec, lsgradrec),      "Normal"));
+        vtkwriter->Write( 0.);
+    }
+//    if (vtkwriter.get() != 0 && stepCount % P.get<int>( "VTK.Freq") == 0)
+//    {
+//        vtkwriter->Write( patternFMSolver.cur_time);
+//    }
     int stepNum = (int)(patternFMSolver.tEnd/patternFMSolver.dT);
     for (int stepCount= 1; stepCount<=stepNum; ++stepCount)
     {
+        patternFMSolver.cur_time += patternFMSolver.dT;//step forward
         std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
         patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
+        vtkwriter->Write( patternFMSolver.cur_time);
         patternFMSolver.GetGradientOfLevelSet();
         patternFMSolver.DoStepRD();
+        vtkwriter->Write( patternFMSolver.cur_time);
         patternFMSolver.DoStepHeat();//Solve Heat Equation w.r.t level set
-        patternFMSolver.cur_time += patternFMSolver.dT;//step forward
+        vtkwriter->Write( patternFMSolver.cur_time);
     }
 
 
