@@ -762,7 +762,7 @@ public:
 
 protected:
     // numerical data
-    VecDescT*          _sol;
+    VecDescT*          _sol;//VecDescCL
     // boundary-data
     BndDataCL*         _bnd;
     // the multigrid

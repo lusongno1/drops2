@@ -529,20 +529,20 @@ void StrategyHeat(PoissonCL& Poisson,VecDescCL &x0,double t)
     }
 #endif
     //VTK format
-    VTKOutCL * vtkwriter = NULL;
-    if (P2.get<int>("VTK.Freq",0)){
-        vtkwriter = new VTKOutCL(mg, "DROPS data",
-                                 P2.get<int>("Time.NumSteps")+1,
-                                 P2.get<std::string>("VTK.VTKDir"), P2.get<std::string>("VTK.VTKName"),
-                                 P2.get<std::string>("VTK.TimeFileName"),
-                                 P2.get<int>("VTK.Binary"),
-                                 P2.get<int>("VTK.UseOnlyP1"),
-                                 -1,  /* <- level */
-                                 P2.get<int>("VTK.ReUseTimeFile"),
-                                 P2.get<int>("VTK.UseDeformation"));
-        vtkwriter->Register( make_VTKScalar( Poisson.GetSolution(), "ConcenT"));
-        vtkwriter->Write( Poisson.x.t);
-    }
+//    VTKOutCL * vtkwriter = NULL;
+//    if (P2.get<int>("VTK.Freq",0)){
+//        vtkwriter = new VTKOutCL(mg, "DROPS data",
+//                                 P2.get<int>("Time.NumSteps")+1,
+//                                 P2.get<std::string>("VTK.VTKDir"), P2.get<std::string>("VTK.VTKName"),
+//                                 P2.get<std::string>("VTK.TimeFileName"),
+//                                 P2.get<int>("VTK.Binary"),
+//                                 P2.get<int>("VTK.UseOnlyP1"),
+//                                 -1,  /* <- level */
+//                                 P2.get<int>("VTK.ReUseTimeFile"),
+//                                 P2.get<int>("VTK.UseDeformation"));
+//        vtkwriter->Register( make_VTKScalar( Poisson.GetSolution(), "ConcenT"));
+//        vtkwriter->Write( Poisson.x.t);
+//    }
     //Do we have an instationary problem?
     if(P2.get<int>("Time.NumSteps")!=0)
     {
@@ -586,17 +586,17 @@ void StrategyHeat(PoissonCL& Poisson,VecDescCL &x0,double t)
                 std::cout << " o -time " << timer.GetTime() << " s" << std::endl;
             }
 #endif
-            if (vtkwriter && step%P2.get<int>("VTK.Freq", 0)==0){
-                std::cout << " o VTK output ...\n";
-                timer.Reset();
-                vtkwriter->Write( Poisson.x.t);
-                timer.Stop();
-                std::cout << " o -time " << timer.GetTime() << " s" << std::endl;
-            }
+//            if (vtkwriter && step%P2.get<int>("VTK.Freq", 0)==0){
+//                std::cout << " o VTK output ...\n";
+//                timer.Reset();
+//                vtkwriter->Write( Poisson.x.t);
+//                timer.Stop();
+//                std::cout << " o -time " << timer.GetTime() << " s" << std::endl;
+//            }
         }
     }
 
-    if (vtkwriter) delete vtkwriter;
+    //if (vtkwriter) delete vtkwriter;
 #ifndef _PAR
     if (ensight) delete ensight;
 #endif
