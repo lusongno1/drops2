@@ -25,7 +25,7 @@
             "Restart": 100
         }, 
         "Coeff": {
-            "Diffusion": 0.01, 
+            "Diffusion": 1, 
             "Reaction": "Example2_Reaction", 
             "Flowfield": "Example2_Flowfield", 
             "withConvection": 0, 
@@ -36,29 +36,22 @@
         },
         "Solution": "Example2_tetraSolution", 
         "SolutionIsKnown": 1, 
-        "P1": 0
+        "P1": 1
     }, 
     "DomainCond": {
         "RefineSteps": 0
     }, 
     "Mesh": {
-         "Type": "BrickBuilder", 
-        "Origin":      [-3, -3, -3],
-        "E1":          [ 6,  0,  0],
-        "E2":          [ 0,  6,  0],
-        "E3":          [ 0,  0,  6],
-        "N1":          16,
-        "N2":          16,
-        "N3":          16,
-        "Origin0":[0,0,0],
-        "E10": [1,0,0],
-        "E20": [0,1,0],
-        "E30": [0,0,1],
-        "N10": 1,
-        "N20": 1,
-        "N30": 1,
+          "Type": "BrickBuilder", 
+        "Origin":[-3,-3,-3],
+        "E1": [6,0,0],
+        "E2": [0,6,0],
+        "E3": [0,0,6],
+        "N1": 1,
+        "N2": 1,
+        "N3": 1,
         "AdaptRef":{
-            "FinestLevel": 0
+            "FinestLevel": 4
             }
     }, 
     "Restart": {
@@ -66,9 +59,9 @@
     }, 
    
     "Time": {
-        "NumSteps": 10, 
+        "NumSteps": 2, 
         "Scheme": 1, 
-        "FinalTime": 0.1, 
+        "FinalTime": 0.02, 
         "Theta": 1
     }, 
     "Error": {
@@ -84,8 +77,6 @@
         "VTKDir": "vtk", 
         "Binary": 0, 
         "Freq": 1, 
-        "VTKName": "instatpoisson_ex_",
-	"TimeFileName":"none"
-
+        "VTKName": "instatpoisson_ex_"
     }
 }

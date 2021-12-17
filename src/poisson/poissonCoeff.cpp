@@ -163,7 +163,8 @@ static DROPS::RegisterVectorTetraFunction regvecnus("Nusselt", Nusselt);
     }
     /// \brief Solution
     double Solution( const DROPS::Point3DCL& p, double t) {
-        return (std::exp(t)*std::exp(p[0]+p[1]+p[2]));
+        return p.norm()-1;
+        //return (std::exp(t)*std::exp(p[0]+p[1]+p[2]));
     }
     double tetraSolution(const DROPS::TetraCL& tet, const DROPS::BaryCoordCL& b, double t) {
         const DROPS::Point3DCL p= DROPS::GetWorldCoord( tet, b);
@@ -412,7 +413,7 @@ static DROPS::RegisterVectorTetraFunction regvecnus("Nusselt", Nusselt);
     }
     double Init( const DROPS::Point3DCL& p, double )
     {
-        DROPS::Point3DCL ref= TransBack(p, 0.);        
+        DROPS::Point3DCL ref= TransBack(p, 0.);
         return 100. * (ref[0] - ref[0] * ref [0] ) * (0.2 * ref[1] - ref[1]* ref[1]) * (0.2 * ref[2] - ref[2] * ref[2]);
     }
     /// \brief Solution
@@ -522,7 +523,7 @@ static DROPS::RegisterVectorTetraFunction regvecnus("Nusselt", Nusselt);
     }
     double Init( const DROPS::Point3DCL& p, double )
     {
-        DROPS::Point3DCL ref= TransBack(p, 0.);        
+        DROPS::Point3DCL ref= TransBack(p, 0.);
         return 100. * (ref[0] - ref[0] * ref [0] ) * (0.2 * ref[1] - ref[1]* ref[1]) * (0.2 * ref[2] - ref[2] * ref[2]);
     }
     /// \brief Solution
@@ -563,14 +564,14 @@ static DROPS::RegisterVectorTetraFunction regvecnus("Nusselt", Nusselt);
         double a= Gradx(ref,t);
         double b= Grady(ref,t);
         double c= Grad1(ref,t);
-        double d= Grad2(ref,t);        
+        double d= Grad2(ref,t);
         double sol= Solution(tet, bary, t);
         double timederiv = 10. * sol;
         double conv      =  1. * (Solx(ref, t) - a/b * Soly(ref, t));
         double diff1     = -alpha* (Solxx(ref, t) - 2 * a/b * Solxy(ref,t ) - d * Soly(ref, t) + a/b * c * Soly(ref, t) + a * a /b/b *Solyy(ref, t));
         double diff2     = -alpha/(b*b)*Solyy(ref, t);
         double diff3     = -alpha*Solzz(ref, t);
-        return timederiv + conv + diff1 +diff2 +diff3; 
+        return timederiv + conv + diff1 +diff2 +diff3;
     }
     static DROPS::RegisterScalarTetraFunction regscaq("ALEEx3_Reaction",     Reaction    );
     static DROPS::RegisterScalarTetraFunction regscaf("ALEEx3_Source",       Source      );
@@ -626,7 +627,7 @@ static DROPS::RegisterVectorTetraFunction regvecnus("Nusselt", Nusselt);
     }
     double Init( const DROPS::Point3DCL& p, double )
     {
-        DROPS::Point3DCL ref= TransBack(p, 0.);        
+        DROPS::Point3DCL ref= TransBack(p, 0.);
         return 100. * (ref[0] - ref[0] * ref [0] ) * (0.2 * ref[1] - ref[1]* ref[1]) * (0.2 * ref[2] - ref[2] * ref[2]);
     }
     /// \brief Solution

@@ -255,13 +255,14 @@ void Strategy(PoissonCL& Poisson)
     std::cout << line << "Connecting triangulation and matrices/vectors ...\n";
     timer.Reset();
 
-    if(P.get<int>("Poisson.P1"))
+
+    if(P2.get<int>("Poisson.P1"))
         Poisson.idx.SetFE( P1_FE);
     else
         Poisson.idx.SetFE( P2_FE);
     // set quadratic finite elements
     //see class for explanation: template didnt work
-    if ( PoissonSolverFactoryHelperCL().MGUsed(P))
+    if ( PoissonSolverFactoryHelperCL().MGUsed(P2))
         Poisson.SetNumLvl ( mg.GetNumLevel());
     Poisson.CreateNumbering( mg.GetLastLevel(), &Poisson.idx);  // number vertices and edges
     Poisson.b.SetIdx( &Poisson.idx);                            // tell b about numbering
@@ -295,7 +296,7 @@ void Strategy(PoissonCL& Poisson)
     std::cout << line << "Choose the poisson solver...\n";
     timer.Reset();
     // type of preconditioner and solver
-    PoissonSolverFactoryCL<> factory( P.get_child("Poisson.Solver"), Poisson.idx);
+    PoissonSolverFactoryCL<> factory( P2.get_child("Poisson.Solver"), Poisson.idx);
     PoissonSolverBaseCL* solver = factory.CreatePoissonSolver();
 
     if ( factory.GetProlongation() != 0)
@@ -305,14 +306,14 @@ void Strategy(PoissonCL& Poisson)
     std::cout << " o time " << timer.GetTime() << " s" << std::endl;
 
     //If it is NOT a stationary problem, set up the system and the initial condition
-    if (P.get<int>("Time.NumSteps") != 0)
+    if (P2.get<int>("Time.NumSteps") != 0)
     {
         // discretize (setup linear equation system)
         std::cout << line << "Discretize (setup linear equation system) for instationary problem...\n";
         timer.Reset();
         if (Poisson.usesALE())
         {
-            md.SetMeshTransformation(PoissonCoeffCL::ALEDeform, -1, P.get<int>("ALE.OnlyBndCurved"), P.get<int>("ALE.P1")==0);
+            md.SetMeshTransformation(PoissonCoeffCL::ALEDeform, -1, P2.get<int>("ALE.OnlyBndCurved"), P2.get<int>("ALE.P1")==0);
             //ALE.InitGrid();
         }
         Poisson.SetupInstatSystem( Poisson.A, Poisson.M, Poisson.x.t);
@@ -343,33 +344,33 @@ void Strategy(PoissonCL& Poisson)
 #endif
     //VTK format
     VTKOutCL * vtkwriter = NULL;
-    if (P.get<int>("VTK.Freq",0)){
+    if (P2.get<int>("VTK.Freq",0)){
         vtkwriter = new VTKOutCL(mg, "DROPS data",
-                                 P.get<int>("Time.NumSteps")+1,
-                                 P.get<std::string>("VTK.VTKDir"), P.get<std::string>("VTK.VTKName"),
-                                 P.get<std::string>("VTK.TimeFileName"),
-                                 P.get<int>("VTK.Binary"),
-                                 P.get<int>("VTK.UseOnlyP1"),
+                                 P2.get<int>("Time.NumSteps")+1,
+                                 P2.get<std::string>("VTK.VTKDir"), P2.get<std::string>("VTK.VTKName"),
+                                 P2.get<std::string>("VTK.TimeFileName"),
+                                 P2.get<int>("VTK.Binary"),
+                                 P2.get<int>("VTK.UseOnlyP1"),
                                  -1,  /* <- level */
-                                 P.get<int>("VTK.ReUseTimeFile"),
-                                 P.get<int>("VTK.UseDeformation"));
+                                 P2.get<int>("VTK.ReUseTimeFile"),
+                                 P2.get<int>("VTK.UseDeformation"));
         vtkwriter->Register( make_VTKScalar( Poisson.GetSolution(), "ConcenT"));
         vtkwriter->Write( Poisson.x.t);
     }
     //Do we have an instationary problem?
-    if(P.get<int>("Time.NumSteps")!=0)
+    if(P2.get<int>("Time.NumSteps")!=0)
     {
         //Creat instationary ThetaschemeCL to handle time integration for instationary problem and set time steps
         InstatPoissonThetaSchemeCL<PoissonCL, PoissonSolverBaseCL>
-        ThetaScheme( Poisson, *solver, P);
-        ThetaScheme.SetTimeStep(P.get<double>("Time.FinalTime")/P.get<int>("Time.NumSteps") );
+        ThetaScheme( Poisson, *solver, P2);
+        ThetaScheme.SetTimeStep(P2.get<double>("Time.FinalTime")/P2.get<int>("Time.NumSteps") );
         //Solve linear systerm in each time step
-        for ( int step = 1; step <= P.get<int>("Time.NumSteps") ; ++step) {
+        for ( int step = 1; step <= P2.get<int>("Time.NumSteps") ; ++step) {
             timer.Reset();
             std::cout << line << "Step: " << step << std::endl;
             if (Poisson.usesALE())
             {
-                md.SetMeshTransformation(PoissonCoeffCL::ALEDeform, Poisson.x.t, P.get<int>("ALE.OnlyBndCurved"), P.get<int>("ALE.P1")==0 );
+                md.SetMeshTransformation(PoissonCoeffCL::ALEDeform, Poisson.x.t, P2.get<int>("ALE.OnlyBndCurved"), P2.get<int>("ALE.P1")==0 );
                 //ALE.MovGrid(Poisson.x.t);
             }
             else
@@ -382,7 +383,7 @@ void Strategy(PoissonCL& Poisson)
                       << "   - iterations    " << solver->GetIter()  << '\n'
                       << "   - residuum      " << solver->GetResid() << '\n';
 
-            if (P.get("Poisson.SolutionIsKnown", 0)) {
+            if (P2.get("Poisson.SolutionIsKnown", 0)) {
                 std::cout << " o Check result against known solution ...\n";
                 timer.Reset();
                 Poisson.CheckSolution( Poisson.x, Poisson.Coeff_.Solution, Poisson.x.t);
@@ -391,7 +392,7 @@ void Strategy(PoissonCL& Poisson)
             }
 
 #ifndef _PAR
-            if (ensight && step%P.get<int>("Ensight.Freq", 0)==0){
+            if (ensight && step%P2.get<int>("Ensight.Freq", 0)==0){
                 std::cout << " o Ensight output ...\n";
                 timer.Reset();
                 ensight->Write( Poisson.x.t);
@@ -399,7 +400,7 @@ void Strategy(PoissonCL& Poisson)
                 std::cout << " o -time " << timer.GetTime() << " s" << std::endl;
             }
 #endif
-            if (vtkwriter && step%P.get<int>("VTK.Freq", 0)==0){
+            if (vtkwriter && step%P2.get<int>("VTK.Freq", 0)==0){
                 std::cout << " o VTK output ...\n";
                 timer.Reset();
                 vtkwriter->Write( Poisson.x.t);

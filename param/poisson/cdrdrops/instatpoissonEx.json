@@ -58,7 +58,7 @@
         "N20": 1,
         "N30": 1,
         "AdaptRef":{
-            "FinestLevel": 0
+            "FinestLevel0": 0
             }
     }, 
     "Restart": {

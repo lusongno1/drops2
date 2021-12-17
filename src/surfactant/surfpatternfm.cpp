@@ -2589,29 +2589,31 @@ void  PatternFormulationCL::DoStepRD ()
 //         }
         //if (C.rpm_Freq && step%C.rpm_Freq==0) { // reparam levelset function
         // lset.ReparamFastMarching( C.rpm_Method);
-        const bool doGridMod= P.get<int>("Mesh.AdaptRef.Freq") && step%P.get<int>("Mesh.AdaptRef.Freq") == 0;
-        const bool gridChanged= doGridMod ? adap.UpdateTriang() : false;//gird changed? or surface moved?
-        if (gridChanged)
-        {
-            std::cout << "Triangulation changed.\n";
-            vidx.DeleteNumbering( mg);
-            vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
-            v.SetIdx( &vidx);
-            InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
-            //if(abs(cur_time)<1e-9)
-            {
-                LSInit( mg, lset.Phi, the_lset_fun, cur_time);
-            }
-//            the_sol_vd.SetIdx( &lset.idx);
-//           LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
-            // timedisc.Update(); // Called unconditionally in DoStep.
 
-            //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), dt);
 
-            std::cout << "rel. Volume: " << lset.GetVolume()/Vol << std::endl;
-            lset.AdjustVolume();
-            lset.GetVolumeAdjuster()->DebugOutput( std::cout);
-        }
+//        const bool doGridMod= P.get<int>("Mesh.AdaptRef.Freq") && step%P.get<int>("Mesh.AdaptRef.Freq") == 0;
+//        const bool gridChanged= doGridMod ? adap.UpdateTriang() : false;//gird changed? or surface moved?
+//        if (gridChanged)
+//        {
+//            std::cout << "Triangulation changed.\n";
+//            vidx.DeleteNumbering( mg);
+//            vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
+//            v.SetIdx( &vidx);
+//            InitVel( mg, &v, Bnd_v, the_wind_fun, cur_time);
+//            //if(abs(cur_time)<1e-9)
+//            {
+//                LSInit( mg, lset.Phi, the_lset_fun, cur_time);
+//            }
+////            the_sol_vd.SetIdx( &lset.idx);
+////           LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
+//            // timedisc.Update(); // Called unconditionally in DoStep.
+//
+//            //lset2.SetupSystem( make_P2Eval( mg, Bnd_v, v), dt);
+//
+//            std::cout << "rel. Volume: " << lset.GetVolume()/Vol << std::endl;
+//            lset.AdjustVolume();
+//            lset.GetVolumeAdjuster()->DebugOutput( std::cout);
+//        }
     }
 
     std::cout << std::endl;
@@ -2668,26 +2670,26 @@ void PatternFormulationCL::DoStepHeat()
         probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, P2.get<int>("ALE.wavy"));
     }
     // Refine the grid
-    std::cout << "Refine the grid " << P2.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
+    //std::cout << "Refine the grid " << P2.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
     // Create new tetrahedra
-    for ( int ref=1; ref <= P2.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
-    {
-        std::cout << " refine (" << ref << ")\n";
-        DROPS::MarkAll( mg);
-        mg.Refine();
-    }
-    mg.SizeInfo( std::cout);
+//    for ( int ref=1; ref <= P2.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
+//    {
+//        std::cout << " refine (" << ref << ")\n";
+//        DROPS::MarkAll( mg);
+//        mg.Refine();
+//    }
+//    mg.SizeInfo( std::cout);
     // Solve the problem
     if(P2.get<int>("Poisson.P1"))
         DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
     else
         DROPS::StrategyHeat<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
 
-     //DROPS::WriteFEToFile( lset.Phi, mg, "10.txt", /*binary=*/ false);
-     //DROPS::WriteFEToFile( probP2->x, mg, "1.txt", /*binary=*/ false);
-     lset.Phi.Data = probP2->x.Data;
-     //DROPS::WriteFEToFile( lset.Phi, mg, "11.txt", /*binary=*/ false);
-     //std::swap(lset.Phi, probP2->x);
+    //DROPS::WriteFEToFile( lset.Phi, mg, "10.txt", /*binary=*/ false);
+    //DROPS::WriteFEToFile( probP2->x, mg, "1.txt", /*binary=*/ false);
+    lset.Phi.Data = probP2->x.Data;
+    //DROPS::WriteFEToFile( lset.Phi, mg, "11.txt", /*binary=*/ false);
+    //std::swap(lset.Phi, probP2->x);
 
     //lset.Phi = probP2->x;//update lset
     //std::swap(lset.Phi, probP2->x);
@@ -2731,11 +2733,11 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
     {
         patternFMSolver.cur_time += patternFMSolver.dT;//step forward
         std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
-        //patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
-        //vtkwriter->Write( patternFMSolver.cur_time);
-        //patternFMSolver.GetGradientOfLevelSet();
-        //patternFMSolver.DoStepRD();
-        //vtkwriter->Write( patternFMSolver.cur_time);
+        patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
+        vtkwriter->Write( patternFMSolver.cur_time);
+        patternFMSolver.GetGradientOfLevelSet();
+        patternFMSolver.DoStepRD();
+        vtkwriter->Write( patternFMSolver.cur_time);
         patternFMSolver.DoStepHeat();//Solve Heat Equation w.r.t level set
         vtkwriter->Write( patternFMSolver.cur_time);
         //DROPS::WriteFEToFile( patternFMSolver.lset.Phi, mg, "12.txt", /*binary=*/ false);
@@ -2890,12 +2892,33 @@ int main (int argc, char* argv[])
 
         DROPS::AdapTriangCL adap( mg, &marker);
 
+//        {
+//            for ( int ref=1; ref <= 4; ++ref)
+//            {
+//                std::cout << " refine (" << ref << ")\n";
+//                DROPS::MarkAll( mg);
+//                mg.Refine();
+//            }
+//
+//        }
+
+        for ( int ref=1; ref <= P.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
+        {
+            std::cout << " refine (" << ref << ")\n";
+            DROPS::MarkAll( mg);
+            mg.Refine();
+        }
+        mg.SizeInfo( std::cout);
+
+
+
         // DROPS::LevelsetP2CL lset( mg, lsbnd, sf);
         DROPS::LevelsetP2CL& lset( *LevelsetP2CL::Create( mg, lsbnd, sf, P.get_child("Levelset")) );
 
         if (P.get<int>("VTK.Freq",0))
             vtkwriter= std::unique_ptr<VTKOutCL>( new VTKOutCL(
-                    adap.GetMG(),
+                    //adap.GetMG(),
+                    mg,
                     "DROPS data",
                     P.get<int>("Time.NumSteps")/P.get<int>("VTK.Freq") + 1,
                     P.get<std::string>("VTK.VTKDir"),

@@ -14,19 +14,19 @@
         "E1":          [ 6,  0,  0],
         "E2":          [ 0,  6,  0],
         "E3":          [ 0,  0,  6],
-        "N1":          16,
-        "N2":          16,
-        "N3":          16,
+        "N1":          1,
+        "N2":          1,
+        "N3":          1,
         "RestartFile": "",
 
         "AdaptRef": {
-            "Freq":          -1,
+            "Freq0":          1,
             "Width":         10,
             "CoarsestLevel": 0,
-            "FinestLevel":   0,
-            "SD":            0.1,
-            "CurvDiff":      -1,
-            "Discontinuous": 0
+            "FinestLevel":   4,
+            "SD0":            0.1,
+            "CurvDiff0":      -1,
+            "Discontinuous0": 0
         }
     },
 
@@ -34,7 +34,7 @@
     {
         "Read" : 0,
         "Write": "yes",
-        "NumSteps":	1,
+        "NumSteps":	3,
         "FinalTime": 0.1
     },
 
@@ -102,7 +102,7 @@
 
     "VTK": {
         "Freq":           1,
-        "VTKDir":         "../../output/",
+        "VTKDir":         "PMVTKDir/",
         "VTKName":        "surfactant",
         "TimeFileName":   "surfactant",
         "Binary":         1,
@@ -118,7 +118,7 @@
         "gamma":        30,
         "a":            0.1,
         "b":            0.9,
-        "EndTime":      0.05,
+        "EndTime":      0.03,
         "delta":        0.1,
         "epsilon":      0.01,
         "TimeStep":     0.01
