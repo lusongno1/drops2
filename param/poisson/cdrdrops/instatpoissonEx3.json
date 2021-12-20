@@ -36,10 +36,10 @@
         },
         "Solution": "Example2_tetraSolution", 
         "SolutionIsKnown": 1, 
-        "P1": 0
+        "P1": 1
     }, 
     "DomainCond": {
-        "RefineSteps": 3
+        "RefineSteps": 4
     }, 
     "Mesh": {
           "Type": "BrickBuilder", 
@@ -47,11 +47,11 @@
         "E1": [6,0,0],
         "E2": [0,6,0],
         "E3": [0,0,6],
-        "N1": 2,
-        "N2": 2,
-        "N3": 2,
+        "N1": 16,
+        "N2": 16,
+        "N3": 16,
         "AdaptRef":{
-            "FinestLevel": 3
+            "FinestLevel": 0
             }
     }, 
     "Restart": {
@@ -61,7 +61,7 @@
     "Time": {
         "NumSteps": 2, 
         "Scheme": 1, 
-        "FinalTime": 0.02, 
+        "FinalTime": 0.2, 
         "Theta": 1
     }, 
     "Error": {
