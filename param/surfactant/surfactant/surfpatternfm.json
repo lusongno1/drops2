@@ -14,16 +14,16 @@
         "E1":          [ 6,  0,  0],
         "E2":          [ 0,  6,  0],
         "E3":          [ 0,  0,  6],
-        "N1":          1,
-        "N2":          1,
-        "N3":          1,
+        "N1":          16,
+        "N2":          16,
+        "N3":          16,
         "RestartFile": "",
 
         "AdaptRef": {
             "Freq0":          1,
             "Width":         10,
             "CoarsestLevel": 0,
-            "FinestLevel":   4,
+            "FinestLevel":   0,
             "SD0":            0.1,
             "CurvDiff0":      -1,
             "Discontinuous0": 0
@@ -102,7 +102,7 @@
 
     "VTK": {
         "Freq":           1,
-        "VTKDir":         "PMVTKDir/",
+        "VTKDir":         "PFVTKDir/",
         "VTKName":        "surfactant",
         "TimeFileName":   "surfactant",
         "Binary":         1,

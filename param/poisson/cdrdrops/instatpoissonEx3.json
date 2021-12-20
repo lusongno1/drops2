@@ -39,7 +39,7 @@
         "P1": 1
     }, 
     "DomainCond": {
-        "RefineSteps": 4
+        "RefineSteps": 0
     }, 
     "Mesh": {
           "Type": "BrickBuilder", 
@@ -78,5 +78,16 @@
         "Binary": 0, 
         "Freq": 1, 
         "VTKName": "instatpoisson_ex_"
+    },    
+    "Levelset": {
+        "Solver": {
+            "Tol":           1e-14,
+            "Iter":          500
+        },
+        "SD":            0.1,
+        "CurvDiff":      -1,
+        "VolCorrection": "",
+        "Theta":         1,
+        "Discontinuous": 0
     }
 }

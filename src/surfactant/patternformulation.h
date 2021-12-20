@@ -146,7 +146,7 @@ public:
     //virtual void DoStepRD (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::LevelsetP2CL& lset)
     virtual void DoStepRD ();
     virtual void DoStepHeat();
-    void ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t);
+    void P2ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t);
     void GetGradientOfLevelSet();
 
 };

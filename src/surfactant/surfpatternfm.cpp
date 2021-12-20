@@ -2280,12 +2280,17 @@ void StationaryStrategyDeformationP2 (DROPS::MultiGridCL& mg, DROPS::AdapTriangC
     }
 }
 
-void PatternFormulationCL::ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t)
+void PatternFormulationCL::P2ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t)
 {
     const Uint lvl= ic.GetLevel(),
                idx= ic.RowIdx->GetIdx();
 
     DROPS_FOR_TRIANG_CONST_VERTEX( mg, lvl, it)
+    {
+        if (it->Unknowns.Exist( idx))
+            ic.Data[it->Unknowns( idx)]= uw0;
+    }
+    DROPS_FOR_TRIANG_CONST_EDGE( mg, lvl, it)
     {
         if (it->Unknowns.Exist( idx))
             ic.Data[it->Unknowns( idx)]= uw0;
@@ -2309,8 +2314,8 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData());
     ic.SetIdx( &idx);
     icw.SetIdx( &idx);
-    ConstantInit (1.0,ic, mg, 0.);
-    ConstantInit (0.9,icw, mg, 0.);
+    P2ConstantInit (1.0,ic, mg, 0.);
+    P2ConstantInit (0.9,icw, mg, 0.);
     //initiate dist
     dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
          +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
