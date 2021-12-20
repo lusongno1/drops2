@@ -32,11 +32,11 @@
             "Source": "Example2_Source"
         }, 
         "BoundaryData":{
-              "Default":["DirBC", "Example2_Solution"]
+	      "Default":["DirBC", "Example2_Solution"]
         },
         "Solution": "Example2_tetraSolution", 
         "SolutionIsKnown": 1, 
-        "P1": 1
+        "P1": 0
     }, 
     "DomainCond": {
         "RefineSteps": 0
@@ -59,7 +59,7 @@
     }, 
    
     "Time": {
-        "NumSteps": 2, 
+        "NumSteps": 3, 
         "Scheme": 1, 
         "FinalTime": 0.2, 
         "Theta": 1

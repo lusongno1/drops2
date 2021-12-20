@@ -502,10 +502,6 @@ int main (int argc, char** argv)
             std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
         }
 
-
-
-
-
         // Setup the problem
         DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P);
 
