@@ -2101,7 +2101,7 @@ public:
 
 
 /// \brief P1-discretization and solution of the transport equation on the interface
-class SurfactantP1BaseCL: public SurfacePDEP1BaseCL
+class SurfactantP1BaseCL: public SurfacePDEP1BaseCL//SurfactantP2BaseCL
 {
 public:
     typedef P1EvalCL<double, const BndDataT, VecDescCL>       DiscSolCL;

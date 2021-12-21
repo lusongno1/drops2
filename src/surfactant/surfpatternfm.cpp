@@ -2739,7 +2739,7 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
         patternFMSolver.cur_time += patternFMSolver.dT;//step forward
         std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
         patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
-        vtkwriter->Write( patternFMSolver.cur_time);
+        //vtkwriter->Write( patternFMSolver.cur_time);
         patternFMSolver.GetGradientOfLevelSet();
         patternFMSolver.DoStepRD();
         vtkwriter->Write( patternFMSolver.cur_time);
