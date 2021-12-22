@@ -428,7 +428,7 @@ int main (int argc, char** argv)
         DROPS::ParTimerCL timer;
 #endif
 
-        DROPS::read_parameter_file_from_cmdline( P, argc, argv, "../../param/poisson/cdrdrops/instatpoissonEx3.json");
+        DROPS::read_parameter_file_from_cmdline( P, argc, argv, "../../param/poisson/cdrdrops/instatpoissonEx4.json");
         P.put_if_unset<std::string>("VTK.TimeFileName",P.get<std::string>("VTK.VTKName"));
         //output all the parameters
         std::cout << P << std::endl;

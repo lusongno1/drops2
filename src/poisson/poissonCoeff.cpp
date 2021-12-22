@@ -163,7 +163,8 @@ static DROPS::RegisterVectorTetraFunction regvecnus("Nusselt", Nusselt);
     }
     /// \brief Solution
     double Solution( const DROPS::Point3DCL& p, double t) {
-        return p.norm()-1;
+        return (p[0]-0.5)*(p[0]-0.5)+(p[1]-0.5)*(p[1]-0.5)+(p[2]-0.5)*(p[2]-0.5)-0.25;
+        //return p.norm()-1;
         //return (std::exp(t)*std::exp(p[0]+p[1]+p[2]));
     }
     double tetraSolution(const DROPS::TetraCL& tet, const DROPS::BaryCoordCL& b, double t) {

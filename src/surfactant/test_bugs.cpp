@@ -145,7 +145,7 @@ int main (int argc, char** argv)
         vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
         vtkwriter->Register( make_VTKScalar( Poisson.GetSolution(), "ConcenT"));
         vtkwriter->Write( Poisson.x.t);
-        std::cout<<"to here"<<std::endl;
+        //std::cout<<"to here"<<std::endl;
     }
 
     //vtkwriter->Write( Poisson.x.t);
