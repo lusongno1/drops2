@@ -2297,12 +2297,26 @@ void PatternFormulationCL::P2ConstantInit (double uw0, VecDescCL& ic, const Mult
     }
     ic.t= t;
 }
+
+void PatternFormulationCL::P1ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t)
+{
+    const Uint lvl= ic.GetLevel(),
+               idx= ic.RowIdx->GetIdx();
+
+    DROPS_FOR_TRIANG_CONST_VERTEX( mg, lvl, it)
+    {
+        if (it->Unknowns.Exist( idx))
+            ic.Data[it->Unknowns( idx)]= uw0;
+    }
+    ic.t= t;
+}
+
 //construction function to initialize quantum
 PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTriangCL& adap,
         DROPS::LevelsetP2CL& lset,instat_scalar_fun_ptr the_lset_fun,instat_vector_fun_ptr the_normal_fun,
         instat_scalar_fun_ptr the_rhs_fun,instat_scalar_fun_ptr the_sol_fun):
     mg(mg), adap(adap),lset( lset),the_lset_fun(the_lset_fun),the_normal_fun(the_normal_fun),
-    the_rhs_fun(the_rhs_fun),the_sol_fun(the_sol_fun),idx( P2IF_FE)
+    the_rhs_fun(the_rhs_fun),the_sol_fun(the_sol_fun),idx( P1IF_FE)
 {
     using namespace DROPS;
     //init level set globally
@@ -2314,8 +2328,8 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData());
     ic.SetIdx( &idx);
     icw.SetIdx( &idx);
-    P2ConstantInit (1.0,ic, mg, 0.);
-    P2ConstantInit (0.9,icw, mg, 0.);
+    P1ConstantInit (1.0,ic, mg, 0.);
+    P1ConstantInit (0.9,icw, mg, 0.);
     //initiate dist
     dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
          +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
@@ -2386,6 +2400,7 @@ void  PatternFormulationCL::DoStepRD ()
 //        timedisc.idx.swap(idx);
 //    }
 
+
     int numSteps =  P.get<int>("Time.NumSteps");
     {
         //backup ic iw idx
@@ -2412,7 +2427,8 @@ void  PatternFormulationCL::DoStepRD ()
 
     timedisc.InitTimeStep();
 
-    // Init Interface-Sol
+    // Init new narrow-band
+    //idx.CreateNumbering( oldidx_.TriangLevel(), MG_, &lset_vd_, &lsetbnd_,width_);
     timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);//set Unknowns near interface
     std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
     timedisc.ic.SetIdx( &timedisc.idx);
@@ -2424,11 +2440,11 @@ void  PatternFormulationCL::DoStepRD ()
 //            timedisc.SetInitialValueConstant( 1.0, 0.9, 0.);
 //        }
 
-    timedisc.iface.SetIdx( &timedisc.idx);
-    timedisc.iface_old.SetIdx( &timedisc.idx);
+    //timedisc.iface.SetIdx( &timedisc.idx);
+    //timedisc.iface_old.SetIdx( &timedisc.idx);
 
 
-    BndDataCL<> nobnd( 0);
+    //BndDataCL<> nobnd( 0);
 
     //VecDescCL the_sol_vd( &lset.idx);
     //LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);//an api for true solution if we have
@@ -2461,12 +2477,12 @@ void  PatternFormulationCL::DoStepRD ()
 //        //vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
 //        vtkwriter->Write( 0.);
 //    }
-    if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0)
-    {
-        DROPS::WriteFEToFile( timedisc.ic, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
-        DROPS::WriteFEToFile( timedisc.icw, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
+//   if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0)
+//   {
+//       DROPS::WriteFEToFile( timedisc.ic, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
+//       DROPS::WriteFEToFile( timedisc.icw, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
 
-    }
+//   }
 
     /*
         //const double dt= P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps");//1/32
@@ -2480,10 +2496,10 @@ void  PatternFormulationCL::DoStepRD ()
         std::cout << "H_1x-error: " << H_1x_err << std::endl;
         double L_2tH_1x_err_sq= 0.5*dt*std::pow( H_1x_err, 2);
     */
-    BndDataCL<> ifbnd( 0);
-    std::cout << "initial surfactant on \\Gamma: " << Integral_Gamma( mg, lset.Phi, lset.GetBndData(), make_P1Eval(  mg, ifbnd, timedisc.ic)) << '\n';
-    dynamic_cast<DistMarkingStrategyCL*>( adap.get_marking_strategy())->SetDistFct( lset);
-    double total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
+//    BndDataCL<> ifbnd( 0);
+//    std::cout << "initial surfactant on \\Gamma: " << Integral_Gamma( mg, lset.Phi, lset.GetBndData(), make_P1Eval(  mg, ifbnd, timedisc.ic)) << '\n';
+//    dynamic_cast<DistMarkingStrategyCL*>( adap.get_marking_strategy())->SetDistFct( lset);
+//    double total_mass=Integral_Gamma(mg, lset.Phi,lset.GetBndData(),make_P1Eval(mg, ifbnd, timedisc.ic));
     //In the first step, we use some smaller time step to solve the problem
     // double discrete_mass=0;
     /*  int N1=10;
@@ -2552,17 +2568,7 @@ void  PatternFormulationCL::DoStepRD ()
         L_2tH_1x_err_sq+= 0.5*dt*std::pow( H_1x_err, 2);
         std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
         */
-        {
-            //backup ic iw idx
-            if (idx.NumUnknowns() > 0)
-                idx.DeleteNumbering( mg);
-            idx.swap( timedisc.idx);
-            ic.Data.resize( timedisc.ic.Data.size());
-            ic.Data = timedisc.ic.Data;
-            icw.Data.resize( timedisc.icw.Data.size());
-            icw.Data = timedisc.icw.Data;
 
-        }
 
         //if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0)
         //{
@@ -2619,6 +2625,18 @@ void  PatternFormulationCL::DoStepRD ()
 //            lset.AdjustVolume();
 //            lset.GetVolumeAdjuster()->DebugOutput( std::cout);
 //        }
+    }
+
+    {
+        //backup ic iw idx
+        if (idx.NumUnknowns() > 0)
+            idx.DeleteNumbering( mg);
+        idx.swap( timedisc.idx);
+        ic.Data.resize( timedisc.ic.Data.size());
+        ic.Data = timedisc.ic.Data;
+        icw.Data.resize( timedisc.icw.Data.size());
+        icw.Data = timedisc.icw.Data;
+
     }
 
     std::cout << std::endl;
@@ -2736,13 +2754,13 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
     int stepNum = (int)(patternFMSolver.tEnd/patternFMSolver.dT);
     for (int stepCount= 1; stepCount<=stepNum; ++stepCount)
     {
-        patternFMSolver.cur_time += patternFMSolver.dT;//step forward
-        std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
-        patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
-        //vtkwriter->Write( patternFMSolver.cur_time);
-        patternFMSolver.GetGradientOfLevelSet();
-        patternFMSolver.DoStepRD();
-        vtkwriter->Write( patternFMSolver.cur_time);
+//        patternFMSolver.cur_time += patternFMSolver.dT;//step forward
+//        std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
+//        patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
+//        //vtkwriter->Write( patternFMSolver.cur_time);
+//        patternFMSolver.GetGradientOfLevelSet();
+//        patternFMSolver.DoStepRD();
+//        vtkwriter->Write( patternFMSolver.cur_time);
         patternFMSolver.DoStepHeat();//Solve Heat Equation w.r.t level set
         vtkwriter->Write( patternFMSolver.cur_time);
         //DROPS::WriteFEToFile( patternFMSolver.lset.Phi, mg, "12.txt", /*binary=*/ false);

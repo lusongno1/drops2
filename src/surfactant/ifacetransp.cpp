@@ -3460,7 +3460,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
         ic.t= new_t;
         //dt_= ic.t - oldt_;
         //idx.GetXidx().SetBound( width_); //transfer the width_ to CreatNumbering
-        idx.CreateNumbering( oldidx_.TriangLevel(), MG_, &lset_vd_, &lsetbnd_,width_); // InitTimeStep deletes oldidx_ and swaps idx and oldidx_.
+        //idx.CreateNumbering( oldidx_.TriangLevel(), MG_, &lset_vd_, &lsetbnd_,width_); // InitTimeStep deletes oldidx_ and swaps idx and oldidx_.
         //update idx
         //idx_c.CreateNumbering( oldidx_c_.TriangLevel(), MG_, &lset_vd_, &lsetbnd_);
         std::cout << "old NumUnknowns: " << oldidx_.NumUnknowns();
@@ -3518,7 +3518,8 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
 
     /**< perform set up all kinds of matrix and solve equations by GMRES */
     {
-        ic.SetIdx( &idx);
+        //ic.SetIdx( &idx);
+        //icw.SetIdx( &idx);
         std::cout<<"test---2  DoStep1()"<<std::endl;
         /**< Update()*/
         ScopeTimerCL timer( "SurfactantNarrowBandStblP1CL::Update");
