@@ -66,9 +66,9 @@
     }, 
    
     "Time": {
-        "NumSteps": 3, 
+        "NumSteps": 2, 
         "Scheme": 1, 
-        "FinalTime": 0.5, 
+        "FinalTime": 0.1, 
         "Theta": 1
     }, 
     "Error": {

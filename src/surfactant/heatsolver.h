@@ -692,9 +692,9 @@ void StrategyHeat2(PoissonCL& Poisson, VecDescCL &x0,double t)
             md.SetMeshTransformation(PoissonCoeffCL::ALEDeform, -1, P2.get<int>("ALE.OnlyBndCurved"), P2.get<int>("ALE.P1")==0);
             //ALE.InitGrid();
         }
-        //Poisson.SetupInstatSystem( Poisson.A, Poisson.M, Poisson.x.t);
-        Poisson.Init( Poisson.x, Poisson.Coeff_.InitialCondition, 0.0);//give the initial value of solution
-        //Poisson.Init( Poisson.x, x0, t);//give the initial value of solution
+        Poisson.SetupInstatSystem( Poisson.A, Poisson.M, Poisson.x.t);
+        //Poisson.Init( Poisson.x, Poisson.Coeff_.InitialCondition, 0.0);//give the initial value of solution
+        Poisson.Init( Poisson.x, x0, 0.0);//give the initial value of solution
 
         timer.Stop();
         std::cout << " o time " << timer.GetTime() << " s" << std::endl;
