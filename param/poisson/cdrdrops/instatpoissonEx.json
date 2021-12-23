@@ -25,7 +25,7 @@
             "Restart": 100
         }, 
         "Coeff": {
-            "Diffusion": 0.01, 
+            "Diffusion": 0.1, 
             "Reaction": "Example2_Reaction", 
             "Flowfield": "Example2_Flowfield", 
             "withConvection": 0, 
@@ -66,9 +66,9 @@
     }, 
    
     "Time": {
-        "NumSteps": 1, 
+        "NumSteps": 3, 
         "Scheme": 1, 
-        "FinalTime": 0.1, 
+        "FinalTime": 0.5, 
         "Theta": 1
     }, 
     "Error": {
@@ -80,7 +80,7 @@
         "Threshold": 0.6, 
         "DoErrorEstimate": 0
     }, 
-    "VTK0": {
+    "VTK": {
         "VTKDir": "vtk", 
         "Binary": 0, 
         "Freq": 1, 

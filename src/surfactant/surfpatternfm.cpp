@@ -2744,26 +2744,26 @@ void PatternFormulationCL::DoStepHeat2()
 #else
         DROPS::ParTimerCL timer;
 #endif
-        DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx3.json");
+        DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx.json");
         P2.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
         //output all the parameters
         std::cout << P2 << std::endl;
 
 
         //create geometry
-        DROPS::MultiGridCL* mg= 0;
+        DROPS::MultiGridCL* mgPtr= &mg;
         DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
 
         //build computational domain
-        std::unique_ptr<DROPS::MGBuilderCL> builder( DROPS::make_MGBuilder( P2));
-        mg = new DROPS::MultiGridCL( *builder);
+        //std::unique_ptr<DROPS::MGBuilderCL> builder( DROPS::make_MGBuilder( P));
+        //mg = new DROPS::MultiGridCL( *builder);
 
         // Create new tetrahedra
-        for ( int ref=1; ref <= P2.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
+        for ( int ref=1; ref <= P.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
         {
             std::cout << " refine (" << ref << ")\n";
-            DROPS::MarkAll( *mg);
-            mg->Refine();
+            DROPS::MarkAll( *mgPtr);
+            mgPtr->Refine();
             // do loadbalancing
 #ifdef _PAR
             lb.DoMigration();
@@ -2776,7 +2776,7 @@ void PatternFormulationCL::DoStepHeat2()
 
 
         //Setup boundary conditions
-        read_BndData( *bdata, *mg, P2.get_child( "Poisson.BoundaryData"));
+        read_BndData( *bdata, *mgPtr, P2.get_child( "Poisson.BoundaryData"));
 
 
 
@@ -2788,7 +2788,7 @@ void PatternFormulationCL::DoStepHeat2()
         timer.Reset();
 
 
-        for (int i=0; i<mg->GetBnd().GetNumBndSeg(); ++i)
+        for (int i=0; i<mgPtr->GetBnd().GetNumBndSeg(); ++i)
             std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
         //Initialize SUPGCL class
         DROPS::SUPGCL supg;
@@ -2805,15 +2805,16 @@ void PatternFormulationCL::DoStepHeat2()
         }
 
         // Setup the problem
-        DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2);
+        //DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2);
+        DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P,P2);
 
         DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
         DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
         if(P2.get<int>("Poisson.P1"))
-            probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( *mg, tmp, *bdata, supg, P2.get<int>("ALE.wavy"));
+            probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( *mgPtr, tmp, *bdata, supg, P2.get<int>("ALE.wavy"));
         else
         {
-            probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( *mg, tmp, *bdata, P2.get<int>("ALE.wavy"));
+            probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( *mgPtr, tmp, *bdata, P2.get<int>("ALE.wavy"));
         }
 
 #ifdef _PAR
@@ -2826,13 +2827,13 @@ void PatternFormulationCL::DoStepHeat2()
         std::cout << " o time " << timer.GetTime() << " s" << std::endl;
 
         // Refine the grid
-        std::cout << "Refine the grid " << P2.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
+        std::cout << "Refine the grid " << P.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
         timer.Reset();
 
 
         timer.Stop();
         std::cout << " o time " << timer.GetTime() << " s" << std::endl;
-        mg->SizeInfo( std::cout);
+        mgPtr->SizeInfo( std::cout);
 
         // Solve the problem
         if(P2.get<int>("Poisson.P1"))
@@ -2845,11 +2846,11 @@ void PatternFormulationCL::DoStepHeat2()
         if(P2.get<int>("ALE.wavy"))
             std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
         else
-            std::cout << DROPS::SanityMGOutCL(*mg) << std::endl;
+            std::cout << DROPS::SanityMGOutCL(*mgPtr) << std::endl;
         timer.Stop();
         std::cout << " o time " << timer.GetTime() << " s" << std::endl;
         // delete dynamically allocated objects
-        delete mg;
+        //delete mgPtr;
         delete bdata;
         delete probP1;
         delete probP2;

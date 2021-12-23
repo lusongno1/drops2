@@ -98,6 +98,29 @@ public:
 
     }
 
+    PoissonCoeffCL( ParamCL& P, ParamCL& P2)
+    {
+        C_=P2;
+        nx_= P.get<int>("Mesh.N1");
+        ny_= P.get<int>("Mesh.N2");
+        dx_= norm(P.get<DROPS::Point3DCL>("Mesh.E1"));
+        dy_= norm(P.get<DROPS::Point3DCL>("Mesh.E2"));
+        dt_= P2.get<int>("Time.NumSteps")!=0 ? P2.get<double>("Time.FinalTime")/P2.get<int>("Time.NumSteps") : 0;  //step size used in ALEVelocity
+        DROPS::InScaMap & scamap = DROPS::InScaMap::getInstance();
+        DROPS::ScaTetMap & scatet = DROPS::ScaTetMap::getInstance();
+        q = scatet[P2.get<std::string>("Poisson.Coeff.Reaction")];
+        alpha = P2.get<double>("Poisson.Coeff.Diffusion");
+        f = scatet[P2.get<std::string>("Poisson.Coeff.Source")];
+        Solution = scatet[P2.get<std::string>("Poisson.Solution")];
+        //Solution = scamp[P.get<std::string>("Poisson.Solution")];
+        InitialCondition = scamap[P2.get<std::string>("Poisson.InitialValue")];
+        DROPS::VecTetMap & vectet = DROPS::VecTetMap::getInstance();
+        Vel = vectet[P2.get<std::string>("Poisson.Coeff.Flowfield")];
+
+        interface = scamap[P2.get<std::string>("ALE.Interface")];
+
+    }
+
 
     PoissonCoeffCL( ParamCL& P1,ParamCL& P2,double epsilon,double delta,VecDescCL ic,double dT)
     {
