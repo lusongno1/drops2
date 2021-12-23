@@ -2839,7 +2839,8 @@ void PatternFormulationCL::DoStepHeat2()
         if(P2.get<int>("Poisson.P1"))
             DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
         else
-            DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2);
+            DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
+        //lset.Phi.Data = probP2->x.Data;
         //Check if Multigrid is sane
         std::cout << line << "Check if multigrid works properly...\n";
         timer.Reset();

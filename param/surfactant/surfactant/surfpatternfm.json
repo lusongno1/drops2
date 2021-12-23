@@ -34,7 +34,7 @@
     {
         "Read" : 0,
         "Write": "yes",
-        "NumSteps":	3,
+        "NumSteps":	1,
         "FinalTime": 0.1
     },
 

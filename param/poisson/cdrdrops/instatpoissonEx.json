@@ -25,7 +25,7 @@
             "Restart": 100
         }, 
         "Coeff": {
-            "Diffusion": 0.1, 
+            "Diffusion": 1, 
             "Reaction": "Example2_Reaction", 
             "Flowfield": "Example2_Flowfield", 
             "withConvection": 0, 

@@ -611,7 +611,7 @@ void StrategyHeat(PoissonCL& Poisson,VecDescCL &x0,double t)
 //void StrategyHeat(PoissonCL& Poisson,VecDescCL &x0,double t)
 /// \brief Strategy to solve the Poisson problem on a given triangulation
 template< class PoissonCL>
-void StrategyHeat2(PoissonCL& Poisson)
+void StrategyHeat2(PoissonCL& Poisson, VecDescCL &x0,double t)
 {
     // time measurements
 #ifndef _PAR
@@ -692,8 +692,10 @@ void StrategyHeat2(PoissonCL& Poisson)
             md.SetMeshTransformation(PoissonCoeffCL::ALEDeform, -1, P2.get<int>("ALE.OnlyBndCurved"), P2.get<int>("ALE.P1")==0);
             //ALE.InitGrid();
         }
-        Poisson.SetupInstatSystem( Poisson.A, Poisson.M, Poisson.x.t);
+        //Poisson.SetupInstatSystem( Poisson.A, Poisson.M, Poisson.x.t);
         Poisson.Init( Poisson.x, Poisson.Coeff_.InitialCondition, 0.0);//give the initial value of solution
+        //Poisson.Init( Poisson.x, x0, t);//give the initial value of solution
+
         timer.Stop();
         std::cout << " o time " << timer.GetTime() << " s" << std::endl;
     }
