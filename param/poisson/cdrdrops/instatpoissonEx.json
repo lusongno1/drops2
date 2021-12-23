@@ -80,7 +80,7 @@
         "Threshold": 0.6, 
         "DoErrorEstimate": 0
     }, 
-    "VTK": {
+    "VTK0": {
         "VTKDir": "vtk", 
         "Binary": 0, 
         "Freq": 1, 

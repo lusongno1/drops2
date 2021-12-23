@@ -10,10 +10,10 @@
 
     "Mesh": {
         "Type":        "BrickBuilder",
-        "Origin":      [ 0,  0,  0],
-        "E1":          [ 1,  0,  0],
-        "E2":          [ 0,  1,  0],
-        "E3":          [ 0,  0,  1],
+        "Origin":      [ -2,  -2,  -2],
+        "E1":          [ 4,  0,  0],
+        "E2":          [ 0,  4,  0],
+        "E3":          [ 0,  0,  4],
         "N1":          16,
         "N2":          16,
         "N3":          16,
@@ -69,7 +69,7 @@
             "Tol":  1e-9
         },
         "XFEMReduced":             -1,
-        "FEDegree":                1,
+        "FEDegree":                2,
         "NormalLaplaceCoefficient": 1.0,
         "SolutionOutput": {
             "Freq":   0,

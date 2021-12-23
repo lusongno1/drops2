@@ -36,7 +36,7 @@
         },
         "Solution": "Example2_tetraSolution", 
         "SolutionIsKnown": 1, 
-        "P1": 1
+        "P1": 0
     }, 
     "DomainCond": {
         "RefineSteps": 4
@@ -47,11 +47,11 @@
         "E1": [4,0,0],
         "E2": [0,4,0],
         "E3": [0,0,4],
-        "N1": 1,
-        "N2": 1,
-        "N3": 1,
+        "N1": 16,
+        "N2": 16,
+        "N3": 16,
         "AdaptRef":{
-            "FinestLevel": 4
+            "FinestLevel": 0
             }
     }, 
     "Restart": {

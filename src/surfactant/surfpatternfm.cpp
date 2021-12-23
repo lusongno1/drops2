@@ -2646,7 +2646,7 @@ void PatternFormulationCL::DoStepHeat()
 {
     //P1
     DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx.json");//read_parameter_file
-    P2.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
+    //P2.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
     std::cout << P2 << std::endl;
     DROPS::dynamicLoad(P2.get<std::string>("General.DynamicLibsPrefix"),
                        P2.get<std::vector<std::string> >("General.DynamicLibs") );
@@ -2683,6 +2683,7 @@ void PatternFormulationCL::DoStepHeat()
     // Setup the problem
     //NoBndDataCL<> nobnddata;
     DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P,P2,epsilon,delta,ic,dT);
+    //DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P,P2,1,delta,ic,dT);
     //DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2);
     DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
     DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
