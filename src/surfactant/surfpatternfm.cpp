@@ -2732,6 +2732,132 @@ void PatternFormulationCL::DoStepHeat()
 }
 
 
+
+void PatternFormulationCL::DoStepHeat2()
+{
+#ifdef _PAR
+    DROPS::ProcCL::Instance(&argc, &argv);
+#endif
+        // time measurements
+#ifndef _PAR
+        DROPS::TimerCL timer;
+#else
+        DROPS::ParTimerCL timer;
+#endif
+        DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx3.json");
+        P2.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
+        //output all the parameters
+        std::cout << P2 << std::endl;
+
+
+        //create geometry
+        DROPS::MultiGridCL* mg= 0;
+        DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
+
+        //build computational domain
+        std::unique_ptr<DROPS::MGBuilderCL> builder( DROPS::make_MGBuilder( P2));
+        mg = new DROPS::MultiGridCL( *builder);
+
+        // Create new tetrahedra
+        for ( int ref=1; ref <= P2.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
+        {
+            std::cout << " refine (" << ref << ")\n";
+            DROPS::MarkAll( *mg);
+            mg->Refine();
+            // do loadbalancing
+#ifdef _PAR
+            lb.DoMigration();
+#endif
+        }
+
+        DROPS::dynamicLoad(P2.get<std::string>("General.DynamicLibsPrefix"),
+                           P2.get<std::vector<std::string> >("General.DynamicLibs") );
+
+
+
+        //Setup boundary conditions
+        read_BndData( *bdata, *mg, P2.get_child( "Poisson.BoundaryData"));
+
+
+
+        if (P2.get<int>("General.ProgressBar"))
+            DROPS::ProgressBarTetraAccumulatorCL::Activate();
+        // set up data structure to represent a poisson problem
+        // ---------------------------------------------------------------------
+        std::cout << line << "Set up data structure to represent a Poisson problem ...\n";
+        timer.Reset();
+
+
+        for (int i=0; i<mg->GetBnd().GetNumBndSeg(); ++i)
+            std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
+        //Initialize SUPGCL class
+        DROPS::SUPGCL supg;
+        //SUPG stabilization, ALE method  and error estimation are not yet implemented for P2 case!
+        if(!P2.get<int>("Poisson.P1"))
+        {
+            P2.put<int>("Stabilization.SUPG",0);
+            P2.put<int>("Error.DoErrorEstimate",0);
+        }
+        if(P2.get<int>("Stabilization.SUPG"))
+        {
+            supg.init(P2);
+            std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
+        }
+
+        // Setup the problem
+        DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2);
+
+        DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
+        DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
+        if(P2.get<int>("Poisson.P1"))
+            probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( *mg, tmp, *bdata, supg, P2.get<int>("ALE.wavy"));
+        else
+        {
+            probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( *mg, tmp, *bdata, P2.get<int>("ALE.wavy"));
+        }
+
+#ifdef _PAR
+        // Set parallel data structures
+        DROPS::LoadBalCL lb( *mg);                    // loadbalancing
+        lb.DoMigration();    // distribute initial grid
+#endif
+
+        timer.Stop();
+        std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+
+        // Refine the grid
+        std::cout << "Refine the grid " << P2.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
+        timer.Reset();
+
+
+        timer.Stop();
+        std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+        mg->SizeInfo( std::cout);
+
+        // Solve the problem
+        if(P2.get<int>("Poisson.P1"))
+            DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
+        else
+            DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2);
+        //Check if Multigrid is sane
+        std::cout << line << "Check if multigrid works properly...\n";
+        timer.Reset();
+        if(P2.get<int>("ALE.wavy"))
+            std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
+        else
+            std::cout << DROPS::SanityMGOutCL(*mg) << std::endl;
+        timer.Stop();
+        std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+        // delete dynamically allocated objects
+        delete mg;
+        delete bdata;
+        delete probP1;
+        delete probP2;
+        std::cout << "cdrdrops finished regularly" << std::endl;
+
+}
+
+
 void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& adap, DROPS::LevelsetP2CL& lset)
 {
     using namespace DROPS;
@@ -2762,7 +2888,7 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
 //        patternFMSolver.GetGradientOfLevelSet();
 //        patternFMSolver.DoStepRD();
 //        vtkwriter->Write( patternFMSolver.cur_time);
-        patternFMSolver.DoStepHeat();//Solve Heat Equation w.r.t level set
+        patternFMSolver.DoStepHeat2();//Solve Heat Equation w.r.t level set
         vtkwriter->Write( patternFMSolver.cur_time);
         //DROPS::WriteFEToFile( patternFMSolver.lset.Phi, mg, "12.txt", /*binary=*/ false);
     }
