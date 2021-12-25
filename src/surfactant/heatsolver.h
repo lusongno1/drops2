@@ -647,6 +647,8 @@ void StrategyHeat2(PoissonCL& Poisson, VecDescCL &x0,double t)
     Poisson.M.SetIdx( &Poisson.idx, &Poisson.idx);              // tell M about numbering
     Poisson.U.SetIdx( &Poisson.idx, &Poisson.idx);              // tell U about numbering
 
+    std::cout<< "debug:" << Poisson.x.RowIdx->NumUnknowns() <<std::endl;
+
     timer.Stop();
     std::cout << " o time " << timer.GetTime() << " s" << std::endl;
 

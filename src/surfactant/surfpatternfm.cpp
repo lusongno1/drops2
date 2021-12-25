@@ -123,6 +123,7 @@ bnd_val_fun bf_wind[6];
 
 instat_scalar_fun_ptr sigma( 0);
 SurfaceTensionCL sf( sigma, 0);
+//DROPS::LsetBndDataCL lsbnd( 6);
 DROPS::LsetBndDataCL lsbnd( 6);
 
 
@@ -2326,6 +2327,8 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     //init ic icw globally
     //IdxDescCL idx( P2IF_FE);
     idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData());
+    std::cout<<"debug:"<<lset.Phi.RowIdx->NumUnknowns()<<std::endl;
+
     ic.SetIdx( &idx);
     icw.SetIdx( &idx);
     P1ConstantInit (1.0,ic, mg, 0.);
@@ -2744,10 +2747,10 @@ void PatternFormulationCL::DoStepHeat2()
 #else
         DROPS::ParTimerCL timer;
 #endif
-        DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx.json");
-        P2.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
-        //output all the parameters
-        std::cout << P2 << std::endl;
+//        DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx.json");
+//        P2.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
+//        //output all the parameters
+//        std::cout << P2 << std::endl;
 
 
         //create geometry
@@ -3015,6 +3018,10 @@ int main (int argc, char* argv[])
 
         DROPS::read_parameter_file_from_cmdline( P, argc, argv, "../../param/surfactant/surfactant/surfpatternfm.json");
         std::cout << P << std::endl;
+        DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx.json");
+        P2.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
+        //output all the parameters
+        std::cout << P2 << std::endl;
 
         DROPS::dynamicLoad(P.get<std::string>("General.DynamicLibsPrefix"), P.get<std::vector<std::string> >("General.DynamicLibs") );
 
@@ -3065,7 +3072,10 @@ int main (int argc, char* argv[])
 
 
         // DROPS::LevelsetP2CL lset( mg, lsbnd, sf);
+        //DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
         DROPS::LevelsetP2CL& lset( *LevelsetP2CL::Create( mg, lsbnd, sf, P.get_child("Levelset")) );
+        //DROPS::LevelsetP2CL& lset( *LevelsetP2CL::Create( mg, bdata, sf, P.get_child("Levelset")) );
+        //read_BndData( *bdata, mg, P2.get_child( "Poisson.BoundaryData"));
 
         if (P.get<int>("VTK.Freq",0))
             vtkwriter= std::unique_ptr<VTKOutCL>( new VTKOutCL(

@@ -1114,9 +1114,46 @@ void PoissonP2CL<Coeff>::Init( VecDescCL& vec, instat_scalar_fun_ptr func, doubl
 template <class Coeff>
 void PoissonP2CL<Coeff>::Init( VecDescCL& vec, VecDescCL& x0, double t0) const
 {
-    vec.RowIdx = x0.RowIdx;
-    vec.Data.resize(x0.Data.size());
-    vec.Data = x0.Data;
+    vec.Clear(t0);
+    const Uint lvl = vec.GetLevel(),
+               idx = vec.RowIdx->GetIdx();
+
+
+    for (MultiGridCL::const_TriangVertexIteratorCL sit= const_cast<const MultiGridCL&>(MG_).GetTriangVertexBegin(lvl),
+        send= const_cast<const MultiGridCL&>(MG_).GetTriangVertexEnd(lvl); sit != send; ++sit)  //Vertices
+    {
+        if (sit->Unknowns.Exist(idx))
+        {
+            if(ALE_)
+            {
+                //vec.Data[sit->Unknowns(idx)]= func( md_.GetTransformedVertexCoord(*sit), t0);
+            }
+            else
+                //vec.Data[sit->Unknowns(idx)]= func( sit->GetCoord(), t0);
+                vec.Data[sit->Unknowns(idx)]= x0.Data[sit->Unknowns(idx)];
+
+        }
+    }
+
+    for (MultiGridCL::const_TriangEdgeIteratorCL sit= const_cast<const MultiGridCL&>(MG_).GetTriangEdgeBegin(lvl),
+        send= const_cast<const MultiGridCL&>(MG_).GetTriangEdgeEnd(lvl); sit!=send; ++sit)      //Edges
+    {
+
+        if (sit->Unknowns.Exist(idx))
+        {
+           if(ALE_)
+            {
+                //vec.Data[sit->Unknowns(idx)]= func( md_.GetTransformedEdgeBaryCenter(*sit), t0);
+            }
+            else
+                //vec.Data[sit->Unknowns(idx)]= func( GetBaryCenter( *sit), t0);
+                vec.Data[sit->Unknowns(idx)]= x0.Data[sit->Unknowns(idx)];
+        }
+    }
+
+    //vec.RowIdx = x0.RowIdx;
+    //vec.Data.resize(x0.Data.size());
+    //vec.Data = x0.Data;
 
     //vec.Reset();
     //vec.Data.resize(x0.Data.size());
