@@ -693,8 +693,8 @@ void StrategyHeat2(PoissonCL& Poisson, VecDescCL &x0,double t)
             //ALE.InitGrid();
         }
         Poisson.SetupInstatSystem( Poisson.A, Poisson.M, Poisson.x.t);
-        //Poisson.Init( Poisson.x, Poisson.Coeff_.InitialCondition, 0.0);//give the initial value of solution
-        Poisson.Init( Poisson.x, x0, 0.0);//give the initial value of solution
+        Poisson.Init( Poisson.x, Poisson.Coeff_.InitialCondition, 0.0);//give the initial value of solution
+        //Poisson.Init( Poisson.x, x0, 0.0);//give the initial value of solution
 
         timer.Stop();
         std::cout << " o time " << timer.GetTime() << " s" << std::endl;
