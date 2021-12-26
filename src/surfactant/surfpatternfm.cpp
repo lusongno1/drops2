@@ -2648,9 +2648,9 @@ void  PatternFormulationCL::DoStepRD ()
 void PatternFormulationCL::DoStepHeat()
 {
     //P1
-    DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx.json");//read_parameter_file
-    //P2.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
-    std::cout << P2 << std::endl;
+    //DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx.json");//read_parameter_file
+    P2.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
+    //std::cout << P2 << std::endl;
     DROPS::dynamicLoad(P2.get<std::string>("General.DynamicLibsPrefix"),
                        P2.get<std::vector<std::string> >("General.DynamicLibs") );
     if (P2.get<int>("General.ProgressBar"))
@@ -2710,7 +2710,7 @@ void PatternFormulationCL::DoStepHeat()
     if(P2.get<int>("Poisson.P1"))
         DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
     else
-        DROPS::StrategyHeat<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
+        DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
 
     //DROPS::WriteFEToFile( lset.Phi, mg, "10.txt", /*binary=*/ false);
     //DROPS::WriteFEToFile( probP2->x, mg, "1.txt", /*binary=*/ false);
@@ -2809,7 +2809,8 @@ void PatternFormulationCL::DoStepHeat2()
 
         // Setup the problem
         //DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2);
-        DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P,P2);
+       // DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P,P2);
+        DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL(P,P2,epsilon,delta,ic,dT);
 
         DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
         DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
@@ -2843,7 +2844,7 @@ void PatternFormulationCL::DoStepHeat2()
             DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
         else
             DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
-        //lset.Phi.Data = probP2->x.Data;
+        lset.Phi.Data = probP2->x.Data;
         //Check if Multigrid is sane
         std::cout << line << "Check if multigrid works properly...\n";
         timer.Reset();
@@ -2886,14 +2887,14 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
     int stepNum = (int)(patternFMSolver.tEnd/patternFMSolver.dT);
     for (int stepCount= 1; stepCount<=stepNum; ++stepCount)
     {
-//        patternFMSolver.cur_time += patternFMSolver.dT;//step forward
-//        std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
-//        patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
-//        //vtkwriter->Write( patternFMSolver.cur_time);
-//        patternFMSolver.GetGradientOfLevelSet();
-//        patternFMSolver.DoStepRD();
-//        vtkwriter->Write( patternFMSolver.cur_time);
-        patternFMSolver.DoStepHeat2();//Solve Heat Equation w.r.t level set
+        patternFMSolver.cur_time += patternFMSolver.dT;//step forward
+        std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
+        patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
+        //vtkwriter->Write( patternFMSolver.cur_time);
+        patternFMSolver.GetGradientOfLevelSet();
+        patternFMSolver.DoStepRD();
+        vtkwriter->Write( patternFMSolver.cur_time);
+        patternFMSolver.DoStepHeat();//Solve Heat Equation w.r.t level set
         vtkwriter->Write( patternFMSolver.cur_time);
         //DROPS::WriteFEToFile( patternFMSolver.lset.Phi, mg, "12.txt", /*binary=*/ false);
     }

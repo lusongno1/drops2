@@ -1114,6 +1114,9 @@ void PoissonP2CL<Coeff>::Init( VecDescCL& vec, instat_scalar_fun_ptr func, doubl
 template <class Coeff>
 void PoissonP2CL<Coeff>::Init( VecDescCL& vec, VecDescCL& x0, double t0) const
 {
+    vec.Data = x0.Data;
+
+    /*
     vec.Clear(t0);
     const Uint lvl = vec.GetLevel(),
                idx = vec.RowIdx->GetIdx();
@@ -1150,6 +1153,8 @@ void PoissonP2CL<Coeff>::Init( VecDescCL& vec, VecDescCL& x0, double t0) const
                 vec.Data[sit->Unknowns(idx)]= x0.Data[sit->Unknowns(idx)];
         }
     }
+
+    */
 
     //vec.RowIdx = x0.RowIdx;
     //vec.Data.resize(x0.Data.size());
