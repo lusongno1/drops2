@@ -122,8 +122,8 @@
         "epsilon":       0.01,
 	"epsilon0":      0.01,
         "EndTime":      5,
-	"EndTime0":     5.0,
-        "TimeStep":     0.5,
+	"EndTime0":     1,
+        "TimeStep":     1,
 	"TimeStep0":     0.001
     }
 }
