@@ -124,7 +124,7 @@ bnd_val_fun bf_wind[6];
 instat_scalar_fun_ptr sigma( 0);
 SurfaceTensionCL sf( sigma, 0);
 //DROPS::LsetBndDataCL lsbnd( 6);
-DROPS::LsetBndDataCL lsbnd( 6);
+DROPS::LsetBndDataCL lsbnd(0,0);//( 6);
 
 
 // Surface divergence of a vector field w

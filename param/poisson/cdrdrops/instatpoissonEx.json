@@ -32,7 +32,8 @@
             "Source": "Example2_Source"
         }, 
         "BoundaryData":{
-              "Default":["DirBC", "Example2_Solution"]
+	      "Default":["DirBC", "Example2_Solution"],
+              "Default":["Nat0BC","Zero"]
         },
         "Solution": "Example2_tetraSolution", 
         "SolutionIsKnown": 1, 
