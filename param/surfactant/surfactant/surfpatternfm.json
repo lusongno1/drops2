@@ -118,12 +118,14 @@
         "gamma":        30,
         "a":            0.1,
         "b":            0.9,
-        "delta":        0.1,
-        "epsilon":       0.01,
+	"delta":        0.1,
+        "delta0":        0.1,
+        "epsilon":      0.01,
 	"epsilon0":      0.01,
-        "EndTime":      5,
-	"EndTime0":     1,
-        "TimeStep":     1,
+	"epsilon0":     0.01,
+        "EndTime":      0.05,
+	"EndTime0":     5,
+        "TimeStep":     0.01,
 	"TimeStep0":     0.001
     }
 }

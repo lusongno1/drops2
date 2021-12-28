@@ -2251,7 +2251,7 @@ public:
                                   int iter= 1000, double tol= 1e-7, double omit_bound= -1.)
         :  SurfactantP1BaseCL( mg, theta, D, v,nd, Bnd_v, lset_vd, lsetbnd, iter, tol, omit_bound),
            //: SurfactantP1BaseCL( mg, theta, D, v, Bnd_v, lset_vd, lsetbnd, width, iter, tol, omit_bound),
-           full_idx( P2_FE), rhsext1(), normal_(normal), width_(width), rho_(rho)
+           full_idx( P2_FE), rhsext1(), rhsextw1(), normal_(normal), width_(width), rho_(rho)
     {}
 
 

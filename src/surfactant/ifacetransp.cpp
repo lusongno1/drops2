@@ -68,7 +68,8 @@ void ExtendP2 (const MultiGridCL& mg, const VecDescCL& x, VecDescCL& xext)
     const Uint xidx( x.RowIdx->GetIdx()),
           xextidx( xext.RowIdx->GetIdx()),
           lvl( x.RowIdx->TriangLevel());
-    xext.Data= 1000;
+    xext.Data= 100000;//wrong
+//    xext.Data = 0;
 
     DROPS_FOR_TRIANG_CONST_VERTEX( mg, lvl, it)
     {
@@ -3490,6 +3491,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
             temp_ic.SetIdx( &full_idx);
             temp_ic.Data=rhsext.Data;
             WriteToFile( temp_ic.Data, "Extended.txt", "mass");*/
+        /*
         if(std::fabs(new_t/dt_-1)<0.0000001)//(new_t/dt_==1)//used in InitStep 3.
         {
             rhsext1.Reset();
@@ -3500,6 +3502,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
             rhsextw1.Data=0.1*rhsextw.Data;
             //   std::cout<<std::sqrt(dt_)/dt_<<" TESTING "<<std::endl;
         }
+        */
         VecDescCL rhs1( &idx);
         VecDescCL rhsw1( &idx);
         //   Restrict( MG_, rhsext, rhs1);

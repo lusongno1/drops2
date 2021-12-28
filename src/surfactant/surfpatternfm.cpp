@@ -2327,7 +2327,7 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     //init ic icw globally
     //IdxDescCL idx( P2IF_FE);
     idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData());
-    std::cout<<"debug:"<<lset.Phi.RowIdx->NumUnknowns()<<std::endl;
+    //std::cout<<"debug:"<<lset.Phi.RowIdx->NumUnknowns()<<std::endl;
 
     ic.SetIdx( &idx);
     icw.SetIdx( &idx);
@@ -2374,7 +2374,7 @@ void  PatternFormulationCL::DoStepRD ()
     */
 
     const double Vol= lset.GetVolume();
-    lset.InitVolume( Vol);
+    //lset.InitVolume( Vol);
     std::cout << "droplet volume: " << Vol << std::endl;
 
     BndDataCL<Point3DCL> Bnd_v( 6, bc_wind, bf_wind);
@@ -2416,22 +2416,24 @@ void  PatternFormulationCL::DoStepRD ()
         timedisc.icw.Data.resize( icw.Data.size());
         timedisc.icw.Data = icw.Data;
         timedisc.SetPars(d1,d2,gamma,a,b,delta,epsilon);
-
     }
 
 
 
     timedisc.SetRhs( the_rhs_fun);//zero right hand side
 
+/*
     LevelsetRepairCL lsetrepair( lset);
     adap.push_back( &lsetrepair);
     InterfaceP1RepairCL ic_repair( mg, lset.Phi, lset.GetBndData(), timedisc.ic);
     adap.push_back( &ic_repair);
+*/
 
     timedisc.InitTimeStep();
 
     // Init new narrow-band
     //idx.CreateNumbering( oldidx_.TriangLevel(), MG_, &lset_vd_, &lsetbnd_,width_);
+    //dist = 0.25;
     timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);//set Unknowns near interface
     std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
     timedisc.ic.SetIdx( &timedisc.idx);
@@ -2628,6 +2630,12 @@ void  PatternFormulationCL::DoStepRD ()
 //            lset.AdjustVolume();
 //            lset.GetVolumeAdjuster()->DebugOutput( std::cout);
 //        }
+        if(step < numSteps)
+        {
+            timedisc.InitTimeStep();
+        }
+
+
     }
 
     {
@@ -2710,7 +2718,7 @@ void PatternFormulationCL::DoStepHeat()
     if(P2.get<int>("Poisson.P1"))
         DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
     else
-        DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
+        DROPS::StrategyHeat<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
 
     //DROPS::WriteFEToFile( lset.Phi, mg, "10.txt", /*binary=*/ false);
     //DROPS::WriteFEToFile( probP2->x, mg, "1.txt", /*binary=*/ false);
@@ -2733,6 +2741,75 @@ void PatternFormulationCL::DoStepHeat()
     std::cout << "cdrdrops finished regularly" << std::endl;
 
 }
+
+void PatternFormulationCL::DoStepHeatTest()
+{
+
+
+
+
+	DROPS::dynamicLoad(P2.get<std::string>("General.DynamicLibsPrefix"),
+	                   P2.get<std::vector<std::string> >("General.DynamicLibs") );
+
+	if (P2.get<int>("General.ProgressBar"))
+		DROPS::ProgressBarTetraAccumulatorCL::Activate();
+
+	std::cout << line << "Set up data structure to represent a Poisson problem ...\n";
+	//DROPS::MultiGridCL* mgPtr= &mg;
+	DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
+
+
+	read_BndData( *bdata, mg, P2.get_child( "Poisson.BoundaryData"));
+	for (int i=0; i<mg.GetBnd().GetNumBndSeg(); ++i)
+		std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
+
+	DROPS::SUPGCL supg;
+	if(!P2.get<int>("Poisson.P1"))
+	{
+		P2.put<int>("Stabilization.SUPG",0);
+		P2.put<int>("Error.DoErrorEstimate",0);
+	}
+	if(P2.get<int>("Stabilization.SUPG"))
+	{
+		supg.init(P2);
+		std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
+	}
+
+	DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL(P,P2,epsilon,delta,ic,dT);
+
+	DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
+	DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
+	if(P2.get<int>("Poisson.P1"))
+		probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, supg, P2.get<int>("ALE.wavy"));
+	else
+	{
+		probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, P2.get<int>("ALE.wavy"));
+	}
+
+	if(P2.get<int>("Poisson.P1"))
+		DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
+	else
+		DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
+
+	lset.Phi.Data = probP2->x.Data;
+
+	std::cout << line << "Check if multigrid works properly...\n";
+	if(P2.get<int>("ALE.wavy"))
+		std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
+	else
+		std::cout << DROPS::SanityMGOutCL(mg) << std::endl;
+
+	delete bdata;
+	delete probP1;
+	delete probP2;
+	std::cout << "cdrdrops finished regularly" << std::endl;
+
+
+
+
+
+}
+
 
 
 
@@ -2843,7 +2920,7 @@ void PatternFormulationCL::DoStepHeat2()
         if(P2.get<int>("Poisson.P1"))
             DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
         else
-            DROPS::StrategyHeat<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
+            DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
         lset.Phi.Data = probP2->x.Data;
         //Check if Multigrid is sane
         std::cout << line << "Check if multigrid works properly...\n";
@@ -2890,11 +2967,11 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
         patternFMSolver.cur_time += patternFMSolver.dT;//step forward
         std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
         patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
-        //vtkwriter->Write( patternFMSolver.cur_time);
+        vtkwriter->Write( patternFMSolver.cur_time);
         patternFMSolver.GetGradientOfLevelSet();
         patternFMSolver.DoStepRD();
         vtkwriter->Write( patternFMSolver.cur_time);
-        patternFMSolver.DoStepHeat();//Solve Heat Equation w.r.t level set
+        patternFMSolver.DoStepHeat2();//Solve Heat Equation w.r.t level set
         vtkwriter->Write( patternFMSolver.cur_time);
         //DROPS::WriteFEToFile( patternFMSolver.lset.Phi, mg, "12.txt", /*binary=*/ false);
     }

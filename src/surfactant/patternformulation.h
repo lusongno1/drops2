@@ -147,6 +147,7 @@ public:
     virtual void DoStepRD ();
     virtual void DoStepHeat();
     virtual void DoStepHeat2();
+    virtual void DoStepHeatTest();
     void P2ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t);
     void P1ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t);
     void GetGradientOfLevelSet();
