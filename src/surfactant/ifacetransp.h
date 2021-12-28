@@ -1484,7 +1484,9 @@ private:
     double D_; // diffusion coefficient- stabilization parameter?
     double dt_;
     instat_vector_fun_ptr normal_;
+    const P2Eval3dCL nd_;
     double time_;
+    //LocalP2CL<Point3DCL> nd_loc;
 
     Point3DCL grad[4];
     double dummy;
@@ -1498,12 +1500,45 @@ public:
                                 col_fe_type= P1IF_FE;
     double coup[4][4];
 
+
+#if 0
     void setup (const TetraCL& tet, const NarrowBandCommonDataP1CL& cdata)
     {
 
         P1DiscCL::GetGradients( grad, dummy, tet);
 
         qnormal.assign(tet,normal_,time_,Quad5DataCL::Node);
+
+        for(int i=0; i<4; ++i)
+            U_Grad[i]=dot( qnormal, Quad5CL<Point3DCL>( grad[i]));
+
+        absdet=std::abs(dummy);
+
+        dummy=std::pow(absdet,1./3); //of order h--meshsize of the tetra hedra~~!!!!
+        //  std::cout<<"dummy  "<<dummy<<std::endl;
+        for (int i= 0; i < 4; ++i)
+        {
+            for(int j= 0; j <= i; ++j)
+            {
+                Quad5CL<double> res3( U_Grad[i] * U_Grad[j]);
+                coup[i][j]= coup[j][i]=D_*//(1.0+1.0/(dummy+dt_))*
+                                       res3.quad(absdet/6);//D_*(D_/dummy+dummy/dt_+0.2)*// D_*
+                //  	std::cout<<i<<" "<<j<<" : "<<coup[i][j]<<"  "<<coup[j][i]<<" ; ";
+            }
+            //   std::cout<<std::endl;
+        }
+        // std::cin>>dummy;
+    }
+#endif
+    void setup (const TetraCL& tet, const NarrowBandCommonDataP1CL& cdata)
+    {
+        //nd_loc.assign( t, nd_);
+
+        P1DiscCL::GetGradients( grad, dummy, tet);
+
+        //qnormal.assign(tet,normal_,time_,Quad5DataCL::Node);
+        qnormal.assign(tet,nd_);
+
 
         for(int i=0; i<4; ++i)
             U_Grad[i]=dot( qnormal, Quad5CL<Point3DCL>( grad[i]));
@@ -1550,8 +1585,12 @@ public:
         }
         // std::cin>>dummy;
     }
+
+
     LocalNormalLaplaceBulkP1CL (double D,double dt,instat_vector_fun_ptr normal, double t)
         :D_( D),dt_(dt),normal_(normal),time_(t) {}
+    LocalNormalLaplaceBulkP1CL (double D,double dt,const P2Eval3dCL& nd, instat_vector_fun_ptr normal, double t)
+        :D_( D),dt_(dt),nd_(nd),normal_(normal),time_(t) {}
 };
 
 
