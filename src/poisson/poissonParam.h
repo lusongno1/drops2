@@ -68,8 +68,8 @@ public:
     {
         //const DROPS::Point3DCL p= DROPS::GetWorldCoord( tet, b);
         NoBndDataCL<> nobnddata;
-        LocalP2CL<> icp2(tet, ic_, nobnddata);
-        return -delta_*icp2(b);
+        LocalP1CL<> icp1(tet, ic_, nobnddata);
+        return -delta_*icp1(b);
         //return 0;
         //val(const TetraCL& s, const BaryCoordCL&) const;
         //return (-2.0*std::exp(t)*std::exp(p[0]+p[1]+p[2]));
