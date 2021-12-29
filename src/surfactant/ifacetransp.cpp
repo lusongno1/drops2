@@ -3518,6 +3518,19 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
     rhsw1_= rhsw1.Data;
 
     //}
+    /*extend oldic_ and oldicw_ to P2 on global idx*/
+//    DROPS::VecDescCL ic0( &full_idx);
+//    DROPS::VecDescCL icw0( &full_idx);
+//    VecDescCL oldicCp( &oldidx_);
+//    oldicCp.Data= oldic_;
+//    VecDescCL oldicwCp( &oldidx_);
+//    oldicwCp.Data= oldicw_;
+//    DROPS::ExtendP2( MG_, oldicCp, ic0);//extend local narrow band idx to global idx
+//    DROPS::ExtendP2( MG_, oldicwCp, icw0);
+    DROPS::VecDescCL ic0( &oldidx_);
+    DROPS::VecDescCL icw0( &oldidx_);
+    ic0.Data= oldic_;
+    icw0.Data= oldicw_;
 
     /**< perform set up all kinds of matrix and solve equations by GMRES */
     //{
@@ -3577,17 +3590,17 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
     /**< push back term like quasi-mass with curvature (\delta u^n -\epsilon H)H as coefficient: M1*/
     //P2Eval3dCL normalP2Eval = make_P2Eval( MG_, Bnd_v_, *nd_);
     InterfaceMatrixAccuCL<LocalInterfaceMassCurvUP1CL<P2Eval3dCL>, InterfaceCommonDataP1CL> massCurvU_accu( &MassCurvU,
-            LocalInterfaceMassCurvUP1CL<P2Eval3dCL>(ic,icw,epsilon,delta,normalP2Eval,MG_,1),
+            LocalInterfaceMassCurvUP1CL<P2Eval3dCL>(ic0,icw0,epsilon,delta,normalP2Eval,MG_,1),
             cdata, "massCurvU");
     accus.push_back( &massCurvU_accu);
 
 
     /**< push back mass-like term with u_n*w_n as its coefficient: M20 */
-    InterfaceMatrixAccuCL<LocalInterfaceMassUWP1CL, InterfaceCommonDataP1CL> massUW_accu( &MassUW, LocalInterfaceMassUWP1CL(ic,icw,delta,MG_,1), cdata, "massUW");
+    InterfaceMatrixAccuCL<LocalInterfaceMassUWP1CL, InterfaceCommonDataP1CL> massUW_accu( &MassUW, LocalInterfaceMassUWP1CL(ic0,icw0,delta,MG_,1), cdata, "massUW");
     accus.push_back( &massUW_accu);
     /**< push back right-hand side w.r.t two equations: F */
     InterfaceVectorAccuCL<LocalVectorFP1CL, InterfaceCommonDataP1CL> loadF_accu( &vd_loadF,
-            LocalVectorFP1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic,icw,MG_,Bnd_v_), cdata, "loadF");
+            LocalVectorFP1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic0,icw0,MG_,Bnd_v_), cdata, "loadF");
     accus.push_back(&loadF_accu);
 
 
@@ -3610,7 +3623,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
     accus2.push_back( &bdata);
     //accus2.push_back( &massCurvU_accu);//update M1 with new u^n
     /**< push back mass-like term with u_n*u_n as its coefficient: M21 */
-    InterfaceMatrixAccuCL<LocalInterfaceMassUUP1CL, InterfaceCommonDataP1CL> massUU_accu( &MassUU, LocalInterfaceMassUUP1CL(ic,icw,delta,MG_,1), cdata, "massUU");
+    InterfaceMatrixAccuCL<LocalInterfaceMassUUP1CL, InterfaceCommonDataP1CL> massUU_accu( &MassUU, LocalInterfaceMassUUP1CL(ic,icw0,delta,MG_,1), cdata, "massUU");
     accus2.push_back( &massUU_accu);
     accumulate( accus2, MG_, cidx->TriangLevel(), cidx->GetBndInfo());
     /**< solve the second equation */

@@ -2643,8 +2643,12 @@ void  PatternFormulationCL::DoStepRD ()
         if (idx.NumUnknowns() > 0)
             idx.DeleteNumbering( mg);
         idx.swap( timedisc.idx);
+
+        ic.SetIdx( &idx);
         ic.Data.resize( timedisc.ic.Data.size());
         ic.Data = timedisc.ic.Data;
+
+        icw.SetIdx( &idx);
         icw.Data.resize( timedisc.icw.Data.size());
         icw.Data = timedisc.icw.Data;
 

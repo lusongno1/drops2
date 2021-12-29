@@ -1212,8 +1212,8 @@ public:
     {
         make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
         BndDataCL<> nobnd( 0);
-        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, ic_), t, qdom, qu);
-        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, icw_), t, qdom, qw);
+        resize_and_evaluate_on_vertexes( make_P1Eval( MG_, nobnd, ic_), t, qdom, qu);
+        resize_and_evaluate_on_vertexes( make_P1Eval( MG_, nobnd, icw_), t, qdom, qw);
         for (int i= 0; i < 4; ++i)
             resize_and_evaluate_on_vertexes ( cdata.p1[i], qdom, q[i]);
         for (int i= 0; i < 4; ++i)
@@ -1249,7 +1249,7 @@ public:
     {
         make_CompositeQuad5Domain2D ( qdom, cdata.surf, t);
         BndDataCL<> nobnd( 0);
-        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, ic_), t, qdom, qu);
+        resize_and_evaluate_on_vertexes( make_P1Eval( MG_, nobnd, ic_), t, qdom, qu);
         //resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, icw_), t, qdom, qw);
         for (int i= 0; i < 4; ++i)
             resize_and_evaluate_on_vertexes ( cdata.p1[i], qdom, q[i]);
@@ -1306,10 +1306,12 @@ public:
         for (int i= 0; i < 10; ++i)
         {
             evaluate_on_vertexes( gradp2[i], qdom, Addr( qgradp2i));
-            H+= dot(nd_loc[i], qgradp2i) - dot( nd_loc[i], n)*dot( n, qgradp2i);
+            //H+= dot(nd_loc[i], qgradp2i) - dot( nd_loc[i], n)*dot( n, qgradp2i);
+            H+= dot(nd_loc[i], qgradp2i);
+
         }
         BndDataCL<> nobnd( 0);
-        resize_and_evaluate_on_vertexes( make_P2Eval( MG_, nobnd, ic_), t, qdom, qu);
+        resize_and_evaluate_on_vertexes( make_P1Eval( MG_, nobnd, ic_), t, qdom, qu);
         for (int i= 0; i < 4; ++i)
             resize_and_evaluate_on_vertexes ( cdata.p1[i], qdom, q[i]);
         for (int i= 0; i < 4; ++i)
