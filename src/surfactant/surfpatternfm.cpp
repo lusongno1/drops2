@@ -2334,9 +2334,8 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     P1ConstantInit (1.0,ic, mg, 0.);
     P1ConstantInit (0.9,icw, mg, 0.);
     //initiate dist
-    dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
-         +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
-
+    //dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
+    //     +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
     {
         d1      = P.get<double>("Parameters.d1");
         d2      = P.get<double>("Parameters.d2");
@@ -2348,6 +2347,9 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
         epsilon = P.get<double>("Parameters.epsilon");
         dT      = P.get<double>("Parameters.TimeStep");
     }
+    dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*dT
+         +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+
 
 }
 
@@ -2793,7 +2795,7 @@ void PatternFormulationCL::DoStepHeatTest()
 	if(P2.get<int>("Poisson.P1"))
 		DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
 	else
-		DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
+		DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time,dT);
 
 	lset.Phi.Data = probP2->x.Data;
 
@@ -2861,6 +2863,7 @@ void PatternFormulationCL::DoStepHeat2()
 
         //Setup boundary conditions
         read_BndData( *bdata, *mgPtr, P2.get_child( "Poisson.BoundaryData"));
+        //Dir0BC= 0, DirBC= 2, Per1BC= 13, Per2BC= 11, Nat0BC= 21, NatBC= 23, NoBC= 98, UndefinedBC_= 99
 
 
 
@@ -2924,7 +2927,7 @@ void PatternFormulationCL::DoStepHeat2()
         if(P2.get<int>("Poisson.P1"))
             DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
         else
-            DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time);
+            DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time,dT);
         lset.Phi.Data = probP2->x.Data;
         //Check if Multigrid is sane
         std::cout << line << "Check if multigrid works properly...\n";

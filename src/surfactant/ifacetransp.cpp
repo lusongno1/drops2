@@ -3584,16 +3584,12 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
     NarrowBandMatrixAccuP1CL<LocalNormalLaplaceBulkP1CL> sb_accu( &Volume_stab, LocalNormalLaplaceBulkP1CL(1.,dt_,normalP2Eval,normal_,ic.t), bdata, "NormalLaplaceBulk");  ///4* To implement the stabilization Normal gradient
     accus.push_back( &sb_accu);
 
-
-
-
     /**< push back term like quasi-mass with curvature (\delta u^n -\epsilon H)H as coefficient: M1*/
     //P2Eval3dCL normalP2Eval = make_P2Eval( MG_, Bnd_v_, *nd_);
     InterfaceMatrixAccuCL<LocalInterfaceMassCurvUP1CL<P2Eval3dCL>, InterfaceCommonDataP1CL> massCurvU_accu( &MassCurvU,
             LocalInterfaceMassCurvUP1CL<P2Eval3dCL>(ic0,icw0,epsilon,delta,normalP2Eval,MG_,1),
             cdata, "massCurvU");
     accus.push_back( &massCurvU_accu);
-
 
     /**< push back mass-like term with u_n*w_n as its coefficient: M20 */
     InterfaceMatrixAccuCL<LocalInterfaceMassUWP1CL, InterfaceCommonDataP1CL> massUW_accu( &MassUW, LocalInterfaceMassUWP1CL(ic0,icw0,delta,MG_,1), cdata, "massUW");
@@ -3602,8 +3598,6 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
     InterfaceVectorAccuCL<LocalVectorFP1CL, InterfaceCommonDataP1CL> loadF_accu( &vd_loadF,
             LocalVectorFP1CL( rhs_fun_, ic.t, a,b,delta,gamma,ic0,icw0,MG_,Bnd_v_), cdata, "loadF");
     accus.push_back(&loadF_accu);
-
-
 
     /**< begin accumulating all accumulators in accus */
     {
@@ -3618,13 +3612,26 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
     std::cout  <<"  Before solve: res1 = " << norm(therhs1)<<" "<<norm(ic.Data)<<" "<< norm( L1_*ic.Data - therhs1) << std::endl;
     gm_.Solve( L1_, ic.Data, therhs1, ic.RowIdx->GetEx());
     std::cout << "SurfactantExtensionP1CL::DoStep: res1 = " << gm_.GetResid() << ", iter = " << gm_.GetIter() << std::endl;
+
+
+
     TetraAccumulatorTupleCL accus2;
     accus2.push_back( &cdata);
     accus2.push_back( &bdata);
-    //accus2.push_back( &massCurvU_accu);//update M1 with new u^n
+    accus2.push_back( &lb_accu);
+
     /**< push back mass-like term with u_n*u_n as its coefficient: M21 */
     InterfaceMatrixAccuCL<LocalInterfaceMassUUP1CL, InterfaceCommonDataP1CL> massUU_accu( &MassUU, LocalInterfaceMassUUP1CL(ic,icw0,delta,MG_,1), cdata, "massUU");
     accus2.push_back( &massUU_accu);
+
+    /**< push back term like quasi-mass with curvature (\delta u^n -\epsilon H)H as coefficient: M1new*/
+    //MassCurvU2.SetIdx( cidx, cidx);
+    MassCurvU.Data.clear();
+    InterfaceMatrixAccuCL<LocalInterfaceMassCurvUP1CL<P2Eval3dCL>, InterfaceCommonDataP1CL> massCurvU_accu2( &MassCurvU,
+            LocalInterfaceMassCurvUP1CL<P2Eval3dCL>(ic,icw0,epsilon,delta,normalP2Eval,MG_,1),
+            cdata, "massCurvUNew");
+    accus2.push_back( &massCurvU_accu2);
+
     accumulate( accus2, MG_, cidx->TriangLevel(), cidx->GetBndInfo());
     /**< solve the second equation */
     L2_.LinComb( 1./dt_, Mass.Data, 1,MassCurvU.Data, gamma, MassUU.Data,d2, Laplace.Data, rho_, Volume_stab.Data);

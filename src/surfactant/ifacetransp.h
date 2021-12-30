@@ -2265,7 +2265,7 @@ public:
               Massd, ///< mass matrix with interface-divergence of velocity
               MassH,///< mass matrix with curvature>
               MassU,///< mass matrix with (u_n)^2+\delta u_n>
-              MassCurvU,///< mass matrix with (\delta u^n-\epsilon H)H
+              MassCurvU,MassCurvU2,///< mass matrix with (\delta u^n-\epsilon H)H
               MassUW,///< mass matrix with coefficient u^n*w^n
               MassUU;///< mass matrix with coefficient u^n*w^n
 

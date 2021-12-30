@@ -611,7 +611,7 @@ void StrategyHeat(PoissonCL& Poisson,VecDescCL &x0,double t)
 //void StrategyHeat(PoissonCL& Poisson,VecDescCL &x0,double t)
 /// \brief Strategy to solve the Poisson problem on a given triangulation
 template< class PoissonCL>
-void StrategyHeat2(PoissonCL& Poisson, VecDescCL &x0,double t)
+void StrategyHeat2(PoissonCL& Poisson, VecDescCL &x0,double t,double dT)
 {
     // time measurements
 #ifndef _PAR
@@ -647,7 +647,7 @@ void StrategyHeat2(PoissonCL& Poisson, VecDescCL &x0,double t)
     Poisson.M.SetIdx( &Poisson.idx, &Poisson.idx);              // tell M about numbering
     Poisson.U.SetIdx( &Poisson.idx, &Poisson.idx);              // tell U about numbering
 
-    std::cout<< "debug:" << Poisson.x.RowIdx->NumUnknowns() <<std::endl;
+    //std::cout<< "debug:" << Poisson.x.RowIdx->NumUnknowns() <<std::endl;
 
     timer.Stop();
     std::cout << " o time " << timer.GetTime() << " s" << std::endl;
@@ -746,7 +746,8 @@ void StrategyHeat2(PoissonCL& Poisson, VecDescCL &x0,double t)
         //Creat instationary ThetaschemeCL to handle time integration for instationary problem and set time steps
         InstatPoissonThetaSchemeCL<PoissonCL, PoissonSolverBaseCL>
         ThetaScheme( Poisson, *solver, P2);
-        ThetaScheme.SetTimeStep(P2.get<double>("Time.FinalTime")/P2.get<int>("Time.NumSteps") );
+        //ThetaScheme.SetTimeStep(P2.get<double>("Time.FinalTime")/P2.get<int>("Time.NumSteps") );
+        ThetaScheme.SetTimeStep(dT/P2.get<int>("Time.NumSteps") );
         //Solve linear systerm in each time step
         for ( int step = 1; step <= P2.get<int>("Time.NumSteps") ; ++step)
         {
