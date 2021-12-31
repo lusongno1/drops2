@@ -3618,12 +3618,12 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
     TetraAccumulatorTupleCL accus2;
     accus2.push_back( &cdata);
     accus2.push_back( &bdata);
-    accus2.push_back( &lb_accu);
 
     /**< push back mass-like term with u_n*u_n as its coefficient: M21 */
     InterfaceMatrixAccuCL<LocalInterfaceMassUUP1CL, InterfaceCommonDataP1CL> massUU_accu( &MassUU, LocalInterfaceMassUUP1CL(ic,icw0,delta,MG_,1), cdata, "massUU");
     accus2.push_back( &massUU_accu);
-
+#if 0
+    accus2.push_back( &lb_accu);
     /**< push back term like quasi-mass with curvature (\delta u^n -\epsilon H)H as coefficient: M1new*/
     //MassCurvU2.SetIdx( cidx, cidx);
     MassCurvU.Data.clear();
@@ -3631,7 +3631,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
             LocalInterfaceMassCurvUP1CL<P2Eval3dCL>(ic,icw0,epsilon,delta,normalP2Eval,MG_,1),
             cdata, "massCurvUNew");
     accus2.push_back( &massCurvU_accu2);
-
+#endif
     accumulate( accus2, MG_, cidx->TriangLevel(), cidx->GetBndInfo());
     /**< solve the second equation */
     L2_.LinComb( 1./dt_, Mass.Data, 1,MassCurvU.Data, gamma, MassUU.Data,d2, Laplace.Data, rho_, Volume_stab.Data);

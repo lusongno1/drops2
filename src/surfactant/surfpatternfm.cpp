@@ -2334,8 +2334,8 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     P1ConstantInit (1.0,ic, mg, 0.);
     P1ConstantInit (0.9,icw, mg, 0.);
     //initiate dist
-    //dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
-    //     +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+    dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
+         +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
     {
         d1      = P.get<double>("Parameters.d1");
         d2      = P.get<double>("Parameters.d2");
@@ -2347,10 +2347,8 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
         epsilon = P.get<double>("Parameters.epsilon");
         dT      = P.get<double>("Parameters.TimeStep");
     }
-    dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*dT
-         +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
-
-
+//    dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*dT
+//         +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
 }
 
 void PatternFormulationCL::GetGradientOfLevelSet()
@@ -2974,7 +2972,7 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
         patternFMSolver.cur_time += patternFMSolver.dT;//step forward
         std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
         patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
-        vtkwriter->Write( patternFMSolver.cur_time);
+        //vtkwriter->Write( patternFMSolver.cur_time);
         patternFMSolver.GetGradientOfLevelSet();
         patternFMSolver.DoStepRD();
         vtkwriter->Write( patternFMSolver.cur_time);
