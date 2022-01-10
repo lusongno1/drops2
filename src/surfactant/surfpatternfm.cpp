@@ -254,6 +254,49 @@ DROPS::Point3DCL heat_conduction_surfgradsol (const DROPS::Point3DCL& p, double 
 }
 static RegisterVectorFunction regvec_heat_conduction_surfgradsol( "HeatConductionSurfGradSol", heat_conduction_surfgradsol);
 
+
+//test case 5
+//define level set function:atom
+#if 1
+double level_set_function_drops (const DROPS::Point3DCL& p, double)
+{
+
+    double x = p[0];
+    double y = p[1];
+    double z = p[2];
+    //DROPS::Point3DCL RadDrop(1,1,1);
+    //DROPS::Point3DCL PosDrop(0,0,0);
+    //DROPS::Point3DCL x( p - PosDrop);
+    //double value=0;
+    //lsFun(x[0], x[1], x[2], &value);
+   // double result = pow((x*x)/4.0+(y*y)*(4.41E+2/6.25E+2)+(z*z)/4.0+9.0/1.0E+1,2.0)-(y*y)*(6.4E+1/2.5E+1)-1.3E+1/1.0E+1;
+    double result = pow((x*x)/4.0+(y*y)*(4.41E+2/6.25E+2)+(z*z)/4.0+9.0/1.0E+1,2.0)-(y*y)*(6.4E+1/2.5E+1)-1.3E+1/1.0E+1;
+    return result;
+    //return value;
+}
+static DROPS::RegisterScalarFunction regsca_atom_dist_lset( "LevelSetFunDrops", level_set_function_drops);
+#endif
+
+
+//test case 6
+//define level set function:tooth
+#if 1
+double level_set_function_drops2 (const DROPS::Point3DCL& p, double)
+{
+    double x = p[0];
+    double y = p[1];
+    double z = p[2];
+    //DROPS::Point3DCL RadDrop(1,1,1);
+    //DROPS::Point3DCL PosDrop(0,0,0);
+    //DROPS::Point3DCL x( p - PosDrop);
+    //double value=0;
+    //lsFun(x[0], x[1], x[2], &value);
+    double result = (x*x)*(-1.6E+1/2.5E+1)+(x*x*x*x)*(2.56E+2/6.25E+2)-(y*y)*(1.6E+1/2.5E+1)+(y*y*y*y)*(2.56E+2/6.25E+2)-(z*z)*(1.6E+1/2.5E+1)+(z*z*z*z)*(2.56E+2/6.25E+2);
+    //return value;
+}
+static DROPS::RegisterScalarFunction regsca_tooth_dist_lset( "LevelSetFunDropsTooth", level_set_function_drops2);
+#endif
+
 // ==non-stationary test-case "ToroidalFlow"==
 // Level set: "torus" with RadTorus
 
@@ -2334,8 +2377,8 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     P1ConstantInit (1.0,ic, mg, 0.);
     P1ConstantInit (0.9,icw, mg, 0.);
     //initiate dist
-    dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
-         +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+    //dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
+    //     +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
     {
         d1      = P.get<double>("Parameters.d1");
         d2      = P.get<double>("Parameters.d2");
@@ -2347,8 +2390,8 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
         epsilon = P.get<double>("Parameters.epsilon");
         dT      = P.get<double>("Parameters.TimeStep");
     }
-//    dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*dT
-//         +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+    dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*dT
+         +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
 }
 
 void PatternFormulationCL::GetGradientOfLevelSet()
@@ -2971,11 +3014,12 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
     {
         patternFMSolver.cur_time += patternFMSolver.dT;//step forward
         std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
-        patternFMSolver.lset.Reparam(03,false);//Redistance by fast marching
+        patternFMSolver.lset.Reparam(03,true);//Redistance by fast marching
         //vtkwriter->Write( patternFMSolver.cur_time);
-        patternFMSolver.GetGradientOfLevelSet();
-        patternFMSolver.DoStepRD();
-        vtkwriter->Write( patternFMSolver.cur_time);
+        //patternFMSolver.lset.AdjustVolume();
+        //patternFMSolver.GetGradientOfLevelSet();
+        //patternFMSolver.DoStepRD();
+        //vtkwriter->Write( patternFMSolver.cur_time);
         patternFMSolver.DoStepHeat2();//Solve Heat Equation w.r.t level set
         vtkwriter->Write( patternFMSolver.cur_time);
         //DROPS::WriteFEToFile( patternFMSolver.lset.Phi, mg, "12.txt", /*binary=*/ false);

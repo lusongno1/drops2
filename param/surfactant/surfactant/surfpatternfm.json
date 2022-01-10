@@ -35,7 +35,7 @@
         "Read" : 0,
         "Write": "yes",
         "NumSteps":	1,
-        "FinalTime": 0.1
+        "FinalTime0": 0.5
     },
 
     "SurfTransp": {
@@ -48,7 +48,9 @@
 
             "StationaryPDE": false,
             "Wind":			"ConstantWind",
-            "Levelset":		"SphereDist",
+	    "Levelset":		"LevelSetFunDropsTooth",
+	    "Levelset2":		"LevelSetFunDrops",
+            "Levelset2":		"SphereDist",
             "Levelset2":		"MovingEllipsoid",
             "Normal":		"NormalMovingEllipsoid",
             "Rhs":			"HeatConductionRhs",
@@ -118,13 +120,13 @@
         "gamma":        30,
         "a":            0.1,
         "b":            0.9,
-	"delta":        0.7,
+	"delta":        0.0,
         "delta0":        0.1,
-        "epsilon":      0.01,
+        "epsilon":      1,
 	"epsilon0":      0.01,
         "EndTime":      0.5,
 	"EndTime0":     5,
-        "TimeStep":     0.1,
+        "TimeStep":     0.05,
 	"TimeStep0":     0.001
     }
 }
