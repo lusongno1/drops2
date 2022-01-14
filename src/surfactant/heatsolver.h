@@ -550,7 +550,8 @@ void StrategyHeat(PoissonCL& Poisson,VecDescCL &x0,double t)
         //Creat instationary ThetaschemeCL to handle time integration for instationary problem and set time steps
         InstatPoissonThetaSchemeCL<PoissonCL, PoissonSolverBaseCL>
         ThetaScheme( Poisson, *solver, P2);
-        ThetaScheme.SetTimeStep(P2.get<double>("Time.FinalTime")/P2.get<int>("Time.NumSteps") );
+        //ThetaScheme.SetTimeStep(P2.get<double>("Time.FinalTime")/P2.get<int>("Time.NumSteps") );
+        ThetaScheme.SetTimeStep(P.get<double>("Parameters.TimeStep")/P2.get<int>("Time.NumSteps") );
         //Solve linear systerm in each time step
         for ( int step = 1; step <= P2.get<int>("Time.NumSteps") ; ++step) {
             timer.Reset();

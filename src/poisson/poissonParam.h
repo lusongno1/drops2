@@ -131,7 +131,7 @@ public:
         ny_= P1.get<int>("Mesh.N2");
         dx_= norm(P1.get<DROPS::Point3DCL>("Mesh.E1"));
         dy_= norm(P1.get<DROPS::Point3DCL>("Mesh.E2"));
-        //dt_= P.get<int>("Time.NumSteps")!=0 ? P.get<double>("Time.FinalTime")/P.get<int>("Time.NumSteps") : 0;  //step size used in ALEVelocity
+        //dt_= P2.get<int>("Time.NumSteps")!=0 ? dT/P2.get<int>("Time.NumSteps") : 0;  //step size used in ALEVelocity
         dt_= P2.get<int>("Time.NumSteps")!=0 ? dT/P2.get<int>("Time.NumSteps") : 0;  //step size used in ALEVelocity
         DROPS::InScaMap & scamap = DROPS::InScaMap::getInstance();
         DROPS::ScaTetMap & scatet = DROPS::ScaTetMap::getInstance();

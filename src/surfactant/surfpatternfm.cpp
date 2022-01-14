@@ -3014,14 +3014,14 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
     {
         patternFMSolver.cur_time += patternFMSolver.dT;//step forward
         std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
-        patternFMSolver.lset.Reparam(03,true);//Redistance by fast marching
+        //patternFMSolver.lset.Reparam(03,true);//Redistance by fast marching
         //vtkwriter->Write( patternFMSolver.cur_time);
         //patternFMSolver.lset.AdjustVolume();
-        //patternFMSolver.GetGradientOfLevelSet();
-        //patternFMSolver.DoStepRD();
-        //vtkwriter->Write( patternFMSolver.cur_time);
-        patternFMSolver.DoStepHeat2();//Solve Heat Equation w.r.t level set
+        patternFMSolver.GetGradientOfLevelSet();
+        patternFMSolver.DoStepRD();
         vtkwriter->Write( patternFMSolver.cur_time);
+        //patternFMSolver.DoStepHeat2();//Solve Heat Equation w.r.t level set
+        //vtkwriter->Write( patternFMSolver.cur_time);
         //DROPS::WriteFEToFile( patternFMSolver.lset.Phi, mg, "12.txt", /*binary=*/ false);
     }
 
