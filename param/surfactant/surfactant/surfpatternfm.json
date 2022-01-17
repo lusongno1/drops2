@@ -34,7 +34,7 @@
     {
         "Read" : 0,
         "Write": "yes",
-        "NumSteps":	2,
+        "NumSteps":	5,
         "FinalTime0": 0.5
     },
 
@@ -74,9 +74,10 @@
         "FEDegree":                1,
         "NormalLaplaceCoefficient": 1.0,
         "SolutionOutput": {
-            "Freq":   0,
-            "Path":   "../../output/solutions/iface_sol",
-            "Binary": true
+            "Freq":   1,
+	    "Path":   "./",
+            "Path0":   "../../output/solutions/iface_sol",
+            "Binary": false
         }
     },
 
@@ -124,7 +125,7 @@
         "delta0":        0.1,
         "epsilon":      0.01,
 	"epsilon0":      0.01,
-        "EndTime":      10,
+        "EndTime":      5,
 	"EndTime0":     5,
         "TimeStep":     1,
 	"TimeStep0":     0.001

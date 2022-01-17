@@ -3068,6 +3068,7 @@ void SurfactantP1BaseCL::InitTimeStep ()
     if (oldidx_.NumUnknowns() > 0)
         oldidx_.DeleteNumbering( MG_);
     oldidx_.swap( idx);
+    //oldidx = idx;
     oldic_.resize( ic.Data.size());
     oldic_= ic.Data;
     oldicw_.resize( icw.Data.size());

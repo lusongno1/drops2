@@ -2676,6 +2676,10 @@ void  PatternFormulationCL::DoStepRD ()
         if(step < numSteps)
         {
             timedisc.InitTimeStep();
+            timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);//set Unknowns near interface
+            std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
+            timedisc.ic.SetIdx( &timedisc.idx);
+            timedisc.icw.SetIdx( &timedisc.idx);
         }
 
 
