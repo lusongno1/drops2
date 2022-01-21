@@ -269,7 +269,7 @@ double level_set_function_drops (const DROPS::Point3DCL& p, double)
     //DROPS::Point3DCL x( p - PosDrop);
     //double value=0;
     //lsFun(x[0], x[1], x[2], &value);
-   // double result = pow((x*x)/4.0+(y*y)*(4.41E+2/6.25E+2)+(z*z)/4.0+9.0/1.0E+1,2.0)-(y*y)*(6.4E+1/2.5E+1)-1.3E+1/1.0E+1;
+    // double result = pow((x*x)/4.0+(y*y)*(4.41E+2/6.25E+2)+(z*z)/4.0+9.0/1.0E+1,2.0)-(y*y)*(6.4E+1/2.5E+1)-1.3E+1/1.0E+1;
     double result = pow((x*x)/4.0+(y*y)*(4.41E+2/6.25E+2)+(z*z)/4.0+9.0/1.0E+1,2.0)-(y*y)*(6.4E+1/2.5E+1)-1.3E+1/1.0E+1;
     return result;
     //return value;
@@ -2465,12 +2465,12 @@ void  PatternFormulationCL::DoStepRD ()
 
     timedisc.SetRhs( the_rhs_fun);//zero right hand side
 
-/*
-    LevelsetRepairCL lsetrepair( lset);
-    adap.push_back( &lsetrepair);
-    InterfaceP1RepairCL ic_repair( mg, lset.Phi, lset.GetBndData(), timedisc.ic);
-    adap.push_back( &ic_repair);
-*/
+    /*
+        LevelsetRepairCL lsetrepair( lset);
+        adap.push_back( &lsetrepair);
+        InterfaceP1RepairCL ic_repair( mg, lset.Phi, lset.GetBndData(), timedisc.ic);
+        adap.push_back( &ic_repair);
+    */
 
     timedisc.InitTimeStep();
 
@@ -2496,35 +2496,49 @@ void  PatternFormulationCL::DoStepRD ()
 
     //VecDescCL the_sol_vd( &lset.idx);
     //LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);//an api for true solution if we have
+    VTKOutCL * vtkwritertmp = NULL;//vtkwriter
+    if (P.get<int>("VTK.Freq",0))
+        vtkwritertmp = new VTKOutCL(
+                //adap.GetMG(),
+                mg,
+                "DROPS data",
+                P.get<int>("Time.NumSteps")/P.get<int>("VTK.Freq") + 1,
+                P.get<std::string>("VTK.VTKDirRD"),
+                P.get<std::string>("VTK.VTKName"),
+                P.get<std::string>("VTK.TimeFileName"),
+                P.get<int>("VTK.Binary"),
+                P.get<bool>("VTK.UseOnlyP1"),
+                false, /* <- P2DG */
+                -1,    /* <- level */
+                P.get<bool>("VTK.ReUseTimeFile"));
 //    if (abs(cur_time)<1e-9&&vtkwriter.get() != 0)//data keeping structure for Paraview
-//    {
-//        //std::cout<<1<<std::endl;
-////        vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
-////        //std::cout<<2<<std::endl;
-////        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol1"));
-////        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.icw,                 "InterfaceSol2"));
-////        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
-////        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
-////        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
-////        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, nd),      "Normal"));
-////        //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
-////        vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
-////        vtkwriter->Write( 0.);
-//
-//
-//                //std::cout<<1<<std::endl;
+ //   if (vtkwritertmp->get() != 0)//data keeping structure for Paraview
+    {
+        //std::cout<<1<<std::endl;
 //        vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
 //        //std::cout<<2<<std::endl;
-//        vtkwriter->Register( make_VTKIfaceScalar( mg, ic,                 "InterfaceSol1"));
-//        vtkwriter->Register( make_VTKIfaceScalar( mg, icw,                 "InterfaceSol2"));
-//        //vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
-//        //vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
-//        //vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol1"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.icw,                 "InterfaceSol2"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
+//        vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
+//        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
 //        vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, nd),      "Normal"));
 //        //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
-//        //vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
+//        vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
 //        vtkwriter->Write( 0.);
-//    }
+        //std::cout<<1<<std::endl;
+        vtkwritertmp->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
+        //std::cout<<2<<std::endl;
+        vtkwritertmp->Register( make_VTKIfaceScalar( mg, timedisc.ic,                 "InterfaceSol1"));
+        vtkwritertmp->Register( make_VTKIfaceScalar( mg, timedisc.icw,                 "InterfaceSol2"));
+        //vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface,                 "interface_mesh"));
+        //vtkwriter->Register( make_VTKIfaceScalar( mg, timedisc.iface_old,                 "old_interface_mesh"));
+        //vtkwriter->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, v),      "Velocity"));
+        vtkwritertmp->Register( make_VTKVector(      make_P2Eval( mg, Bnd_v, nd),      "Normal"));
+        //vtkwriter->Register( make_VTKScalar(      lset2.GetSolution(),             "Levelset2"));
+        //vtkwriter->Register( make_VTKScalar(      make_P2Eval( mg, nobnd, the_sol_vd),  "TrueSol"));
+        vtkwritertmp->Write( 0.);
+    }
 //   if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0)
 //   {
 //       DROPS::WriteFEToFile( timedisc.ic, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
@@ -2618,11 +2632,12 @@ void  PatternFormulationCL::DoStepRD ()
         */
 
 
-        //if (vtkwriter.get() != 0 && step % P.get<int>( "VTK.Freq") == 0)
-        //{
-        //LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
-        //    vtkwriter->Write( cur_time);
-        //}
+        //if (vtkwritertmp->get() != 0 && step % P.get<int>( "VTK.Freq") == 0)
+        if (step % P.get<int>( "VTK.Freq") == 0)
+        {
+            //LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
+            vtkwritertmp->Write( cur_time);
+        }
         if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0 && step % P.get<int>( "SurfTransp.SolutionOutput.Freq") == 0)
         {
             std::ostringstream os1,
@@ -2684,6 +2699,8 @@ void  PatternFormulationCL::DoStepRD ()
 
 
     }
+    if (vtkwritertmp)
+        delete vtkwritertmp;
 
     {
         //backup ic iw idx
@@ -2799,61 +2816,61 @@ void PatternFormulationCL::DoStepHeatTest()
 
 
 
-	DROPS::dynamicLoad(P2.get<std::string>("General.DynamicLibsPrefix"),
-	                   P2.get<std::vector<std::string> >("General.DynamicLibs") );
+    DROPS::dynamicLoad(P2.get<std::string>("General.DynamicLibsPrefix"),
+                       P2.get<std::vector<std::string> >("General.DynamicLibs") );
 
-	if (P2.get<int>("General.ProgressBar"))
-		DROPS::ProgressBarTetraAccumulatorCL::Activate();
+    if (P2.get<int>("General.ProgressBar"))
+        DROPS::ProgressBarTetraAccumulatorCL::Activate();
 
-	std::cout << line << "Set up data structure to represent a Poisson problem ...\n";
-	//DROPS::MultiGridCL* mgPtr= &mg;
-	DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
+    std::cout << line << "Set up data structure to represent a Poisson problem ...\n";
+    //DROPS::MultiGridCL* mgPtr= &mg;
+    DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
 
 
-	read_BndData( *bdata, mg, P2.get_child( "Poisson.BoundaryData"));
-	for (int i=0; i<mg.GetBnd().GetNumBndSeg(); ++i)
-		std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
+    read_BndData( *bdata, mg, P2.get_child( "Poisson.BoundaryData"));
+    for (int i=0; i<mg.GetBnd().GetNumBndSeg(); ++i)
+        std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
 
-	DROPS::SUPGCL supg;
-	if(!P2.get<int>("Poisson.P1"))
-	{
-		P2.put<int>("Stabilization.SUPG",0);
-		P2.put<int>("Error.DoErrorEstimate",0);
-	}
-	if(P2.get<int>("Stabilization.SUPG"))
-	{
-		supg.init(P2);
-		std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
-	}
+    DROPS::SUPGCL supg;
+    if(!P2.get<int>("Poisson.P1"))
+    {
+        P2.put<int>("Stabilization.SUPG",0);
+        P2.put<int>("Error.DoErrorEstimate",0);
+    }
+    if(P2.get<int>("Stabilization.SUPG"))
+    {
+        supg.init(P2);
+        std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
+    }
 
-	DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL(P,P2,epsilon,delta,ic,dT);
+    DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL(P,P2,epsilon,delta,ic,dT);
 
-	DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
-	DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
-	if(P2.get<int>("Poisson.P1"))
-		probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, supg, P2.get<int>("ALE.wavy"));
-	else
-	{
-		probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, P2.get<int>("ALE.wavy"));
-	}
+    DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
+    DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
+    if(P2.get<int>("Poisson.P1"))
+        probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, supg, P2.get<int>("ALE.wavy"));
+    else
+    {
+        probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( mg, tmp, *bdata, P2.get<int>("ALE.wavy"));
+    }
 
-	if(P2.get<int>("Poisson.P1"))
-		DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
-	else
-		DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time,dT);
+    if(P2.get<int>("Poisson.P1"))
+        DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
+    else
+        DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time,dT);
 
-	lset.Phi.Data = probP2->x.Data;
+    lset.Phi.Data = probP2->x.Data;
 
-	std::cout << line << "Check if multigrid works properly...\n";
-	if(P2.get<int>("ALE.wavy"))
-		std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
-	else
-		std::cout << DROPS::SanityMGOutCL(mg) << std::endl;
+    std::cout << line << "Check if multigrid works properly...\n";
+    if(P2.get<int>("ALE.wavy"))
+        std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
+    else
+        std::cout << DROPS::SanityMGOutCL(mg) << std::endl;
 
-	delete bdata;
-	delete probP1;
-	delete probP2;
-	std::cout << "cdrdrops finished regularly" << std::endl;
+    delete bdata;
+    delete probP1;
+    delete probP2;
+    std::cout << "cdrdrops finished regularly" << std::endl;
 
 
 
@@ -2869,11 +2886,11 @@ void PatternFormulationCL::DoStepHeat2()
 #ifdef _PAR
     DROPS::ProcCL::Instance(&argc, &argv);
 #endif
-        // time measurements
+    // time measurements
 #ifndef _PAR
-        DROPS::TimerCL timer;
+    DROPS::TimerCL timer;
 #else
-        DROPS::ParTimerCL timer;
+    DROPS::ParTimerCL timer;
 #endif
 //        DROPS::read_parameter_file_from_cmdline( P2, "../../param/poisson/cdrdrops/instatpoissonEx.json");
 //        P2.put_if_unset<std::string>("VTK.TimeFileName",P2.get<std::string>("VTK.VTKName"));
@@ -2881,114 +2898,114 @@ void PatternFormulationCL::DoStepHeat2()
 //        std::cout << P2 << std::endl;
 
 
-        //create geometry
-        DROPS::MultiGridCL* mgPtr= &mg;
-        DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
+    //create geometry
+    DROPS::MultiGridCL* mgPtr= &mg;
+    DROPS::PoissonBndDataCL* bdata = new DROPS::PoissonBndDataCL(0);
 
-        //build computational domain
-        //std::unique_ptr<DROPS::MGBuilderCL> builder( DROPS::make_MGBuilder( P));
-        //mg = new DROPS::MultiGridCL( *builder);
+    //build computational domain
+    //std::unique_ptr<DROPS::MGBuilderCL> builder( DROPS::make_MGBuilder( P));
+    //mg = new DROPS::MultiGridCL( *builder);
 
-        // Create new tetrahedra
-        for ( int ref=1; ref <= P.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
-        {
-            std::cout << " refine (" << ref << ")\n";
-            DROPS::MarkAll( *mgPtr);
-            mgPtr->Refine();
-            // do loadbalancing
+    // Create new tetrahedra
+    for ( int ref=1; ref <= P.get<int>("Mesh.AdaptRef.FinestLevel"); ++ref)
+    {
+        std::cout << " refine (" << ref << ")\n";
+        DROPS::MarkAll( *mgPtr);
+        mgPtr->Refine();
+        // do loadbalancing
 #ifdef _PAR
-            lb.DoMigration();
+        lb.DoMigration();
 #endif
-        }
+    }
 
-        DROPS::dynamicLoad(P2.get<std::string>("General.DynamicLibsPrefix"),
-                           P2.get<std::vector<std::string> >("General.DynamicLibs") );
-
-
-
-        //Setup boundary conditions
-        read_BndData( *bdata, *mgPtr, P2.get_child( "Poisson.BoundaryData"));
-        //Dir0BC= 0, DirBC= 2, Per1BC= 13, Per2BC= 11, Nat0BC= 21, NatBC= 23, NoBC= 98, UndefinedBC_= 99
+    DROPS::dynamicLoad(P2.get<std::string>("General.DynamicLibsPrefix"),
+                       P2.get<std::vector<std::string> >("General.DynamicLibs") );
 
 
 
-        if (P2.get<int>("General.ProgressBar"))
-            DROPS::ProgressBarTetraAccumulatorCL::Activate();
-        // set up data structure to represent a poisson problem
-        // ---------------------------------------------------------------------
-        std::cout << line << "Set up data structure to represent a Poisson problem ...\n";
-        timer.Reset();
+    //Setup boundary conditions
+    read_BndData( *bdata, *mgPtr, P2.get_child( "Poisson.BoundaryData"));
+    //Dir0BC= 0, DirBC= 2, Per1BC= 13, Per2BC= 11, Nat0BC= 21, NatBC= 23, NoBC= 98, UndefinedBC_= 99
 
 
-        for (int i=0; i<mgPtr->GetBnd().GetNumBndSeg(); ++i)
-            std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
-        //Initialize SUPGCL class
-        DROPS::SUPGCL supg;
-        //SUPG stabilization, ALE method  and error estimation are not yet implemented for P2 case!
-        if(!P2.get<int>("Poisson.P1"))
-        {
-            P2.put<int>("Stabilization.SUPG",0);
-            P2.put<int>("Error.DoErrorEstimate",0);
-        }
-        if(P2.get<int>("Stabilization.SUPG"))
-        {
-            supg.init(P2);
-            std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
-        }
 
-        // Setup the problem
-        //DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2);
-       // DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P,P2);
-        DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL(P,P2,epsilon,delta,ic,dT);
+    if (P2.get<int>("General.ProgressBar"))
+        DROPS::ProgressBarTetraAccumulatorCL::Activate();
+    // set up data structure to represent a poisson problem
+    // ---------------------------------------------------------------------
+    std::cout << line << "Set up data structure to represent a Poisson problem ...\n";
+    timer.Reset();
 
-        DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
-        DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
-        if(P2.get<int>("Poisson.P1"))
-            probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( *mgPtr, tmp, *bdata, supg, P2.get<int>("ALE.wavy"));
-        else
-        {
-            probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( *mgPtr, tmp, *bdata, P2.get<int>("ALE.wavy"));
-        }
+
+    for (int i=0; i<mgPtr->GetBnd().GetNumBndSeg(); ++i)
+        std::cout << i << ": BC = " << bdata->GetBndSeg(i).GetBC() << std::endl;
+    //Initialize SUPGCL class
+    DROPS::SUPGCL supg;
+    //SUPG stabilization, ALE method  and error estimation are not yet implemented for P2 case!
+    if(!P2.get<int>("Poisson.P1"))
+    {
+        P2.put<int>("Stabilization.SUPG",0);
+        P2.put<int>("Error.DoErrorEstimate",0);
+    }
+    if(P2.get<int>("Stabilization.SUPG"))
+    {
+        supg.init(P2);
+        std::cout << line << "The SUPG stabilization will be added ...\n"<<line;
+    }
+
+    // Setup the problem
+    //DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P2);
+    // DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL( P,P2);
+    DROPS::PoissonCoeffCL tmp = DROPS::PoissonCoeffCL(P,P2,epsilon,delta,ic,dT);
+
+    DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> *probP1 = 0;
+    DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> *probP2 = 0;
+    if(P2.get<int>("Poisson.P1"))
+        probP1 = new DROPS::PoissonP1CL<DROPS::PoissonCoeffCL>( *mgPtr, tmp, *bdata, supg, P2.get<int>("ALE.wavy"));
+    else
+    {
+        probP2 = new DROPS::PoissonP2CL<DROPS::PoissonCoeffCL>( *mgPtr, tmp, *bdata, P2.get<int>("ALE.wavy"));
+    }
 
 #ifdef _PAR
-        // Set parallel data structures
-        DROPS::LoadBalCL lb( *mg);                    // loadbalancing
-        lb.DoMigration();    // distribute initial grid
+    // Set parallel data structures
+    DROPS::LoadBalCL lb( *mg);                    // loadbalancing
+    lb.DoMigration();    // distribute initial grid
 #endif
 
-        timer.Stop();
-        std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+    timer.Stop();
+    std::cout << " o time " << timer.GetTime() << " s" << std::endl;
 
-        // Refine the grid
-        std::cout << "Refine the grid " << P.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
-        timer.Reset();
+    // Refine the grid
+    std::cout << "Refine the grid " << P.get<int>("Mesh.AdaptRef.FinestLevel") << " times regulary ...\n";
+    timer.Reset();
 
 
-        timer.Stop();
-        std::cout << " o time " << timer.GetTime() << " s" << std::endl;
-        mgPtr->SizeInfo( std::cout);
+    timer.Stop();
+    std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+    mgPtr->SizeInfo( std::cout);
 
-        // Solve the problem
-        if(P2.get<int>("Poisson.P1"))
-            DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
-        else
-            DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time,dT);
-        lset.Phi.Data = probP2->x.Data;
-        //Check if Multigrid is sane
-        std::cout << line << "Check if multigrid works properly...\n";
-        timer.Reset();
-        if(P2.get<int>("ALE.wavy"))
-            std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
-        else
-            std::cout << DROPS::SanityMGOutCL(*mgPtr) << std::endl;
-        timer.Stop();
-        std::cout << " o time " << timer.GetTime() << " s" << std::endl;
-        // delete dynamically allocated objects
-        //delete mgPtr;
-        delete bdata;
-        delete probP1;
-        delete probP2;
-        std::cout << "cdrdrops finished regularly" << std::endl;
+    // Solve the problem
+    if(P2.get<int>("Poisson.P1"))
+        DROPS::Strategy<DROPS::PoissonP1CL<DROPS::PoissonCoeffCL> >(*probP1);
+    else
+        DROPS::StrategyHeat2<DROPS::PoissonP2CL<DROPS::PoissonCoeffCL> >(*probP2,lset.Phi,cur_time,dT);
+    lset.Phi.Data = probP2->x.Data;
+    //Check if Multigrid is sane
+    std::cout << line << "Check if multigrid works properly...\n";
+    timer.Reset();
+    if(P2.get<int>("ALE.wavy"))
+        std::cout << "Because of ALE method, we don't check the sanity of multigrid here!" << std::endl;
+    else
+        std::cout << DROPS::SanityMGOutCL(*mgPtr) << std::endl;
+    timer.Stop();
+    std::cout << " o time " << timer.GetTime() << " s" << std::endl;
+    // delete dynamically allocated objects
+    //delete mgPtr;
+    delete bdata;
+    delete probP1;
+    delete probP2;
+    std::cout << "cdrdrops finished regularly" << std::endl;
 
 }
 

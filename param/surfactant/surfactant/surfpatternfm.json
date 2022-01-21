@@ -34,7 +34,7 @@
     {
         "Read" : 0,
         "Write": "yes",
-        "NumSteps":	5,
+        "NumSteps":	1,
         "FinalTime0": 0.5
     },
 
@@ -106,6 +106,7 @@
     "VTK": {
         "Freq":           1,
         "VTKDir":         "PFVTKDir/",
+	"VTKDirRD":         "PFVTKDirRD1/",
         "VTKName":        "surfactant",
         "TimeFileName":   "surfactant",
         "Binary":         1,
