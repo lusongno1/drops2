@@ -2403,7 +2403,19 @@ void PatternFormulationCL::GetGradientOfLevelSet()
     averaging_P2_gradient_recovery( mg, lset.Phi, lset.GetBndData(), lsgradrec);
 }
 
-
+void backupDof(IdxDescCL &idx0,VecDescCL &ic0,VecDescCL &icw0,IdxDescCL &idx1,VecDescCL &ic1,VecDescCL &icw1,MultiGridCL &MG)
+{
+    if (idx0.NumUnknowns() > 0)
+        idx0.DeleteNumbering( MG);
+    idx0.swap( idx1);
+    ic0.SetIdx(&idx0);
+    ic0.Data.resize( ic1.Data.size());
+    ic0.Data = ic1.Data;
+    icw0.SetIdx(&idx0);
+    icw0.Data.resize( icw1.Data.size());
+    icw0.Data = icw1.Data;
+    //t_= ic1.t;
+}
 
 
 void  PatternFormulationCL::DoStepRD ()
@@ -2416,17 +2428,21 @@ void  PatternFormulationCL::DoStepRD ()
         LSInit( mg, lset.Phi, the_lset_fun, 0.);
     }
     */
-
     const double Vol= lset.GetVolume();
     //lset.InitVolume( Vol);
     std::cout << "droplet volume: " << Vol << std::endl;
 
+#if 0
     BndDataCL<Point3DCL> Bnd_v( 6, bc_wind, bf_wind);
     //BndDataCL<> Bnd_v( 0);
     IdxDescCL vidx( vecP2_FE);
     vidx.CreateNumbering( mg.GetLastLevel(), mg, Bnd_v);
     VecDescCL v( &vidx);
     InitVel( mg, &v, Bnd_v, the_wind_fun, 0.);//make vector-value fun to be vector-val vectors
+#endif
+    BndDataCL<Point3DCL> Bnd_v( 6, bc_wind, bf_wind);
+    IdxDescCL vidx( vecP2_FE);
+    VecDescCL v( &vidx);
     //VecDescCL nd( &vidx);
     VecDescCL &nd = lsgradrec;//gradient of level set function
     //if(abs(cur_time)<1e-9)//first iteration, initiate level set values by the prescribed function
@@ -2449,20 +2465,22 @@ void  PatternFormulationCL::DoStepRD ()
 
 
     int numSteps =  P.get<int>("Time.NumSteps");
-    {
-        //backup ic iw idx
-        timedisc.SetDt(dT/numSteps);
-        if (timedisc.idx.NumUnknowns() > 0)
-            timedisc.idx.DeleteNumbering( mg);
-        timedisc.idx.swap( idx);
-        timedisc.ic.SetIdx(&timedisc.idx);
-        timedisc.ic.Data.resize( ic.Data.size());
-        timedisc.ic.Data = ic.Data;
-        timedisc.icw.SetIdx(&timedisc.idx);
-        timedisc.icw.Data.resize( icw.Data.size());
-        timedisc.icw.Data = icw.Data;
-        timedisc.SetPars(d1,d2,gamma,a,b,delta,epsilon);
-    }
+    //{
+    //backup ic iw idx
+    timedisc.SetDt(dT/numSteps);
+    timedisc.SetPars(d1,d2,gamma,a,b,delta,epsilon);
+
+//        if (timedisc.idx.NumUnknowns() > 0)
+//            timedisc.idx.DeleteNumbering( mg);
+//        timedisc.idx.swap( idx);
+//        timedisc.ic.SetIdx(&timedisc.idx);
+//        timedisc.ic.Data.resize( ic.Data.size());
+//        timedisc.ic.Data = ic.Data;
+//        timedisc.icw.SetIdx(&timedisc.idx);
+//        timedisc.icw.Data.resize( icw.Data.size());
+//        timedisc.icw.Data = icw.Data;
+    backupDof(timedisc.idx,timedisc.ic,timedisc.icw,idx,ic,icw,mg);
+    //}
 
 
 
@@ -2706,22 +2724,22 @@ void  PatternFormulationCL::DoStepRD ()
     }
     if (vtkwritertmp)
         delete vtkwritertmp;
-
-    {
-        //backup ic iw idx
-        if (idx.NumUnknowns() > 0)
-            idx.DeleteNumbering( mg);
-        idx.swap( timedisc.idx);
-
-        ic.SetIdx( &idx);
-        ic.Data.resize( timedisc.ic.Data.size());
-        ic.Data = timedisc.ic.Data;
-
-        icw.SetIdx( &idx);
-        icw.Data.resize( timedisc.icw.Data.size());
-        icw.Data = timedisc.icw.Data;
-
-    }
+    backupDof(idx,ic,icw,timedisc.idx,timedisc.ic,timedisc.icw,mg);
+//    {
+//        //backup ic iw idx
+//        if (idx.NumUnknowns() > 0)
+//            idx.DeleteNumbering( mg);
+//        idx.swap( timedisc.idx);
+//
+//        ic.SetIdx( &idx);
+//        ic.Data.resize( timedisc.ic.Data.size());
+//        ic.Data = timedisc.ic.Data;
+//
+//        icw.SetIdx( &idx);
+//        icw.Data.resize( timedisc.icw.Data.size());
+//        icw.Data = timedisc.icw.Data;
+//
+//    }
 
     std::cout << std::endl;
 }
