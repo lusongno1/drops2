@@ -106,7 +106,7 @@
     "VTK": {
         "Freq":           1,
         "VTKDir":         "PFVTKDir/",
-	"VTKDirRD":         "PFVTKDirRD1/",
+	"VTKDirRD":         "PFVTKDirRD/",
         "VTKName":        "surfactant",
         "TimeFileName":   "surfactant",
         "Binary":         1,
@@ -126,9 +126,9 @@
         "delta0":        0.1,
         "epsilon":      0.01,
 	"epsilon0":      0.01,
-        "EndTime":      5,
+        "EndTime":      1.5,
 	"EndTime0":     5,
-        "TimeStep":     1,
+        "TimeStep":     0.3,
 	"TimeStep0":     0.001
     }
 }

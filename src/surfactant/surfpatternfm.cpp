@@ -2390,8 +2390,9 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
         epsilon = P.get<double>("Parameters.epsilon");
         dT      = P.get<double>("Parameters.TimeStep");
     }
-    dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*dT
-         +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+    //dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*dT
+    //     +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
+    dist = 10;
 }
 
 void PatternFormulationCL::GetGradientOfLevelSet()
@@ -2454,8 +2455,10 @@ void  PatternFormulationCL::DoStepRD ()
         if (timedisc.idx.NumUnknowns() > 0)
             timedisc.idx.DeleteNumbering( mg);
         timedisc.idx.swap( idx);
+        timedisc.ic.SetIdx(&timedisc.idx);
         timedisc.ic.Data.resize( ic.Data.size());
         timedisc.ic.Data = ic.Data;
+        timedisc.icw.SetIdx(&timedisc.idx);
         timedisc.icw.Data.resize( icw.Data.size());
         timedisc.icw.Data = icw.Data;
         timedisc.SetPars(d1,d2,gamma,a,b,delta,epsilon);
@@ -2496,23 +2499,24 @@ void  PatternFormulationCL::DoStepRD ()
 
     //VecDescCL the_sol_vd( &lset.idx);
     //LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ 0.);//an api for true solution if we have
+#if 1
     VTKOutCL * vtkwritertmp = NULL;//vtkwriter
     if (P.get<int>("VTK.Freq",0))
         vtkwritertmp = new VTKOutCL(
-                //adap.GetMG(),
-                mg,
-                "DROPS data",
-                P.get<int>("Time.NumSteps")/P.get<int>("VTK.Freq") + 1,
-                P.get<std::string>("VTK.VTKDirRD"),
-                P.get<std::string>("VTK.VTKName"),
-                P.get<std::string>("VTK.TimeFileName"),
-                P.get<int>("VTK.Binary"),
-                P.get<bool>("VTK.UseOnlyP1"),
-                false, /* <- P2DG */
-                -1,    /* <- level */
-                P.get<bool>("VTK.ReUseTimeFile"));
+            //adap.GetMG(),
+            mg,
+            "DROPS data",
+            P.get<int>("Time.NumSteps")/P.get<int>("VTK.Freq") + 1,
+            P.get<std::string>("VTK.VTKDirRD"),
+            P.get<std::string>("VTK.VTKName"),
+            P.get<std::string>("VTK.TimeFileName"),
+            P.get<int>("VTK.Binary"),
+            P.get<bool>("VTK.UseOnlyP1"),
+            false, /* <- P2DG */
+            -1,    /* <- level */
+            P.get<bool>("VTK.ReUseTimeFile"));
 //    if (abs(cur_time)<1e-9&&vtkwriter.get() != 0)//data keeping structure for Paraview
- //   if (vtkwritertmp->get() != 0)//data keeping structure for Paraview
+//   if (vtkwritertmp->get() != 0)//data keeping structure for Paraview
     {
         //std::cout<<1<<std::endl;
 //        vtkwriter->Register( make_VTKScalar(      lset.GetSolution(),              "Levelset") );
@@ -2545,7 +2549,7 @@ void  PatternFormulationCL::DoStepRD ()
 //       DROPS::WriteFEToFile( timedisc.icw, mg, P.get<std::string>( "SurfTransp.SolutionOutput.Path"), P.get<bool>( "SolutionOutput.Binary"));
 
 //   }
-
+#endif
     /*
         //const double dt= P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps");//1/32
         double L_2x_err= L2_error( lset.Phi, lset.GetBndData(), timedisc.GetSolution(), the_sol_fun);
@@ -2631,13 +2635,14 @@ void  PatternFormulationCL::DoStepRD ()
         std::cout << "L_2tH_1x-error: " << std::sqrt( L_2tH_1x_err_sq) << std::endl;
         */
 
-
+#if 1
         //if (vtkwritertmp->get() != 0 && step % P.get<int>( "VTK.Freq") == 0)
         if (step % P.get<int>( "VTK.Freq") == 0)
         {
             //LSInit( mg, the_sol_vd, the_sol_fun, /*t*/ cur_time);
             vtkwritertmp->Write( cur_time);
         }
+#endif
         if (P.get<int>( "SurfTransp.SolutionOutput.Freq") > 0 && step % P.get<int>( "SurfTransp.SolutionOutput.Freq") == 0)
         {
             std::ostringstream os1,
@@ -3031,10 +3036,12 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
 //        vtkwriter->Write( patternFMSolver.cur_time);
 //    }
     int stepNum = (int)(patternFMSolver.tEnd/patternFMSolver.dT);
+    //patternFMSolver.GetGradientOfLevelSet();
     for (int stepCount= 1; stepCount<=stepNum; ++stepCount)
     {
         patternFMSolver.cur_time += patternFMSolver.dT;//step forward
-        std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
+        //std::cout<<"test"<<std::endl;
+        //std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
         //patternFMSolver.lset.Reparam(03,true);//Redistance by fast marching
         //vtkwriter->Write( patternFMSolver.cur_time);
         //patternFMSolver.lset.AdjustVolume();
@@ -3053,7 +3060,7 @@ int main (int argc, char* argv[])
 {
     try
     {
-        system("rm PFVTKDir vtk -rf");
+        //system("rm PFVTKDir vtk -rf");
         /*
                 // time measurements
         #ifndef _PAR
