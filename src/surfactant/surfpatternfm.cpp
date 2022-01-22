@@ -2450,12 +2450,19 @@ void  PatternFormulationCL::DoStepRD ()
     //InitVel( mg, &nd, Bnd_v, the_normal_fun, 0.);//initial normal vector by prescribed vector function
     //}
 
-
     //make dist width to be 10*h
     std::unique_ptr<SurfactantP1BaseCL> timediscp( make_surfactant_timedisc( mg, lset, v, nd, Bnd_v, P,dist));
     //initial a surfactant_timedisc by assignments
     SurfactantP1BaseCL& timedisc= *timediscp;
+    int numSteps =  P.get<int>("Time.NumSteps");
+    //{
+    //backup ic iw idx
+    timedisc.SetDt(dT/numSteps);
+    timedisc.SetPars(d1,d2,gamma,a,b,delta,epsilon);
+    timedisc.SetRhs( the_rhs_fun);//zero right hand side
 
+    backupDof(timedisc.idx,timedisc.ic,timedisc.icw,idx,ic,icw,mg);
+//    timedisc.InitTimeStep();
 //    {
 //        //pass ic icw to SurfactantP1BaseCL
 //        timedisc.ic = ic;
@@ -2463,12 +2470,6 @@ void  PatternFormulationCL::DoStepRD ()
 //        timedisc.idx.swap(idx);
 //    }
 
-
-    int numSteps =  P.get<int>("Time.NumSteps");
-    //{
-    //backup ic iw idx
-    timedisc.SetDt(dT/numSteps);
-    timedisc.SetPars(d1,d2,gamma,a,b,delta,epsilon);
 
 //        if (timedisc.idx.NumUnknowns() > 0)
 //            timedisc.idx.DeleteNumbering( mg);
@@ -2479,12 +2480,8 @@ void  PatternFormulationCL::DoStepRD ()
 //        timedisc.icw.SetIdx(&timedisc.idx);
 //        timedisc.icw.Data.resize( icw.Data.size());
 //        timedisc.icw.Data = icw.Data;
-    backupDof(timedisc.idx,timedisc.ic,timedisc.icw,idx,ic,icw,mg);
+
     //}
-
-
-
-    timedisc.SetRhs( the_rhs_fun);//zero right hand side
 
     /*
         LevelsetRepairCL lsetrepair( lset);
@@ -2492,16 +2489,15 @@ void  PatternFormulationCL::DoStepRD ()
         InterfaceP1RepairCL ic_repair( mg, lset.Phi, lset.GetBndData(), timedisc.ic);
         adap.push_back( &ic_repair);
     */
-
-    timedisc.InitTimeStep();
-
     // Init new narrow-band
     //idx.CreateNumbering( oldidx_.TriangLevel(), MG_, &lset_vd_, &lsetbnd_,width_);
     //dist = 0.25;
+#if 0
     timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);//set Unknowns near interface
     std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
     timedisc.ic.SetIdx( &timedisc.idx);
     timedisc.icw.SetIdx( &timedisc.idx);
+#endif
 
 //        if(abs(cur_time)<1e-9)
 //        {
@@ -2621,6 +2617,14 @@ void  PatternFormulationCL::DoStepRD ()
     {
         //std::cout << "======================================================== step " << step << ":\n";
         ScopeTimerCL timer( "Strategy: Time-loop");
+
+        timedisc.InitTimeStep();
+        timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);//set Unknowns near interface
+        std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
+        timedisc.ic.SetIdx( &timedisc.idx);
+        timedisc.icw.SetIdx( &timedisc.idx);
+
+
         //const double cur_time= step*dt;
         // Assumes (as the rest of Drops), that the current triangulation is acceptable to perform the time-step.
         // If dt is large and AdapRef.Width is small, this may not be true.
@@ -2711,14 +2715,14 @@ void  PatternFormulationCL::DoStepRD ()
 //            lset.AdjustVolume();
 //            lset.GetVolumeAdjuster()->DebugOutput( std::cout);
 //        }
-        if(step < numSteps)
-        {
-            timedisc.InitTimeStep();
-            timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);//set Unknowns near interface
-            std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
-            timedisc.ic.SetIdx( &timedisc.idx);
-            timedisc.icw.SetIdx( &timedisc.idx);
-        }
+//        if(step < numSteps)
+//        {
+//            timedisc.InitTimeStep();
+//            timedisc.idx.CreateNumbering( mg.GetLastLevel(), mg, &lset.Phi, &lset.GetBndData(), dist);//set Unknowns near interface
+//            std::cout << "NumUnknowns: " << timedisc.idx.NumUnknowns() << std::endl;
+//            timedisc.ic.SetIdx( &timedisc.idx);
+//            timedisc.icw.SetIdx( &timedisc.idx);
+//        }
 
 
     }
