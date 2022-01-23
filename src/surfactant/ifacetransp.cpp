@@ -68,7 +68,7 @@ void ExtendP2 (const MultiGridCL& mg, const VecDescCL& x, VecDescCL& xext)
     const Uint xidx( x.RowIdx->GetIdx()),
           xextidx( xext.RowIdx->GetIdx()),
           lvl( x.RowIdx->TriangLevel());
-    xext.Data= 100000;//wrong
+    xext.Data= 1000;//wrong
 //    xext.Data = 0;
 
     DROPS_FOR_TRIANG_CONST_VERTEX( mg, lvl, it)
@@ -3623,7 +3623,7 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
     /**< push back mass-like term with u_n*u_n as its coefficient: M21 */
     InterfaceMatrixAccuCL<LocalInterfaceMassUUP1CL, InterfaceCommonDataP1CL> massUU_accu( &MassUU, LocalInterfaceMassUUP1CL(ic,icw0,delta,MG_,1), cdata, "massUU");
     accus2.push_back( &massUU_accu);
-#if 0
+#if 1
     accus2.push_back( &lb_accu);
     /**< push back term like quasi-mass with curvature (\delta u^n -\epsilon H)H as coefficient: M1new*/
     //MassCurvU2.SetIdx( cidx, cidx);

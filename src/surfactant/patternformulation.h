@@ -150,6 +150,7 @@ public:
     virtual void DoStepHeatTest();
     void P2ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t);
     void P1ConstantInit (double uw0, VecDescCL& ic, const MultiGridCL& mg, double t);
+    void P1Init( VecDescCL& vec, instat_scalar_fun_ptr func, double t0);
     void GetGradientOfLevelSet();
 
 };

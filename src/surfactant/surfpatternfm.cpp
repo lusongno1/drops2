@@ -2354,6 +2354,25 @@ void PatternFormulationCL::P1ConstantInit (double uw0, VecDescCL& ic, const Mult
     }
     ic.t= t;
 }
+void PatternFormulationCL::P1Init( VecDescCL& vec, instat_scalar_fun_ptr func, double t0)
+{
+    Uint lvl= vec.GetLevel(),
+         idx= vec.RowIdx->GetIdx();
+    for (MultiGridCL::const_TriangVertexIteratorCL sit= const_cast<const MultiGridCL&>(mg).GetTriangVertexBegin(lvl), send= const_cast<const MultiGridCL&>(mg).GetTriangVertexEnd(lvl);
+         sit != send; ++sit)
+    {
+        if (sit->Unknowns.Exist(idx))
+        {
+//            if(ALE_)
+//            {
+//                vec.Data[sit->Unknowns(idx)]= func( md_.GetTransformedVertexCoord(*sit), t0);
+//            }
+//            else
+                vec.Data[sit->Unknowns(idx)]= func( sit->GetCoord(), t0);
+        }
+    }
+
+}
 
 //construction function to initialize quantum
 PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTriangCL& adap,
@@ -2376,6 +2395,11 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
     icw.SetIdx( &idx);
     P1ConstantInit (1.0,ic, mg, 0.);
     P1ConstantInit (0.9,icw, mg, 0.);
+    //P1ConstantInit (10.1,ic, mg, 0.);
+    //P1ConstantInit (-20.1,icw, mg, 0.);
+    //P1Init( ic, the_sol_fun, 0.);
+    //P1Init( icw, the_sol_fun, 0.);
+
     //initiate dist
     //dist=10*P.get<DROPS::Point3DCL>("SurfTransp.Exp.Velocity").norm()*P.get<double>("Time.FinalTime")/P.get<double>("Time.NumSteps")
     //     +10*P.get<DROPS::Point3DCL>("Mesh.E1")[0]/P.get<double>("Mesh.N1")/pow(2,P.get<int>("Mesh.AdaptRef.FinestLevel")+1);
@@ -2459,7 +2483,7 @@ void  PatternFormulationCL::DoStepRD ()
     //backup ic iw idx
     timedisc.SetDt(dT/numSteps);
     timedisc.SetPars(d1,d2,gamma,a,b,delta,epsilon);
-    timedisc.SetRhs( the_rhs_fun);//zero right hand side
+    //timedisc.SetRhs( the_rhs_fun);//zero right hand side
 
     backupDof(timedisc.idx,timedisc.ic,timedisc.icw,idx,ic,icw,mg);
 //    timedisc.InitTimeStep();
@@ -3064,14 +3088,14 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
         patternFMSolver.cur_time += patternFMSolver.dT;//step forward
         //std::cout<<"test"<<std::endl;
         //std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
-        //patternFMSolver.lset.Reparam(03,true);//Redistance by fast marching
-        //vtkwriter->Write( patternFMSolver.cur_time);
+        patternFMSolver.lset.Reparam(03,true);//Redistance by fast marching
+        vtkwriter->Write( patternFMSolver.cur_time);
         //patternFMSolver.lset.AdjustVolume();
         patternFMSolver.GetGradientOfLevelSet();
         patternFMSolver.DoStepRD();
         vtkwriter->Write( patternFMSolver.cur_time);
-        //patternFMSolver.DoStepHeat2();//Solve Heat Equation w.r.t level set
-        //vtkwriter->Write( patternFMSolver.cur_time);
+        patternFMSolver.DoStepHeat2();//Solve Heat Equation w.r.t level set
+        vtkwriter->Write( patternFMSolver.cur_time);
         //DROPS::WriteFEToFile( patternFMSolver.lset.Phi, mg, "12.txt", /*binary=*/ false);
     }
 
@@ -3082,7 +3106,7 @@ int main (int argc, char* argv[])
 {
     try
     {
-        //system("rm PFVTKDir vtk -rf");
+        system("rm PFVTKDir vtk -rf");
         /*
                 // time measurements
         #ifndef _PAR
