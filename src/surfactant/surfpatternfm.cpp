@@ -2393,8 +2393,8 @@ PatternFormulationCL::PatternFormulationCL (DROPS::MultiGridCL& mg,DROPS::AdapTr
 
     ic.SetIdx( &idx);
     icw.SetIdx( &idx);
-    P1ConstantInit (1.0,ic, mg, 0.);
-    P1ConstantInit (0.9,icw, mg, 0.);
+    P1ConstantInit (1.3,ic, mg, 0.);
+    P1ConstantInit (-2.3,icw, mg, 0.);
     //P1ConstantInit (10.1,ic, mg, 0.);
     //P1ConstantInit (-20.1,icw, mg, 0.);
     //P1Init( ic, the_sol_fun, 0.);
@@ -3088,14 +3088,14 @@ void StrategyPatternFMDeformation (DROPS::MultiGridCL& mg, DROPS::AdapTriangCL& 
         patternFMSolver.cur_time += patternFMSolver.dT;//step forward
         //std::cout<<"test"<<std::endl;
         //std::cout<<"***************--------PATTERN FORMULATIOIN LOOP: STEP = "<<stepCount<<"----------***********************"<<std::endl;
-        patternFMSolver.lset.Reparam(03,true);//Redistance by fast marching
-        vtkwriter->Write( patternFMSolver.cur_time);
+        //patternFMSolver.lset.Reparam(03,true);//Redistance by fast marching
+        //vtkwriter->Write( patternFMSolver.cur_time);
         //patternFMSolver.lset.AdjustVolume();
         patternFMSolver.GetGradientOfLevelSet();
         patternFMSolver.DoStepRD();
         vtkwriter->Write( patternFMSolver.cur_time);
-        patternFMSolver.DoStepHeat2();//Solve Heat Equation w.r.t level set
-        vtkwriter->Write( patternFMSolver.cur_time);
+        //patternFMSolver.DoStepHeat2();//Solve Heat Equation w.r.t level set
+        //vtkwriter->Write( patternFMSolver.cur_time);
         //DROPS::WriteFEToFile( patternFMSolver.lset.Phi, mg, "12.txt", /*binary=*/ false);
     }
 
