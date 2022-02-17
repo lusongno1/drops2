@@ -131,7 +131,7 @@
         "delta0":        0.1,
         "epsilon":      0.0,
 	"epsilon0":      0.01,
-        "EndTime":      3,
+        "EndTime":      1,
 	"EndTime0":     5,
         "TimeStep":     0.1,
 	"TimeStep0":     0.001

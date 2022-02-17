@@ -3607,7 +3607,9 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
     }
     load.resize( idx.NumUnknowns());
     /**< solve the first equation */
-    L1_.LinComb( gamma+1./dt_, Mass.Data, 1,MassCurvU.Data, -gamma, MassUW.Data, d1, Laplace.Data, rho_, Volume_stab.Data);
+    //L1_.LinComb( gamma+1./dt_, Mass.Data, 1,MassCurvU.Data, -gamma, MassUW.Data, d1, Laplace.Data, rho_, Volume_stab.Data);
+    L1_.LinComb( gamma+1./dt_, Mass.Data, 1,MassCurvU.Data, (1.0)*(-gamma), MassUW.Data, d1, Laplace.Data, 0.0, Volume_stab.Data);
+    load = vd_loadF.Data;
     load = vd_loadF.Data;
     const VectorCL therhs1(rhs1_ + a*gamma*load);//const VectorCL therhs(rhs1_ + load);
     std::cout  <<"  Before solve: res1 = " << norm(therhs1)<<" "<<norm(ic.Data)<<" "<< norm( L1_*ic.Data - therhs1) << std::endl;
@@ -3635,7 +3637,8 @@ void SurfactantNarrowBandStblP1CL::DoStep0PatternFM (double new_t)//for pattern 
 #endif
     accumulate( accus2, MG_, cidx->TriangLevel(), cidx->GetBndInfo());
     /**< solve the second equation */
-    L2_.LinComb( 1./dt_, Mass.Data, 1,MassCurvU.Data, gamma, MassUU.Data,d2, Laplace.Data, rho_, Volume_stab.Data);
+    //L2_.LinComb( 1./dt_, Mass.Data, 1,MassCurvU.Data, gamma, MassUU.Data,d2, Laplace.Data, rho_, Volume_stab.Data);
+    L2_.LinComb( 1./dt_, Mass.Data, 1,MassCurvU.Data, 1.0*gamma, MassUU.Data,d2, Laplace.Data, 0.0, Volume_stab.Data);
     const VectorCL therhs2(rhsw1_ + b*gamma*load);
     std::cout  <<"  Before solve: res2 = " << norm(therhs2)<<" "<<norm(icw.Data)<<" "<< norm( L2_*ic.Data - therhs2) << std::endl;
     gm_.Solve( L2_, icw.Data, therhs2, icw.RowIdx->GetEx());
